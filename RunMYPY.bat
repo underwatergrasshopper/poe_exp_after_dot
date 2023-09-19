@@ -14,4 +14,4 @@ if "!PYTHON_VERSION!" neq "" (
     set PY_PYTHON_VERSION=-!PYTHON_VERSION!
 )
 
-py -m mypy ./src ./tests_and_examples
+py -m mypy ./src ./tests
