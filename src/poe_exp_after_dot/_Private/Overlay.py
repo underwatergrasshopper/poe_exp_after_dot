@@ -1,4 +1,4 @@
-from time import perf_counter as _perf_counter
+from time import time as _get_time
 
 from typing import SupportsFloat, SupportsInt
 from dataclasses import dataclass
@@ -145,11 +145,53 @@ class ExpThresholdInfo:
     level       : int
     base_exp    : int
     exp_to_next : int
+
+class StopWatch:
+    _start          : float     # in seconds
+    _stop           : float     # in seconds
+    _accumulator    : float     # in seconds
+    _elapsed_time   : float     # in seconds
+
+    def __init__(self, *, start : float = 0.0):
+        """
+        start
+            Time from the epoch in seconds.
+        """
+        self.reset(start)
+
+    def reset(self, *, start : float = 0.0):
+        """
+        start
+            Time from the epoch in seconds.
+        """
+        self._start         = _get_time() if start is None else start
+        self._stop          = self._start
+        self._accumulator   = 0.0
+        self._elapsed_time  = 0.0
+
+    def update(self):
+        self._stop = _get_time()
+        self._accumulator += self._stop - self._start
+        self._start = self._stop
+
+        self._elapsed_time, self._accumulator = divmod(self._accumulator, 1)
+
+    def get_elapsed_time(self) -> float:
+        """
+        Returns
+            Time in whole seconds.
+        """
+        return self._elapsed_time
+    
+    def get_stop_time(self) -> float:
+        """
+        Returns
+            Time from the epoch in seconds.
+        """
+        return self._stop
     
 class Measurer:
-    _accumulator                    : float     # in seconds
-    _start                          : float     # in seconds
-    _stop                           : float     # in seconds
+    _level                          : int
 
     _progress                       : int       # in percent
     _progress_2_dig_after_dot       : int       # in centy-percent
@@ -164,10 +206,6 @@ class Measurer:
     _is_update_fail                 : bool
 
     def __init__(self, start_time : float = None):
-        self._accumulator = 0.0
-        self._start = _perf_counter() if start_time is None else start_time
-        self._stop = self._start
-
         self._level = 0
 
         self._exp_progress_integer = 0
@@ -183,33 +221,11 @@ class Measurer:
 
         self._is_update_fail = False
 
-
-    def update(self, exp : int):
-        self._stop = _perf_counter()
-        self._accumulator += self._stop - self._start
-        self._start = self._stop
-
-        elapsed_time, self._accumulator = divmod(self._accumulator, 1)
-
-        self._update(exp, elapsed_time)
-
-    def get_exp_progress(self) -> int:
-        return self._progress
-    
-    def get_exp_progress_2_dig_after_dot(self) -> int:
-        return self._progress_2_dig_after_dot
-    
-    def get_speed(self) -> int:
+    def update(self, exp : int, elapsed_time : float):
         """
-        Returns
-            Experience per hour.
+        elapsed_time
+            In seconds.
         """
-        return self._exp_per_hour
-    
-    def get_level(self) -> int:
-        return self._level
-
-    def _update(self, exp : int, elapsed_time : float):
         info = _find_exp_threshold_info(exp)
 
         if info:
@@ -233,6 +249,23 @@ class Measurer:
             self._is_update_fail = False
         else:
             self._is_update_fail = True
+
+    def get_exp_progress(self) -> int:
+        return self._progress
+    
+    def get_exp_progress_2_dig_after_dot(self) -> int:
+        return self._progress_2_dig_after_dot
+    
+    def get_speed(self) -> int:
+        """
+        Returns
+            Experience per hour.
+        """
+        return self._exp_per_hour
+    
+    def get_level(self) -> int:
+        return self._level
+
 
 def _find_exp_threshold_info(exp : int) -> ExpThresholdInfo | None:
     for info in _EXP_THRESHOLD_INFO_TABLE:
