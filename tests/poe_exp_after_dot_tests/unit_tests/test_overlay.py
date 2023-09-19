@@ -23,8 +23,8 @@ def test_fine_time():
     assert str(FineTime(1 * 24 * 60 * 60 + 2 * 60 * 60 + 3 * 60 + 4)) == "1d02h03m04s"
     assert str(FineTime(6 * 24 * 60 * 60 + 23 * 60 * 60 + 59 * 60 + 59)) == "6d23h59m59s"
 
-    assert str(FineTime(7 * 24 * 60 * 60)) == "1w00d00h00m00s"
-    assert str(FineTime(999 * 7 * 24 * 60 * 60 + 6 * 24 * 60 * 60 + 23 * 60 * 60 + 59 * 60 + 59)) == "999w06d23h59m59s"
+    assert str(FineTime(7 * 24 * 60 * 60)) == "1w0d00h00m00s"
+    assert str(FineTime(999 * 7 * 24 * 60 * 60 + 6 * 24 * 60 * 60 + 23 * 60 * 60 + 59 * 60 + 59)) == "999w6d23h59m59s"
 
     assert str(FineTime(125, "s")) == "125s"
 
@@ -36,3 +36,49 @@ def test_fine_time():
 
     assert str(FineTime(30 * 24 * 60 * 60  + 1 * 60 * 60 + 3 * 60 + 4, "d")) == "30d01h03m04s"
     assert str(FineTime(234 * 24 * 60 * 60  + 23 * 60 * 60 + 59 * 60 + 59, "d")) == "234d23h59m59s"
+
+    assert str(FineTime(
+        999     * 7 * 24 * 60 * 60 + 
+        6       * 24 * 60 * 60 + 
+        23      * 60 * 60 + 
+        59      * 60 + 
+        59, 
+        unit_color = "blue"
+    )) == (
+        "999<font color=\"blue\">w</font>"
+        "6<font color=\"blue\">d</font>"
+        "23<font color=\"blue\">h</font>"
+        "59<font color=\"blue\">m</font>"
+        "59<font color=\"blue\">s</font>"
+    )
+
+    assert str(FineTime(
+        999     * 7 * 24 * 60 * 60 + 
+        6       * 24 * 60 * 60 + 
+        23      * 60 * 60 + 
+        59      * 60 + 
+        59, 
+        value_color = "yellow"
+    )) == (
+        "<font color=\"yellow\">999</font>w"
+        "<font color=\"yellow\">6</font>d"
+        "<font color=\"yellow\">23</font>h"
+        "<font color=\"yellow\">59</font>m"
+        "<font color=\"yellow\">59</font>s"
+    )
+
+    assert str(FineTime(
+        999     * 7 * 24 * 60 * 60 + 
+        6       * 24 * 60 * 60 + 
+        23      * 60 * 60 + 
+        59      * 60 + 
+        59, 
+        value_color = "yellow", 
+        unit_color = "blue"
+    )) == (
+        "<font color=\"yellow\">999</font><font color=\"blue\">w</font>"
+        "<font color=\"yellow\">6</font><font color=\"blue\">d</font>"
+        "<font color=\"yellow\">23</font><font color=\"blue\">h</font>"
+        "<font color=\"yellow\">59</font><font color=\"blue\">m</font>"
+        "<font color=\"yellow\">59</font><font color=\"blue\">s</font>"
+    )
