@@ -87,6 +87,17 @@ class FineExpPerHour:
     _exp_per_hour : int
 
     def __init__(self, exp_per_hour : SupportsInt = 0, *, value_color : str | None = None, unit_color : str | None = None):
+        """
+        value_color
+            None or color of all values. 
+            Can be name: "grey", "yellow", "red", "green", "blue", "white", ...
+            Can be value: "#7F7F7F", "#FFFF00", ...
+
+        unit_color
+            None or color of all unit symbols. 
+            Can be name: "grey", "yellow", "red", "green", "blue", "white", ...
+            Can be value: "#7F7F7F", "#FFFF00", ...
+        """
         if not isinstance(exp_per_hour, int):
             self._exp_per_hour = int(exp_per_hour)
         else:
