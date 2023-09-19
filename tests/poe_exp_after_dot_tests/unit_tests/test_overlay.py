@@ -1,4 +1,4 @@
-from poe_exp_after_dot._Private.Overlay import FineTime
+from poe_exp_after_dot._Private.Overlay import FineTime, FineExpPerHour
 
 def test_fine_time():
     assert str(FineTime()) == "0s"
@@ -82,3 +82,44 @@ def test_fine_time():
         "<font color=\"yellow\">59</font><font color=\"blue\">m</font>"
         "<font color=\"yellow\">59</font><font color=\"blue\">s</font>"
     )
+
+    assert _fine_time_with_exception(time_ = 10, max_unit = "wrong") == "Unexpected value of 'max_unit' parameter."
+
+def _fine_time_with_exception(**kwarg):
+    try:
+        FineTime(**kwarg)
+    except Exception as exception:
+        return str(exception)
+    else:
+        return None
+
+def test_fine_exp_per_hour():
+    assert str(FineExpPerHour()) == "0 exp/h"
+    assert str(FineExpPerHour(1)) == "1 exp/h"
+    assert str(FineExpPerHour(99)) == "99 exp/h"
+    assert str(FineExpPerHour(999)) == "999 exp/h"
+
+    assert str(FineExpPerHour(1000)) == "1.00k exp/h"
+    assert str(FineExpPerHour(1909)) == "1.90k exp/h"
+    assert str(FineExpPerHour(1990)) == "1.99k exp/h"
+    assert str(FineExpPerHour(1999)) == "1.99k exp/h"
+
+    assert str(FineExpPerHour(10000)) == "10.0k exp/h"
+    assert str(FineExpPerHour(19900)) == "19.9k exp/h"
+    assert str(FineExpPerHour(99000)) == "99.0k exp/h"
+    assert str(FineExpPerHour(99099)) == "99.0k exp/h"
+    assert str(FineExpPerHour(99900)) == "99.9k exp/h"
+
+    assert str(FineExpPerHour(999999)) == "999k exp/h"
+
+    assert str(FineExpPerHour(9000000)) == "9.00m exp/h"
+    assert str(FineExpPerHour(9010000)) == "9.01m exp/h"
+    assert str(FineExpPerHour(9999999)) == "9.99m exp/h"
+    assert str(FineExpPerHour(99099999)) == "99.0m exp/h"
+    assert str(FineExpPerHour(99999999)) == "99.9m exp/h"
+    assert str(FineExpPerHour(999999999)) == "999m exp/h"
+    assert str(FineExpPerHour(9999999999)) == "9999m exp/h"
+
+    assert str(FineExpPerHour(9999999, value_color = "blue")) == "<font color=\"blue\">9.99</font>m exp/h"
+    assert str(FineExpPerHour(9999999, unit_color = "red")) == "9.99<font color=\"red\">m exp/h</font>"
+    assert str(FineExpPerHour(9999999, value_color = "blue", unit_color = "red")) == "<font color=\"blue\">9.99</font><font color=\"red\">m exp/h</font>"
