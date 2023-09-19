@@ -90,7 +90,8 @@ class FineTime:
         return self._text_representation
 
 class FineExpPerHour:
-    _exp_per_hour : int
+    _exp_per_hour           : int
+    _text_representation    : str
 
     def __init__(self, exp_per_hour : SupportsInt = 0, *, value_color : str | None = None, unit_color : str | None = None):
         """
@@ -137,6 +138,70 @@ class FineExpPerHour:
     def get_exp_per_hour(self) -> int:
         return self._exp_per_hour
 
+    def __str__(self) -> str:
+        return self._text_representation
+    
+    def __repr__(self) -> str:
+        return self._text_representation
+    
+class FinePercent:
+    _percent                : float
+    _integer                : int       # in percent
+    _2_dig_after_dot        : int       # in centipercent
+    _text_representation    : str
+
+    def __init__(self, percent : SupportsFloat = 0.0, *, is_sign = False, integer_color : str | None = None, two_dig_after_dot_color : str | None = None):
+        """
+        integer_color
+            None or color of all values. 
+            Can be name: "grey", "yellow", "red", "green", "blue", "white", ...
+            Can be value: "#7F7F7F", "#FFFF00", ...
+
+        two_dig_after_dot_color
+            None or color of all unit symbols. 
+            Can be name: "grey", "yellow", "red", "green", "blue", "white", ...
+            Can be value: "#7F7F7F", "#FFFF00", ...
+        """
+        if not isinstance(percent, float):
+            self._percent = float(percent)
+        else:
+            self._percent = percent
+   
+        self._integer = int(self._percent)
+        self._2_dig_after_dot = int((self._percent - self._integer) * 100)
+
+        ib = f"<font color=\"{integer_color}\">" if integer_color else ""
+        ie = "</font>" if integer_color else ""
+
+        db = f"<font color=\"{two_dig_after_dot_color}\">" if two_dig_after_dot_color else ""
+        de = "</font>" if two_dig_after_dot_color else ""
+
+        if is_sign:
+            sign = "+" if self._percent >= 0 else "-"
+        elif self._percent < 0:
+            sign = "-"
+        else:
+            sign = ""
+
+        self._text_representation = f"{sign}{ib}{abs(self._integer)}{ie}.{db}{abs(self._2_dig_after_dot):02}{de}%"
+    
+    def get_percent(self) -> float:
+        return self._percent
+
+    def get_integer(self) -> int:
+        """
+        Returns
+            Signed value as percentage.
+        """
+        return self._integer
+    
+    def get_2_dig_after_dot(self) -> int:
+        """
+        Returns
+            Signed value as centipercentage.
+        """
+        return self._2_dig_after_dot
+    
     def __str__(self) -> str:
         return self._text_representation
     
@@ -199,13 +264,9 @@ class Measurer:
 
     _progress                       : float     # in percent
     _progress_in_exp                : int
-    _progress_integer               : int       # in percent
-    _progress_2_dig_after_dot       : int       # in centi-percent
 
     _progress_step                  : float     # in percent
     _progress_step_in_exp           : int   
-    _progress_step_integer          : int       # in percent
-    _progress_step_2_dig_after_dot  : int       # in centi-percent
 
     _progress_step_time             : float     # in seconds
     _exp_per_hour                   : int       
@@ -221,13 +282,9 @@ class Measurer:
 
         self._progress                      = 0.0
         self._progress_in_exp               = 0
-        self._progress_integer              = 0
-        self._progress_2_dig_after_dot      = 0
 
         self._progress_step                 = 0.0
         self._progress_step_in_exp          = 0
-        self._progress_step_integer         = 0
-        self._progress_step_2_dig_after_dot = 0
 
         self._progress_step_time            = 0.0
         self._exp_per_hour                  = 0
@@ -259,24 +316,14 @@ class Measurer:
                     self._progress_step_in_exp  = progress_in_exp                               
                     self._progress_step         = progress                                   
                 else:
-                    self._progress_step_in_exp  = progress_in_exp - self._progress_in_exp 
-                    self._progress_step         = progress - self._progress  
-
-                def split_percent(percent : float) -> tuple[int, int]:
-                    integer, fractional = divmod(percent, 1)
-                    integer = int(integer)
-                    _2_dig_after_dot = int(fractional * 100)   
-                    return (integer, _2_dig_after_dot) 
-
-                self._progress_step_integer, self._progress_step_2_dig_after_dot = split_percent(self._progress_step)         
+                    self._progress_step_in_exp  = progress_in_exp - self._progress_in_exp
+                    self._progress_step         = progress - self._progress
 
                 self._progress_in_exp   = progress_in_exp
                 self._progress          = progress
 
-                self._progress_integer, self._progress_2_dig_after_dot = split_percent(self._progress)   
-
                 if self._is_gained_level:
-                    self._exp_per_hour = 0.0
+                    self._exp_per_hour       = 0
                     self._progress_step_time = 0.0
 
                     self._time_to_next_level = float('inf')
@@ -285,11 +332,11 @@ class Measurer:
                     self._progress_step_time = elapsed_time
 
                     hours = (elapsed_time  / _SECONDS_IN_HOUR) 
-                    self._exp_per_hour = self._progress_step_in_exp / hours # in seconds
+                    self._exp_per_hour = int(self._progress_step_in_exp / hours) # in seconds
 
                     exp_per_second = self._progress_step_in_exp / elapsed_time
-                    if exp_per_second != 0.0:
-                        self._time_to_next_level = (info.exp_to_next - progress_in_exp) / exp_per_second  # in seconds
+                    if exp_per_second > 0.0:
+                        self._time_to_next_level = (info.exp_to_next - self._progress_in_exp) / exp_per_second  # in seconds
                         self._time_to_10_percent = (info.exp_to_next / 10) / exp_per_second               # in seconds
                     else:
                         self._time_to_next_level = float('inf')
@@ -308,40 +355,12 @@ class Measurer:
         """
         return self._progress
     
-    def get_progress_integer(self) -> int:
-        """
-        Returns
-            Current progress to next level in percent (without fractal part).
-        """
-        return self._progress_integer
-    
-    def get_progress_2_dig_after_dot(self) -> int:
-        """
-        Returns
-            Fractal part of current progress to next level in centi-percent.
-        """
-        return self._progress_2_dig_after_dot
-    
     def get_progress_step(self) -> float:
         """
         Returns
             Last progress step to next level in percent.
         """
         return self._progress_step
-    
-    def get_progress_step_integer(self) -> int:
-        """
-        Returns
-            Current progress to next level in percent (without fractal part).
-        """
-        return self._progress_step_integer
-    
-    def get_progress_step_2_dig_after_dot(self) -> int:
-        """
-        Returns
-            Fractal part of current progress to next level in centi-percent.
-        """
-        return self._progress_step_2_dig_after_dot
     
     def get_progress_step_in_exp(self) -> int:
         """

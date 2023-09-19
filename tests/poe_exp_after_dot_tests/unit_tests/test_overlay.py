@@ -1,6 +1,6 @@
 from math import isclose as _isclose
 
-from poe_exp_after_dot._Private.Overlay import FineTime, FineExpPerHour, Measurer
+from poe_exp_after_dot._Private.Overlay import FineTime, FineExpPerHour, FinePercent, Measurer
 
 def test_fine_time():
     assert str(FineTime()) == "0s"
@@ -126,6 +126,57 @@ def test_fine_exp_per_hour():
     assert str(FineExpPerHour(9999999, unit_color = "red")) == "9.99<font color=\"red\">m exp/h</font>"
     assert str(FineExpPerHour(9999999, value_color = "blue", unit_color = "red")) == "<font color=\"blue\">9.99</font><font color=\"red\">m exp/h</font>"
 
+
+def test_fine_percent():
+    fp = FinePercent()
+    assert str(fp) == "0.00%"
+    assert fp.get_integer() == 0
+    assert fp.get_2_dig_after_dot() == 0
+
+    fp = FinePercent(1)
+    assert str(fp) == "1.00%"
+    assert fp.get_integer() == 1
+    assert fp.get_2_dig_after_dot() == 0
+
+    fp = FinePercent(0.01)
+    assert str(fp) == "0.01%"
+    assert fp.get_integer() == 0
+    assert fp.get_2_dig_after_dot() == 1
+
+    fp = FinePercent(12.3401)
+    assert str(fp) == "12.34%"
+    assert fp.get_integer() == 12
+    assert fp.get_2_dig_after_dot() == 34
+
+    fp = FinePercent(12.3499)
+    assert str(fp) == "12.34%"
+    assert fp.get_integer() == 12
+    assert fp.get_2_dig_after_dot() == 34
+
+    fp = FinePercent(-12.3499)
+    assert str(fp) == "-12.34%"
+    assert fp.get_integer() == -12
+    assert fp.get_2_dig_after_dot() == -34
+
+    fp = FinePercent(12.3499, is_sign = True)
+    assert str(fp) == "+12.34%"
+    assert fp.get_integer() == 12
+    assert fp.get_2_dig_after_dot() == 34
+
+    fp = FinePercent(-12.3499, is_sign = True)
+    assert str(fp) == "-12.34%"
+    assert fp.get_integer() == -12
+    assert fp.get_2_dig_after_dot() == -34
+
+    assert str(FinePercent(-12.3499, integer_color = "blue")) == "-<font color=\"blue\">12</font>.34%"
+    assert str(FinePercent(-12.3499, two_dig_after_dot_color = "green")) == "-12.<font color=\"green\">34</font>%"
+    assert str(FinePercent(-12.3499, integer_color = "blue", two_dig_after_dot_color = "green")) == "-<font color=\"blue\">12</font>.<font color=\"green\">34</font>%"
+
+    assert str(FinePercent(12.3499, integer_color = "blue")) == "<font color=\"blue\">12</font>.34%"
+    assert str(FinePercent(12.3499, two_dig_after_dot_color = "green")) == "12.<font color=\"green\">34</font>%"
+    assert str(FinePercent(12.3499, integer_color = "blue", two_dig_after_dot_color = "green")) == "<font color=\"blue\">12</font>.<font color=\"green\">34</font>%"
+
+
 def test_measurer():
     measurer = Measurer()
 
@@ -134,8 +185,6 @@ def test_measurer():
     assert measurer.get_level() == 0
 
     assert measurer.get_progress() == 0.0
-    assert measurer.get_progress_integer() == 0
-    assert measurer.get_progress_2_dig_after_dot() == 0
 
     assert measurer.get_progress_step() == 0.0
     assert measurer.get_progress_step_in_exp() == 0.0
@@ -153,8 +202,6 @@ def test_measurer():
     assert measurer.get_level() == 2
 
     assert _isclose(measurer.get_progress(), 30.3643, abs_tol = 0.0001)
-    assert measurer.get_progress_integer() == 30
-    assert measurer.get_progress_2_dig_after_dot() == 36
 
     assert _isclose(measurer.get_progress_step(), 30.3643, abs_tol = 0.0001)
     assert measurer.get_progress_step_in_exp() == 375
@@ -170,8 +217,6 @@ def test_measurer():
     assert measurer.get_level() == 2
 
     assert _isclose(measurer.get_progress(), 38.4615, abs_tol = 0.0001)
-    assert measurer.get_progress_integer() == 38
-    assert measurer.get_progress_2_dig_after_dot() == 46
 
     assert _isclose(measurer.get_progress_step(), 8.0972, abs_tol = 0.0001)
     assert measurer.get_progress_step_in_exp() == 100
@@ -188,6 +233,7 @@ def test_measurer():
     # next in 1d10h30m45s
 
     measurer = Measurer()
+
     assert _update(measurer, 0, 1) == (
         "LVL 1 0.00%\n"
         "+0.00% in 1s\n"
@@ -272,6 +318,20 @@ def test_measurer():
         "10% in 12m08s\n"
         "next in 46m52s\n"
     )
+    assert _update(measurer, 2750, 60 * 60) == (
+        "LVL 3 48.98%\n"
+        "-12.37% in 1h00m00s\n"
+        "-250 exp/h\n"
+        "10% in never\n"
+        "next in never\n"
+    )
+    assert _update(measurer, 3000, 60 * 60) == (
+        "LVL 3 61.35%\n"
+        "+12.37% in 1h00m00s\n"
+        "250 exp/h\n"
+        "10% in 48m30s\n"
+        "next in 3h07m26s\n"
+    )
 
     # debug
     #measurer = Measurer()
@@ -284,15 +344,16 @@ def test_measurer():
     #print(_update(measurer, 1400, 10))
     #print(_update(measurer, 2000, 10))
     #print(_update(measurer, 3000, 60 * 60))
+    #print(_update(measurer, 2750, 60 * 60))
+    #print(_update(measurer, 3000, 60 * 60))
 
 def _update(measurer : Measurer, total_exp : int, elapsed_time : float) -> str:
     measurer.update(total_exp, elapsed_time)
 
     return (
-        f"LVL {measurer.get_level()} {measurer.get_progress_integer()}.{measurer.get_progress_2_dig_after_dot():02}%\n"
-        f"{measurer.get_progress_step_integer():+}.{measurer.get_progress_step_2_dig_after_dot():02}% in {FineTime(measurer.get_progress_step_time())}\n"
+        f"LVL {measurer.get_level()} {FinePercent(measurer.get_progress())}\n"
+        f"{FinePercent(measurer.get_progress_step(), is_sign = True)} in {FineTime(measurer.get_progress_step_time())}\n"
         f"{FineExpPerHour(measurer.get_exp_per_hour())}\n"
         f"10% in {FineTime(measurer.get_time_to_10_percent())}\n"
         f"next in {FineTime(measurer.get_time_to_next_level())}\n"
     )
-
