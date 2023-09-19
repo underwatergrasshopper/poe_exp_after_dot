@@ -37,41 +37,44 @@ class FineTime:
         else:
             self._time = time_
 
-        if max_unit not in ["w", "d", "h", "m", "s"]:
-            raise ValueError("Unexpected value of 'max_unit' parameter.")
+        if self._time == float('inf'):
+            self._text_representation = "never"
+        else:
+            if max_unit not in ["w", "d", "h", "m", "s"]:
+                raise ValueError("Unexpected value of 'max_unit' parameter.")
 
-        weeks,      remain  = divmod(self._time, _SECONDS_IN_WEEK)  if max_unit in ["w"]                else (0, self._time)
-        days,       remain  = divmod(remain, _SECONDS_IN_DAY)       if max_unit in ["w", "d"]           else (0, remain)
-        hours,      remain  = divmod(remain, _SECONDS_IN_HOUR)      if max_unit in ["w", "d", "h"]      else (0, remain)
-        minutes,    seconds = divmod(remain, _SECONDS_IN_MINUTE)    if max_unit in ["w", "d", "h", "m"] else (0, remain)
+            weeks,      remain  = divmod(self._time, _SECONDS_IN_WEEK)  if max_unit in ["w"]                else (0, self._time)
+            days,       remain  = divmod(remain, _SECONDS_IN_DAY)       if max_unit in ["w", "d"]           else (0, remain)
+            hours,      remain  = divmod(remain, _SECONDS_IN_HOUR)      if max_unit in ["w", "d", "h"]      else (0, remain)
+            minutes,    seconds = divmod(remain, _SECONDS_IN_MINUTE)    if max_unit in ["w", "d", "h", "m"] else (0, remain)
 
-        is_front = True
+            is_front = True
 
-        self._text_representation = ""
+            self._text_representation = ""
 
-        vb = f"<font color=\"{value_color}\">" if value_color else ""
-        ve = "</font>" if value_color else ""
+            vb = f"<font color=\"{value_color}\">" if value_color else ""
+            ve = "</font>" if value_color else ""
 
-        b = f"<font color=\"{unit_color}\">" if unit_color else ""
-        e = "</font>" if unit_color else ""
+            b = f"<font color=\"{unit_color}\">" if unit_color else ""
+            e = "</font>" if unit_color else ""
 
-        if not is_front or weeks != 0:
-            self._text_representation += f"{vb}{weeks:.0f}{ve}{b}w{e}"
-            is_front = False
+            if not is_front or weeks != 0:
+                self._text_representation += f"{vb}{weeks:.0f}{ve}{b}w{e}"
+                is_front = False
 
-        if not is_front or days != 0:
-            self._text_representation += f"{vb}{days:.0f}{ve}{b}d{e}" if is_front else f"{vb}{days:01.0f}{ve}{b}d{e}"
-            is_front = False
+            if not is_front or days != 0:
+                self._text_representation += f"{vb}{days:.0f}{ve}{b}d{e}" if is_front else f"{vb}{days:01.0f}{ve}{b}d{e}"
+                is_front = False
 
-        if not is_front or hours != 0:
-            self._text_representation += f"{vb}{hours:.0f}{ve}{b}h{e}" if is_front else f"{vb}{hours:02.0f}{ve}{b}h{e}"
-            is_front = False
+            if not is_front or hours != 0:
+                self._text_representation += f"{vb}{hours:.0f}{ve}{b}h{e}" if is_front else f"{vb}{hours:02.0f}{ve}{b}h{e}"
+                is_front = False
 
-        if not is_front or minutes != 0:
-            self._text_representation += f"{vb}{minutes:.0f}{ve}{b}m{e}" if is_front else f"{vb}{minutes:02.0f}{ve}{b}m{e}"
-            is_front = False
- 
-        self._text_representation += f"{vb}{seconds:.0f}{ve}{b}s{e}" if is_front else f"{vb}{seconds:02.0f}{ve}{b}s{e}"
+            if not is_front or minutes != 0:
+                self._text_representation += f"{vb}{minutes:.0f}{ve}{b}m{e}" if is_front else f"{vb}{minutes:02.0f}{ve}{b}m{e}"
+                is_front = False
+    
+            self._text_representation += f"{vb}{seconds:.0f}{ve}{b}s{e}" if is_front else f"{vb}{seconds:02.0f}{ve}{b}s{e}"
 
     def get_time(self) -> float:
         """
@@ -192,81 +195,194 @@ class StopWatch:
     
 class Measurer:
     _level                          : int
+    _prev_info                      : ExpThresholdInfo
 
-    _progress                       : int       # in percent
-    _progress_2_dig_after_dot       : int       # in centy-percent
+    _progress                       : float     # in percent
+    _progress_in_exp                : int
+    _progress_integer               : int       # in percent
+    _progress_2_dig_after_dot       : int       # in centi-percent
+
     _progress_step                  : float     # in percent
-    _exp_progress_step              : int       # in exp
+    _progress_step_in_exp           : int   
+    _progress_step_integer          : int       # in percent
+    _progress_step_2_dig_after_dot  : int       # in centi-percent
+
     _progress_step_time             : float     # in seconds
-    _exp_progress_speed             : int       # in exp/h
+    _exp_per_hour                   : int       
 
     _time_to_10_percent             : float     # in seconds
     _time_to_next_level             : float     # in seconds
 
     _is_update_fail                 : bool
 
-    def __init__(self, start_time : float = None):
-        self._level = 0
+    def __init__(self):
+        self._level                         = 0
+        self._prev_info                     = _find_exp_threshold_info(0)
 
-        self._exp_progress_integer = 0
-        self._progress_2_dig_after_dot = 0
-        self._progress_step = 0
-        self._exp_progress_step = 0
+        self._progress                      = 0.0
+        self._progress_in_exp               = 0
+        self._progress_integer              = 0
+        self._progress_2_dig_after_dot      = 0
 
-        self._progress_step_time = 0
-        self._exp_progress_speed = 0
+        self._progress_step                 = 0.0
+        self._progress_step_in_exp          = 0
+        self._progress_step_integer         = 0
+        self._progress_step_2_dig_after_dot = 0
 
-        self._time_to_10_percent = 0
-        self._time_to_next_level = 0
+        self._progress_step_time            = 0.0
+        self._exp_per_hour                  = 0
 
-        self._is_update_fail = False
+        self._time_to_10_percent            = float('inf')
+        self._time_to_next_level            = float('inf')
 
-    def update(self, exp : int, elapsed_time : float):
+        self._is_gained_level               = False
+
+        self._is_update_fail                = False
+
+    def update(self, total_exp : int, elapsed_time : float):
         """
         elapsed_time
             In seconds.
         """
-        info = _find_exp_threshold_info(exp)
+        if elapsed_time > 0.0:
+            info = _find_exp_threshold_info(total_exp)
 
-        if info:
-            self._level = info.level
+            self._is_gained_level = info.level > self._prev_info.level
 
-            exp_progress    = exp - info.base_exp                       # in exp
-            progress        = (exp_progress / info.exp_to_next) * 100   # in percent
-            
-            self._exp_progress_step = exp_progress - self._exp_progress_step    # in exp
-            self._progress_step     = progress - self._progress_step            # in percent
+            if info:
+                self._level = info.level
 
-            self._exp_progress_integer, exp_progress_fractional = divmod(progress, 1)
-            self._progress_2_dig_after_dot = exp_progress_fractional * 100
+                progress_in_exp = total_exp - info.base_exp                           
+                progress        = (progress_in_exp / info.exp_to_next) * 100    
 
-            self._exp_progress_speed = self._exp_progress_step / (elapsed_time  / _SECONDS_IN_HOUR) # in exp/h
-            self._progress_step_time = elapsed_time                                                 # in seconds
+                if self._is_gained_level:
+                    self._progress_step_in_exp  = progress_in_exp                               
+                    self._progress_step         = progress                                   
+                else:
+                    self._progress_step_in_exp  = progress_in_exp - self._progress_in_exp 
+                    self._progress_step         = progress - self._progress  
 
-            self._time_to_next_level = (info.exp_to_next - exp_progress) / (self._exp_progress_step / elapsed_time) # in seconds
-            self._time_to_10_percent = (info.exp_to_next / 10) / (self._exp_progress_step / elapsed_time)           # in seconds
+                def split_percent(percent : float) -> tuple[int, int]:
+                    integer, fractional = divmod(percent, 1)
+                    integer = int(integer)
+                    _2_dig_after_dot = int(fractional * 100)   
+                    return (integer, _2_dig_after_dot) 
 
-            self._is_update_fail = False
-        else:
-            self._is_update_fail = True
+                self._progress_step_integer, self._progress_step_2_dig_after_dot = split_percent(self._progress_step)         
 
-    def get_exp_progress(self) -> int:
-        return self._progress
-    
-    def get_exp_progress_2_dig_after_dot(self) -> int:
-        return self._progress_2_dig_after_dot
-    
-    def get_speed(self) -> int:
+                self._progress_in_exp   = progress_in_exp
+                self._progress          = progress
+
+                self._progress_integer, self._progress_2_dig_after_dot = split_percent(self._progress)   
+
+                if self._is_gained_level:
+                    self._exp_per_hour = 0.0
+                    self._progress_step_time = 0.0
+
+                    self._time_to_next_level = float('inf')
+                    self._time_to_10_percent = float('inf')
+                else:
+                    self._progress_step_time = elapsed_time
+
+                    hours = (elapsed_time  / _SECONDS_IN_HOUR) 
+                    self._exp_per_hour = self._progress_step_in_exp / hours # in seconds
+
+                    exp_per_second = self._progress_step_in_exp / elapsed_time
+                    if exp_per_second != 0.0:
+                        self._time_to_next_level = (info.exp_to_next - progress_in_exp) / exp_per_second  # in seconds
+                        self._time_to_10_percent = (info.exp_to_next / 10) / exp_per_second               # in seconds
+                    else:
+                        self._time_to_next_level = float('inf')
+                        self._time_to_10_percent = float('inf')
+
+                self._is_update_fail = False
+
+                self._prev_info = info
+            else:
+                self._is_update_fail = True
+
+    def get_progress(self) -> int:
         """
         Returns
-            Experience per hour.
+            Current progress to next level in percent.
         """
+        return self._progress
+    
+    def get_progress_integer(self) -> int:
+        """
+        Returns
+            Current progress to next level in percent (without fractal part).
+        """
+        return self._progress_integer
+    
+    def get_progress_2_dig_after_dot(self) -> int:
+        """
+        Returns
+            Fractal part of current progress to next level in centi-percent.
+        """
+        return self._progress_2_dig_after_dot
+    
+    def get_progress_step(self) -> float:
+        """
+        Returns
+            Last progress step to next level in percent.
+        """
+        return self._progress_step
+    
+    def get_progress_step_integer(self) -> int:
+        """
+        Returns
+            Current progress to next level in percent (without fractal part).
+        """
+        return self._progress_step_integer
+    
+    def get_progress_step_2_dig_after_dot(self) -> int:
+        """
+        Returns
+            Fractal part of current progress to next level in centi-percent.
+        """
+        return self._progress_step_2_dig_after_dot
+    
+    def get_progress_step_in_exp(self) -> int:
+        """
+        Returns
+            Last progress step to next level in experience.
+        """
+        return self._progress_step_in_exp
+    
+    def get_progress_step_time(self) -> float:
+        """
+        Returns
+            Time of last progress step to next level in seconds.
+        """
+        return self._progress_step_time
+    
+    def get_time_to_10_percent(self) -> float:
+        """
+        Returns
+            Estimated time in second needed to get 10 percent of current level exp.
+        """
+        return self._time_to_10_percent
+    
+    def get_time_to_next_level(self) -> float:
+        """
+        Returns
+            Estimated time in second to next level.
+        """
+        return self._time_to_next_level
+    
+    def get_exp_per_hour(self) -> int:
         return self._exp_per_hour
     
     def get_level(self) -> int:
         return self._level
-
-
+    
+    def is_gained_level(self) -> bool:
+        return self._is_gained_level
+    
+    def is_update_fail(self) -> bool:
+        return self._is_update_fail
+    
 def _find_exp_threshold_info(exp : int) -> ExpThresholdInfo | None:
     for info in _EXP_THRESHOLD_INFO_TABLE:
         if exp < (info.base_exp + info.exp_to_next):
