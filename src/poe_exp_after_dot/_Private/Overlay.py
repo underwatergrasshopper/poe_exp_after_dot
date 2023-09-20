@@ -574,14 +574,13 @@ def get_pos_data(resolution_width : int, resolution_height : int) -> PosData | N
     match (resolution_width, resolution_height):
         case (1920, 1080):
             return PosData(
-                control_bar_x       = 551,
-                control_bar_y       = 1059,
-                control_bar_width   = 820,
-                control_bar_height  = 21,
-
-                exp_bar_y_offset    = 10,
-                exp_bar_height      = 5,
-
+                control_bar_x                   = 551,
+                control_bar_y                   = 1059,
+                control_bar_width               = 820,
+                control_bar_height              = 21,
+            
+                exp_bar_y_offset                = 10,
+                exp_bar_height                  = 5,
                 
                 in_game_full_exp_region_y       = 1056,
                 in_game_full_exp_region_height  = 24,
