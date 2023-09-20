@@ -3,13 +3,13 @@ from time import time as _get_time
 from typing import SupportsFloat, SupportsInt
 from dataclasses import dataclass
 
-import PyQt5
-from PyQt5 import QtGui
-from PyQt5.QtWidgets import QMainWindow, QApplication, QWidget, QLabel, QVBoxLayout
-from PyQt5.QtCore import Qt, QPoint, QRect
-from PyQt5.QtGui import QPainter, QPen, QColor, QMouseEvent
-from PyQt5.QtWidgets import QMainWindow, QApplication, QWidget, QLabel, QVBoxLayout
-from PyQt5.QtCore import QPoint, QRect
+import PySide6
+from PySide6 import QtGui
+from PySide6.QtWidgets import QMainWindow, QApplication, QWidget, QLabel, QVBoxLayout
+from PySide6.QtCore import Qt, QPoint, QRect
+from PySide6.QtGui import QPainter, QPen, QColor, QMouseEvent
+from PySide6.QtWidgets import QMainWindow, QApplication, QWidget, QLabel, QVBoxLayout
+from PySide6.QtCore import QPoint, QRect
 
 from PIL import ImageGrab, Image
 

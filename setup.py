@@ -26,7 +26,7 @@ setuptools.setup(
     install_requires                = [
         "opencv-python-headless>=4.8.0",
         "easyocr>=1.7.1",
-        "PyQt5>=5.15.9",
+        "PySide6>=6.3.2",
     ],
     license                         = "MIT",
     python_requires                 = "~=3.11",
