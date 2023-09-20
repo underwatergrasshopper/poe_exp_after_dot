@@ -16,7 +16,7 @@ setuptools.setup(
     },
     keywords                        = ["Path of Exile", "poe", "overlay", "experience"],
     classifiers                     = [
-        "Development Status :: 1 - Planning",
+        "Development Status :: 3 - Alpha",
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
         "Operating System :: Microsoft :: Windows",

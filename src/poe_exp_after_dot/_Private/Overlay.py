@@ -3,6 +3,25 @@ from time import time as _get_time
 from typing import SupportsFloat, SupportsInt
 from dataclasses import dataclass
 
+import PyQt5
+from PyQt5 import QtGui
+from PyQt5.QtWidgets import QMainWindow, QApplication, QWidget, QLabel, QVBoxLayout
+from PyQt5.QtCore import Qt, QPoint, QRect
+from PyQt5.QtGui import QPainter, QPen, QColor, QMouseEvent
+from PyQt5.QtWidgets import QMainWindow, QApplication, QWidget, QLabel, QVBoxLayout
+from PyQt5.QtCore import QPoint, QRect
+
+from PIL import ImageGrab, Image
+
+import cv2
+import numpy
+import easyocr
+import re
+import math
+
+import ctypes
+
+
 _SECONDS_IN_MINUTE   = 60
 _SECONDS_IN_HOUR     = 60 * _SECONDS_IN_MINUTE
 _SECONDS_IN_DAY      = 24 * _SECONDS_IN_HOUR
@@ -12,7 +31,15 @@ class FineTime:
     _time                   : float
     _text_representation    : str
 
-    def __init__(self, time_ : SupportsFloat = 0.0, max_unit : str = "w", *, value_color : str | None = None, unit_color : str | None = None):
+    def __init__(
+            self, 
+            time_ : SupportsFloat = 0.0, 
+            max_unit : str = "w", 
+            *, 
+            value_color : str | None = None, 
+            unit_color : str | None = None, 
+            never_color : str | None = None
+                ):
         """
         time_
             Time in seconds.
@@ -30,6 +57,11 @@ class FineTime:
             None or color of all unit symbols. 
             Can be name: "grey", "yellow", "red", "green", "blue", "white", ...
             Can be value: "#7F7F7F", "#FFFF00", ...
+
+        never_color
+            None or color of all unit symbols. 
+            Can be name: "grey", "yellow", "red", "green", "blue", "white", ...
+            Can be value: "#7F7F7F", "#FFFF00", ...
         """
 
         if not isinstance(time_, float):
@@ -38,7 +70,10 @@ class FineTime:
             self._time = time_
 
         if self._time == float('inf'):
-            self._text_representation = "never"
+            nb = f"<font color=\"{never_color}\">" if never_color else ""
+            ne = "</font>" if never_color else ""
+
+            self._text_representation = f"{nb}never{ne}"
         else:
             if max_unit not in ["w", "d", "h", "m", "s"]:
                 raise ValueError("Unexpected value of 'max_unit' parameter.")
@@ -225,7 +260,7 @@ class StopWatch:
         start
             Time from the epoch in seconds.
         """
-        self.reset(start)
+        self.reset(start = start)
 
     def reset(self, *, start : float = 0.0):
         """
@@ -510,3 +545,309 @@ _EXP_THRESHOLD_INFO_TABLE = (
     ExpThresholdInfo(99, 3932818530, 317515914),
     ExpThresholdInfo(100, 4250334444, 0),
 )
+
+@dataclass
+class PosData:
+    control_bar_x                   : int
+    control_bar_y                   : int
+    control_bar_width               : int
+    control_bar_height              : int
+
+    exp_bar_y_offset                : int # from control bar position
+    exp_bar_height                  : int
+
+    in_game_full_exp_region_y       : int
+    in_game_full_exp_region_height  : int
+
+    in_game_exp_tooltip_x_offset    : int # from cursor pos
+    in_game_exp_tooltip_y           : int 
+    in_game_exp_tooltip_width       : int 
+    in_game_exp_tooltip_height      : int 
+
+
+def get_pos_data(resolution_width : int, resolution_height : int) -> PosData | None:
+    """
+    Returns
+        PosData for resolution if resolution is supported.
+        None if resolution is not supported.
+    """
+    match (resolution_width, resolution_height):
+        case (1920, 1080):
+            return PosData(
+                control_bar_x       = 551,
+                control_bar_y       = 1059,
+                control_bar_width   = 820,
+                control_bar_height  = 21,
+
+                exp_bar_y_offset    = 10,
+                exp_bar_height      = 5,
+
+                
+                in_game_full_exp_region_y       = 1056,
+                in_game_full_exp_region_height  = 24,
+
+                in_game_exp_tooltip_x_offset    = 64,
+                in_game_exp_tooltip_y           = 1007,
+                in_game_exp_tooltip_width       = 446,
+                in_game_exp_tooltip_height      = 73,
+            )
+        
+    return None
+
+
+class ExpBar(QWidget):
+    _pos_data : PosData
+
+    def __init__(self, pos_data : PosData):
+        super().__init__()
+
+        self._pos_data = pos_data
+
+        self.setWindowFlags(
+            Qt.WindowStaysOnTopHint |
+            Qt.FramelessWindowHint |
+            Qt.Tool
+        )
+
+        self.setWindowOpacity(0.5)
+
+        # background color
+        palette = self.palette()
+        palette.setColor(self.backgroundRole(), QColor(127, 127, 255))
+        self.setPalette(palette)
+        
+        self.set_area(0.0)
+
+    def set_area(self, ratio : float):
+        """
+        ratio
+            Value from range 0 to 1.
+        """
+        self.setGeometry(QRect(
+            self._pos_data.control_bar_x,
+            self._pos_data.control_bar_y + self._pos_data.exp_bar_y_offset,
+            max(1, int(self._pos_data.control_bar_width * ratio)),
+            self._pos_data.exp_bar_height,
+        ))
+        if ratio == 0.0:
+            self.hide()
+        else:
+            self.show()
+
+
+class ExpInfoTooltip(QWidget):
+    _pos_data   : PosData
+    _prev_pos   : QPoint | None
+
+    def __init__(self, pos_data : PosData, font_name = "Consolas", font_size = 16):
+        """
+        font_size
+            In pixels.
+        """
+        super().__init__()
+
+        self._pos_data = pos_data
+
+        self._prev_pos = None
+
+        self.setWindowFlags(
+            Qt.WindowStaysOnTopHint |
+            Qt.FramelessWindowHint |
+            Qt.Tool
+        )
+
+        # background color
+        palette = self.palette()
+        palette.setColor(self.backgroundRole(), QColor(0, 0, 0))
+        self.setPalette(palette)
+
+        # transparency
+        self.setWindowOpacity(0.7)
+
+        # text
+        self._label = QLabel("", self)
+        self._label.setStyleSheet(f"font: {font_size}px {font_name}; color: white;")
+        # NOTE: This is crucial. Prevents from blocking mouseReleaseEvent for parent widget.
+        self._label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True) 
+        self.set_description("Click on exp bar to receive data.<br>Ctrl + Shift + LMB to move this tooltip.")
+
+        self.oldPos = self.pos()
+
+    def set_description(self, description, is_lock_left_bottom = False):
+        if is_lock_left_bottom:
+            rect = self.geometry()
+            x = rect.x()
+            bottom = rect.y() + rect.height()
+        else:
+            x = self._pos_data.control_bar_x
+            bottom = self._pos_data.in_game_full_exp_region_y
+
+        self._label.setText(description)
+        self._label.adjustSize()
+        self.adjustSize()
+        
+        pos = self.pos()
+        pos.setX(x)
+        pos.setY(bottom - self._label.height())
+        self.move(pos)
+    
+    def mousePressEvent(self, event : QMouseEvent):
+        # 'Ctrl + Shift + LMB' to move tooltip (order matter)
+        if event.button() == Qt.MouseButton.LeftButton and QApplication.keyboardModifiers() == (Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.ShiftModifier):
+            self._prev_pos = event.globalPos()
+
+    def mouseReleaseEvent(self, event : QMouseEvent):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self._prev_pos = None
+
+    def mouseMoveEvent(self, event : QMouseEvent):
+        if self._prev_pos is not None:
+            offset = QPoint(event.globalPos() - self._prev_pos)
+            if offset:
+                self.move(self.x() + offset.x(), self.y() + offset.y())
+                self._prev_pos = event.globalPos()
+
+class ControlBar(QMainWindow):
+    _pos_data           : PosData
+    _measurer           : Measurer
+    _stop_watch         : StopWatch
+    _exp_bar            : ExpBar
+    _exp_info_tooltip   : ExpInfoTooltip
+
+    def __init__(self, pos_data : PosData, measurer : Measurer, stop_watch : StopWatch):
+        super().__init__()
+
+        self._pos_data      = pos_data
+        self._measurer      = measurer
+        self._stop_watch    = stop_watch
+
+        self.setWindowFlags(
+            Qt.WindowStaysOnTopHint | 
+            Qt.FramelessWindowHint
+        )
+
+        self.setWindowOpacity(0.01)
+
+        self.setGeometry(QRect(
+            self._pos_data.control_bar_x,
+            self._pos_data.control_bar_y,
+            self._pos_data.control_bar_width,
+            self._pos_data.control_bar_height,
+        ))
+
+        self._exp_bar = ExpBar(self._pos_data)
+        self._exp_info_tooltip = ExpInfoTooltip(self._pos_data)
+
+    def showEvent(self, event):
+        self._exp_bar.show()
+        self._exp_info_tooltip.show()
+
+    def hideEvent(self, event):
+        self._exp_bar.hide()
+        self._exp_info_tooltip.hide()
+
+    def mousePressEvent(self, event : QMouseEvent):
+        if event.button() == Qt.MouseButton.LeftButton:
+            user32 = ctypes.windll.user32
+            window_handle = user32.FindWindowW(None, "Path of Exile")
+            if window_handle:
+                user32.SetForegroundWindow(window_handle)
+      
+            self._stop_watch.update()
+
+            pos = QPoint(event.x(), event.y())
+            pos = self.mapToGlobal(pos)
+
+            total_exp = self.fetch_exp(pos.x(), pos.y())
+
+            self._measurer.update(total_exp, self._stop_watch.get_elapsed_time())
+
+            level               = self._measurer.get_level()
+            progress            = FinePercent(self._measurer.get_progress(), integer_color = "#F8CD82", two_dig_after_dot_color = "#7F7FFF")
+            progress_step       = FinePercent(self._measurer.get_progress_step(), is_sign = True, integer_color = "#FFFF7F", two_dig_after_dot_color = "#FFFF7F")
+            progress_step_time  = FineTime(self._measurer.get_progress_step_time(), max_unit = "h", unit_color = "#8F8F8F", never_color = "#FF4F1F")
+            exp_per_hour        = FineExpPerHour(self._measurer.get_exp_per_hour(), value_color = "#6FFF6F", unit_color = "#9F9F9F")
+            time_to_10_percent  = FineTime(self._measurer.get_time_to_10_percent(), max_unit = "h", unit_color = "#9F9F9F", never_color = "#FF4F1F")
+            time_to_next_level  = FineTime(self._measurer.get_time_to_next_level(), max_unit = "h", unit_color = "#9F9F9F", never_color = "#FF4F1F")
+
+            description = (
+                f"LVL {level} {progress}<br>"
+                f"{progress_step} in {progress_step_time}<br>"
+                f"{exp_per_hour}<br>"
+                f"10% in {time_to_10_percent}<br>"
+                f"next in {time_to_next_level}"
+            )
+
+            ratio = self._measurer.get_progress()
+            ratio = ratio - int(ratio)
+
+            self._exp_bar.set_area(ratio)
+            self._exp_info_tooltip.set_description(description, is_lock_left_bottom = True)
+
+    def fetch_exp(self, x : int, y: int) -> int:
+        """
+        x
+            Position of cursor on X axis in screen.
+        y
+            Position of cursor on Y axis in screen.
+        Returns
+            Current experience.
+        """
+        self.hide()
+        screenshot = ImageGrab.grab()
+        self.show()
+
+
+        left    = x + self._pos_data.in_game_exp_tooltip_x_offset
+        right   = self._pos_data.in_game_exp_tooltip_y
+        width   = self._pos_data.in_game_exp_tooltip_width
+        height  = self._pos_data.in_game_exp_tooltip_height
+
+        exp_tooltip_image = screenshot.crop((
+            left,
+            right,
+            left + width,
+            right + height,
+        ))
+        exp_tooltip_image = cv2.cvtColor(numpy.array(exp_tooltip_image), cv2.COLOR_RGB2BGR) # converts image from Pillow format to OpenCV format
+
+        reader = easyocr.Reader(['en'], gpu = True)
+
+        text_fragments= reader.readtext(exp_tooltip_image)
+
+        width = exp_tooltip_image.shape[1]
+
+        def extract_comparison_key(text_fragment):
+            pos = text_fragment[0][0]
+            return pos[0] + width * pos[1]
+
+        text_fragments.sort(key = extract_comparison_key)
+
+        full_text = ""
+        for text_fragment in text_fragments:
+            full_text += text_fragment[1] + " "
+
+        exp = 0
+        match_ = re.search(r"^.*?Current[ ]+Exp\:[ ]+([0-9,]+)[ ]+.*$", full_text)
+        if match_:
+            exp = int(match_.group(1).replace(",", ""))
+
+        return exp
+
+class Overlay:
+    def __init__(self):
+        pass
+
+    def main(self, argv : list[str]):
+        width, height = (1920, 1080)
+        pos_data = get_pos_data(width, height)
+        if not pos_data:
+            raise RuntimeError(f"Can not receive position data for resolution: {width}x{height}.")
+
+        measurer = Measurer()
+        stop_watch = StopWatch()
+
+        app = QApplication(argv)
+        control_bar = ControlBar(pos_data, measurer, stop_watch)
+        control_bar.show()
+        app.exec_()
