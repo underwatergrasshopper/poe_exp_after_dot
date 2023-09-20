@@ -634,7 +634,7 @@ class ExpBar(QWidget):
             self.show()
 
 
-class ExpInfoTooltip(QWidget):
+class ExpInfoBoard(QWidget):
     _pos_data   : PosData
     _prev_pos   : QPoint | None
 
@@ -668,7 +668,7 @@ class ExpInfoTooltip(QWidget):
         self._label.setStyleSheet(f"font: {font_size}px {font_name}; color: white;")
         # NOTE: This is crucial. Prevents from blocking mouseReleaseEvent for parent widget.
         self._label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True) 
-        self.set_description("Click on exp bar to receive data.<br>Ctrl + Shift + LMB to move this tooltip.")
+        self.set_description("Click on exp bar to receive data.<br>Ctrl + Shift + LMB to move this board.")
 
         self.oldPos = self.pos()
 
@@ -691,7 +691,7 @@ class ExpInfoTooltip(QWidget):
         self.move(pos)
     
     def mousePressEvent(self, event : QMouseEvent):
-        # 'Ctrl + Shift + LMB' to move tooltip (order matter)
+        # 'Ctrl + Shift + LMB' to move board (order matter)
         if event.button() == Qt.MouseButton.LeftButton and QApplication.keyboardModifiers() == (Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.ShiftModifier):
             self._prev_pos = event.globalPos()
 
@@ -711,7 +711,7 @@ class ControlBar(QMainWindow):
     _measurer           : Measurer
     _stop_watch         : StopWatch
     _exp_bar            : ExpBar
-    _exp_info_tooltip   : ExpInfoTooltip
+    _exp_info_board     : ExpInfoBoard
 
     def __init__(self, pos_data : PosData, measurer : Measurer, stop_watch : StopWatch):
         super().__init__()
@@ -735,15 +735,15 @@ class ControlBar(QMainWindow):
         ))
 
         self._exp_bar = ExpBar(self._pos_data)
-        self._exp_info_tooltip = ExpInfoTooltip(self._pos_data)
+        self._exp_info_board = ExpInfoBoard(self._pos_data)
 
     def showEvent(self, event):
         self._exp_bar.show()
-        self._exp_info_tooltip.show()
+        self._exp_info_board.show()
 
     def hideEvent(self, event):
         self._exp_bar.hide()
-        self._exp_info_tooltip.hide()
+        self._exp_info_board.hide()
 
     def mousePressEvent(self, event : QMouseEvent):
         if event.button() == Qt.MouseButton.LeftButton:
@@ -781,7 +781,7 @@ class ControlBar(QMainWindow):
             ratio = ratio - int(ratio)
 
             self._exp_bar.set_area(ratio)
-            self._exp_info_tooltip.set_description(description, is_lock_left_bottom = True)
+            self._exp_info_board.set_description(description, is_lock_left_bottom = True)
 
     def fetch_exp(self, x : int, y: int) -> int:
         """
@@ -802,19 +802,19 @@ class ControlBar(QMainWindow):
         width   = self._pos_data.in_game_exp_tooltip_width
         height  = self._pos_data.in_game_exp_tooltip_height
 
-        exp_tooltip_image = screenshot.crop((
+        in_game_exp_tooltip_image = screenshot.crop((
             left,
             right,
             left + width,
             right + height,
         ))
-        exp_tooltip_image = cv2.cvtColor(numpy.array(exp_tooltip_image), cv2.COLOR_RGB2BGR) # converts image from Pillow format to OpenCV format
+        in_game_exp_tooltip_image = cv2.cvtColor(numpy.array(in_game_exp_tooltip_image), cv2.COLOR_RGB2BGR) # converts image from Pillow format to OpenCV format
 
         reader = easyocr.Reader(['en'], gpu = True)
 
-        text_fragments= reader.readtext(exp_tooltip_image)
+        text_fragments= reader.readtext(in_game_exp_tooltip_image)
 
-        width = exp_tooltip_image.shape[1]
+        width = in_game_exp_tooltip_image.shape[1]
 
         def extract_comparison_key(text_fragment):
             pos = text_fragment[0][0]
