@@ -595,6 +595,7 @@ def get_pos_data(resolution_width : int, resolution_height : int) -> PosData | N
 
 class ExpBar(QWidget):
     _pos_data : PosData
+    _width    : int
 
     def __init__(self, pos_data : PosData):
         super().__init__()
@@ -614,22 +615,30 @@ class ExpBar(QWidget):
         palette.setColor(self.backgroundRole(), QColor(127, 127, 255))
         self.setPalette(palette)
         
-        self.set_area(0.0)
+        self.set_area(0.0, is_try_show = False)
 
-    def set_area(self, ratio : float):
+    def set_area(self, ratio : float, *, is_try_show = True):
         """
         ratio
             Value from range 0 to 1.
         """
+        self._width = int(self._pos_data.control_bar_width * ratio)
+
         self.setGeometry(QRect(
             self._pos_data.control_bar_x,
             self._pos_data.control_bar_y + self._pos_data.exp_bar_y_offset,
-            max(1, int(self._pos_data.control_bar_width * ratio)),
+            max(1, self._width),
             self._pos_data.exp_bar_height,
         ))
-        if ratio == 0.0:
-            self.hide()
-        else:
+
+        if is_try_show:
+            if self._width >= 1:
+                self.show()
+            else:
+                self.hide()
+
+    def try_show(self):
+        if self._width >= 1:
             self.show()
 
 
@@ -738,7 +747,7 @@ class ControlBar(QMainWindow):
         self._exp_info_board = ExpInfoBoard(self._pos_data)
 
     def showEvent(self, event):
-        self._exp_bar.show()
+        self._exp_bar.try_show()
         self._exp_info_board.show()
 
     def hideEvent(self, event):
