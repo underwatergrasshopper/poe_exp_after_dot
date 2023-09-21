@@ -68,27 +68,37 @@ class FineBareLevel:
 
 class FineTime:
     LENGTH_AFTER_FORMAT     : int   = 15
+    # format:
+    # XXwXdXXhXXmXXs (milliseconds are cut off)
+    #         0sXXms (fractional part of millisecond is cut off)
+    # XXXXXXXXXXXXXw (days are cut off)
+
     # format for out of range:
+    # >9999999999999w
     # >99w6d23h59m59s
     # >9999d23h59m59s
     # >9999999h59m59s
     # >9999999999m59s
     # >9999999999999s
     #             <0s
+
     # format for below measurement:
     #             <1s
+    #            <1ms
 
     _time                   : float
     _text_representation    : str
 
     def __init__(
             self, 
-            time_ : SupportsFloat = 0.0, 
-            max_unit : str = "w", 
+            time_                   : SupportsFloat = 0.0, 
+            max_unit                : str           = "w", 
             *, 
-            value_color : str | None = None, 
-            unit_color : str | None = None, 
-            never_color : str | None = None
+            value_color             : str | None    = None, 
+            unit_color              : str | None    = None, 
+            never_color             : str | None    = None,
+            is_just_weeks_if_cup    : bool          = True,
+            is_show_ms_if_below_1s  : bool          = False
                 ):
         """
         time_
@@ -112,6 +122,9 @@ class FineTime:
             None or color of all unit symbols. 
             Can be name: "grey", "yellow", "red", "green", "blue", "white", ...
             Can be value: "#7F7F7F", "#FFFF00", ...
+
+        is_just_weeks_if_cup
+            If true and number of weeks is higher than 99, then only weeks are represented on max number of digit equal 14.
         """
 
         if not isinstance(time_, float):
@@ -141,13 +154,24 @@ class FineTime:
             self._text_representation = f"{vb}0{ve}{b}s{e}" 
 
         elif self._time < 1.0:
-            self._text_representation = f"<{vb}1{ve}{b}s{e}" 
+            if is_show_ms_if_below_1s:
+                milliseconds = self._time * 100
+                milliseconds, remain = divmod(milliseconds, 1)  # rounding prevention
+
+                if milliseconds == 0.0:
+                    self._text_representation = f"<{vb}1{ve}{b}ms{e}" 
+                else:
+                    self._text_representation = f"{vb}0{ve}{b}s{e}" 
+                    self._text_representation += f"{vb}{milliseconds:02.0f}{ve}{b}ms{e}" 
+            else:
+                self._text_representation = f"<{vb}1{ve}{b}s{e}" 
 
         else:
-            weeks,      remain  = divmod(self._time, _SECONDS_IN_WEEK)  if max_unit in ["w"]                else (0, self._time)
-            days,       remain  = divmod(remain, _SECONDS_IN_DAY)       if max_unit in ["w", "d"]           else (0, remain)
-            hours,      remain  = divmod(remain, _SECONDS_IN_HOUR)      if max_unit in ["w", "d", "h"]      else (0, remain)
-            minutes,    seconds = divmod(remain, _SECONDS_IN_MINUTE)    if max_unit in ["w", "d", "h", "m"] else (0, remain)
+            weeks,      remain  = divmod(self._time, _SECONDS_IN_WEEK)  if max_unit in ["w"]                        else (0, self._time)
+            days,       remain  = divmod(remain, _SECONDS_IN_DAY)       if max_unit in ["w", "d"]                   else (0, remain)
+            hours,      remain  = divmod(remain, _SECONDS_IN_HOUR)      if max_unit in ["w", "d", "h"]              else (0, remain)
+            minutes,    remain  = divmod(remain, _SECONDS_IN_MINUTE)    if max_unit in ["w", "d", "h", "m"]         else (0, remain)
+            seconds,    remain  = divmod(remain, 1)                     if max_unit in ["w", "d", "h", "m", "s"]    else (0, remain)
 
             if weeks > 99:
                 prefix = ">"
@@ -167,30 +191,42 @@ class FineTime:
             else:
                 prefix = ""
 
-            self._text_representation = ""
-            is_front = True
+            if is_just_weeks_if_cup and prefix == ">":
+                weeks = self._time / _SECONDS_IN_WEEK
+                weeks, _ = divmod(weeks, 1)  # rounding prevention
 
-            if not is_front or weeks != 0:
-                self._text_representation += f"{prefix}{vb}{weeks:.0f}{ve}{b}w{e}"
-                is_front = False
-                prefix = ""
+                if weeks > 9999999999999:
+                    weeks = 9999999999999
+                    prefix = ">"
+                else:
+                    prefix = ""
 
-            if not is_front or days != 0:
-                self._text_representation += f"{prefix}{vb}{days:.0f}{ve}{b}d{e}" if is_front else f"{prefix}{vb}{days:01.0f}{ve}{b}d{e}"
-                is_front = False
-                prefix = ""
+                self._text_representation = f"{prefix}{vb}{weeks:.0f}{ve}{b}w{e}"
+            else:
+                self._text_representation = ""
+                is_front = True
 
-            if not is_front or hours != 0:
-                self._text_representation += f"{prefix}{vb}{hours:.0f}{ve}{b}h{e}" if is_front else f"{prefix}{vb}{hours:02.0f}{ve}{b}h{e}"
-                is_front = False
-                prefix = ""
+                if not is_front or weeks != 0:
+                    self._text_representation += f"{prefix}{vb}{weeks:.0f}{ve}{b}w{e}"
+                    is_front = False
+                    prefix = ""
 
-            if not is_front or minutes != 0:
-                self._text_representation += f"{prefix}{vb}{minutes:.0f}{ve}{b}m{e}" if is_front else f"{prefix}{vb}{minutes:02.0f}{ve}{b}m{e}"
-                is_front = False
-                prefix = ""
-    
-            self._text_representation += f"{prefix}{vb}{seconds:.0f}{ve}{b}s{e}" if is_front else f"{prefix}{vb}{seconds:02.0f}{ve}{b}s{e}"
+                if not is_front or days != 0:
+                    self._text_representation += f"{prefix}{vb}{days:.0f}{ve}{b}d{e}" if is_front else f"{prefix}{vb}{days:01.0f}{ve}{b}d{e}"
+                    is_front = False
+                    prefix = ""
+
+                if not is_front or hours != 0:
+                    self._text_representation += f"{prefix}{vb}{hours:.0f}{ve}{b}h{e}" if is_front else f"{prefix}{vb}{hours:02.0f}{ve}{b}h{e}"
+                    is_front = False
+                    prefix = ""
+
+                if not is_front or minutes != 0:
+                    self._text_representation += f"{prefix}{vb}{minutes:.0f}{ve}{b}m{e}" if is_front else f"{prefix}{vb}{minutes:02.0f}{ve}{b}m{e}"
+                    is_front = False
+                    prefix = ""
+        
+                self._text_representation += f"{prefix}{vb}{seconds:.0f}{ve}{b}s{e}" if is_front else f"{prefix}{vb}{seconds:02.0f}{ve}{b}s{e}"
 
     def get_time(self) -> float:
         """

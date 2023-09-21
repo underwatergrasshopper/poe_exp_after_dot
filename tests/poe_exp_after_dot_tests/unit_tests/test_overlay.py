@@ -1,6 +1,7 @@
 from math import isclose as _isclose
 
 from poe_exp_after_dot._Private.Overlay import FineTime, FineExpPerHour, FinePercent, Measurer, FineBareLevel
+from poe_exp_after_dot._Private.Overlay import _SECONDS_IN_WEEK, _SECONDS_IN_DAY, _SECONDS_IN_HOUR, _SECONDS_IN_MINUTE
 
 def test_fine_bare_level():
     assert str(FineBareLevel())     == "0"
@@ -48,32 +49,64 @@ def test_fine_time():
     assert str(FineTime(30 * 24 * 60 * 60  + 1 * 60 * 60 + 3 * 60 + 4, "d")) == "30d01h03m04s"
     assert str(FineTime(234 * 24 * 60 * 60  + 23 * 60 * 60 + 59 * 60 + 59, "d")) == "234d23h59m59s"
 
-    assert str(FineTime(-1)) == "<0s"
-    assert str(FineTime(0.1)) == "<1s"
+    assert str(FineTime((99 + 1) * _SECONDS_IN_WEEK - 1))                           == "99w6d23h59m59s"
+    assert str(FineTime((9999 + 1) * _SECONDS_IN_DAY - 1, max_unit = "d"))          == "9999d23h59m59s"
+    assert str(FineTime((9999999 + 1) * _SECONDS_IN_HOUR - 1, max_unit = "h"))      == "9999999h59m59s"
+    assert str(FineTime((9999999999 + 1) * _SECONDS_IN_MINUTE - 1, max_unit = "m")) == "9999999999m59s"
+    assert str(FineTime(9999999999999, max_unit = "s"))                             == "9999999999999s"
 
-    assert str(FineTime(2**64)) == ">99w6d23h59m59s"
+    ### out of visible range ###
+
+    assert str(FineTime(0.1))   == "<1s"
+    assert str(FineTime(0.01,)) == "<1s"
+    assert str(FineTime(0.009)) == "<1s"
+    assert str(FineTime(0.1, is_show_ms_if_below_1s = True))    == "0s10ms"
+    assert str(FineTime(0.01, is_show_ms_if_below_1s = True))   == "0s01ms"
+    assert str(FineTime(0.009, is_show_ms_if_below_1s = True))  == "<1ms"
+
+    ### cup ###
+
+    assert str(FineTime(-1)) == "<0s"
+
+    assert str(FineTime(2**64))                                 == ">9999999999999w"
+    assert str(FineTime(2**64, is_just_weeks_if_cup = False))   == ">99w6d23h59m59s"
+
+    assert str(FineTime((99 + 1) * _SECONDS_IN_WEEK))                           == "100w"
+    assert str(FineTime((9999 + 1) * _SECONDS_IN_DAY, max_unit = "d"))          == "1428w"
+    assert str(FineTime((9999999 + 1) * _SECONDS_IN_HOUR, max_unit = "h"))      == "59523w"
+    assert str(FineTime((9999999999 + 1) * _SECONDS_IN_MINUTE, max_unit = "m")) == "992063w"
+    assert str(FineTime(9999999999999 + 1, max_unit = "s"))                     == "16534391w"
+
     assert str(FineTime(
         (99 + 1)    * 7 * 24 * 60 * 60 +
         4           * 24 * 60 * 60 + 
         3           * 60 * 60 + 
         2           * 60 + 
-        1
+        1,
+        is_just_weeks_if_cup = False
     )) == ">99w6d23h59m59s"
+
     assert str(FineTime(
         (9999 + 1)  * 24 * 60 * 60 + 
         3           * 60 * 60 + 
         2           * 60 + 
         1, 
-        max_unit = "d"
+        max_unit = "d",
+        is_just_weeks_if_cup = False
     )) == ">9999d23h59m59s"
+
     assert str(FineTime(
         (9999999 + 1) * 60 * 60 + 
         2 * 60 + 
         1, 
-        max_unit = "h"
+        max_unit = "h",
+        is_just_weeks_if_cup = False
     )) == ">9999999h59m59s"
-    assert str(FineTime((9999999999 + 1) * 60 + 1, max_unit = "m")) == ">9999999999m59s"
-    assert str(FineTime((9999999999999 + 1), max_unit = "s")) == ">9999999999999s"
+
+    assert str(FineTime((9999999999 + 1) * 60 + 1, max_unit = "m", is_just_weeks_if_cup = False)) == ">9999999999m59s"
+    assert str(FineTime((9999999999999 + 1), max_unit = "s", is_just_weeks_if_cup = False)) == ">9999999999999s"
+
+    ### color ###
 
     assert str(FineTime(
         99      * 7 * 24 * 60 * 60 + 
@@ -121,6 +154,7 @@ def test_fine_time():
         "<font color=\"yellow\">59</font><font color=\"blue\">s</font>"
     )
 
+    ### exceptions ###
     assert _fine_time_with_exception(time_ = 10, max_unit = "wrong") == "Unexpected value of 'max_unit' parameter."
 
 def _fine_time_with_exception(**kwarg):
@@ -288,7 +322,7 @@ def test_measurer():
         "LVL 1 19.04%\n"
         "+19.04% in 5s\n"
         "72.0k exp/h\n"
-        "10% in 3s\n"
+        "10% in 2s\n"
         "next in 21s\n"
     )
     assert _update(measurer, 100, 5) == (
@@ -337,7 +371,7 @@ def test_measurer():
         "LVL 2 70.85%\n"
         "+64.77% in 10s\n"
         "288k exp/h\n"
-        "10% in 2s\n"
+        "10% in 1s\n"
         "next in 4s\n"
     )
     assert _update(measurer, 2000, 10) == (
@@ -351,8 +385,8 @@ def test_measurer():
         "LVL 3 61.35%\n"
         "+49.48% in 1h00m00s\n"
         "1.00k exp/h\n"
-        "10% in 12m08s\n"
-        "next in 46m52s\n"
+        "10% in 12m07s\n"
+        "next in 46m51s\n"
     )
     assert _update(measurer, 2750, 60 * 60) == (
         "LVL 3 48.98%\n"
