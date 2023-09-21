@@ -29,7 +29,55 @@ def _pad_to_length(text : str, length : int):
         """
         return text.rjust(length)[:length]
 
+class FineBareLevel:
+    MAX_LENGTH_AFTER_FORMAT : int   = 4
+    # format for out of range:
+    # >100
+    #   <0
+
+    _level                  : int
+    _text_representation    : str
+
+    def __init__(self, level : SupportsInt = 0, *, value_color : str | None = None):
+        """
+        value_color
+            None or color of all values. 
+            Can be name: "grey", "yellow", "red", "green", "blue", "white", ...
+            Can be value: "#7F7F7F", "#FFFF00", ...
+        """
+        if not isinstance(level, int):
+            self._level = int(level)
+        else:
+            self._level = level
+
+        if level < 0:
+            self._text_representation = "<0"
+        elif level > 100:
+            self._text_representation = ">100"
+        else:
+            self._text_representation = str(self._level)
+
+    def get_level(self) -> int:
+        return self._level
+
+    def __str__(self) -> str:
+        return self._text_representation
+    
+    def __repr__(self) -> str:
+        return self._text_representation
+
 class FineTime:
+    LENGTH_AFTER_FORMAT     : int   = 15
+    # format for out of range:
+    # >99w6d23h59m59s
+    # >9999d23h59m59s
+    # >9999999h59m59s
+    # >9999999999m59s
+    # >9999999999999s
+    #             <0s
+    # format for below measurement:
+    #             <1s
+
     _time                   : float
     _text_representation    : str
 
@@ -71,47 +119,78 @@ class FineTime:
         else:
             self._time = time_
 
+        if max_unit not in ["w", "d", "h", "m", "s"]:
+            raise ValueError("Unexpected value of 'max_unit' parameter.")
+
+        vb = f"<font color=\"{value_color}\">" if value_color else ""
+        ve = "</font>" if value_color else ""
+
+        b = f"<font color=\"{unit_color}\">" if unit_color else ""
+        e = "</font>" if unit_color else ""
+
         if self._time == float('inf'):
             nb = f"<font color=\"{never_color}\">" if never_color else ""
             ne = "</font>" if never_color else ""
 
             self._text_representation = f"{nb}never{ne}"
-        else:
-            if max_unit not in ["w", "d", "h", "m", "s"]:
-                raise ValueError("Unexpected value of 'max_unit' parameter.")
 
+        elif self._time < 0.0:
+            self._text_representation = f"<{vb}0{ve}{b}s{e}" 
+
+        elif self._time == 0.0:
+            self._text_representation = f"{vb}0{ve}{b}s{e}" 
+
+        elif self._time < 1.0:
+            self._text_representation = f"<{vb}1{ve}{b}s{e}" 
+
+        else:
             weeks,      remain  = divmod(self._time, _SECONDS_IN_WEEK)  if max_unit in ["w"]                else (0, self._time)
             days,       remain  = divmod(remain, _SECONDS_IN_DAY)       if max_unit in ["w", "d"]           else (0, remain)
             hours,      remain  = divmod(remain, _SECONDS_IN_HOUR)      if max_unit in ["w", "d", "h"]      else (0, remain)
             minutes,    seconds = divmod(remain, _SECONDS_IN_MINUTE)    if max_unit in ["w", "d", "h", "m"] else (0, remain)
 
-            is_front = True
+            if weeks > 99:
+                prefix = ">"
+                weeks, days, hours, minutes, seconds = (99, 6, 23, 59, 59)
+            elif days > 9999:
+                prefix = ">"
+                days, hours, minutes, seconds = (9999, 23, 59, 59)
+            elif hours > 9999999:
+                prefix = ">"
+                hours, minutes, seconds = (9999999, 59, 59)
+            elif minutes > 9999999999:
+                prefix = ">"
+                minutes, seconds = (9999999999, 59)
+            elif seconds > 9999999999999:
+                prefix = ">"
+                seconds = 9999999999999
+            else:
+                prefix = ""
 
             self._text_representation = ""
-
-            vb = f"<font color=\"{value_color}\">" if value_color else ""
-            ve = "</font>" if value_color else ""
-
-            b = f"<font color=\"{unit_color}\">" if unit_color else ""
-            e = "</font>" if unit_color else ""
+            is_front = True
 
             if not is_front or weeks != 0:
-                self._text_representation += f"{vb}{weeks:.0f}{ve}{b}w{e}"
+                self._text_representation += f"{prefix}{vb}{weeks:.0f}{ve}{b}w{e}"
                 is_front = False
+                prefix = ""
 
             if not is_front or days != 0:
-                self._text_representation += f"{vb}{days:.0f}{ve}{b}d{e}" if is_front else f"{vb}{days:01.0f}{ve}{b}d{e}"
+                self._text_representation += f"{prefix}{vb}{days:.0f}{ve}{b}d{e}" if is_front else f"{prefix}{vb}{days:01.0f}{ve}{b}d{e}"
                 is_front = False
+                prefix = ""
 
             if not is_front or hours != 0:
-                self._text_representation += f"{vb}{hours:.0f}{ve}{b}h{e}" if is_front else f"{vb}{hours:02.0f}{ve}{b}h{e}"
+                self._text_representation += f"{prefix}{vb}{hours:.0f}{ve}{b}h{e}" if is_front else f"{prefix}{vb}{hours:02.0f}{ve}{b}h{e}"
                 is_front = False
+                prefix = ""
 
             if not is_front or minutes != 0:
-                self._text_representation += f"{vb}{minutes:.0f}{ve}{b}m{e}" if is_front else f"{vb}{minutes:02.0f}{ve}{b}m{e}"
+                self._text_representation += f"{prefix}{vb}{minutes:.0f}{ve}{b}m{e}" if is_front else f"{prefix}{vb}{minutes:02.0f}{ve}{b}m{e}"
                 is_front = False
+                prefix = ""
     
-            self._text_representation += f"{vb}{seconds:.0f}{ve}{b}s{e}" if is_front else f"{vb}{seconds:02.0f}{ve}{b}s{e}"
+            self._text_representation += f"{prefix}{vb}{seconds:.0f}{ve}{b}s{e}" if is_front else f"{prefix}{vb}{seconds:02.0f}{ve}{b}s{e}"
 
     def get_time(self) -> float:
         """
@@ -125,43 +204,6 @@ class FineTime:
     
     def __repr__(self) -> str:
         return self._text_representation
-
-class FineBareLevel:
-    LENGTH                  : int   = 4
-
-    _level                  : int
-    _text_representation    : str
-
-    def __init__(self, level : SupportsInt = 0, *, value_color : str | None = None):
-        """
-        value_color
-            None or color of all values. 
-            Can be name: "grey", "yellow", "red", "green", "blue", "white", ...
-            Can be value: "#7F7F7F", "#FFFF00", ...
-        """
-        if not isinstance(level, int):
-            self._level = int(level)
-        else:
-            self._level = level
-
-        if level < 0:
-            self._text_representation = "<0"
-        elif level > 100:
-            self._text_representation = ">100"
-        else:
-            self._text_representation = str(self._level)
-
-        self._text_representation = _pad_to_length(self._text_representation, FineBareLevel.LENGTH)
-
-    def get_level(self) -> int:
-        return self._level
-
-    def __str__(self) -> str:
-        return self._text_representation
-    
-    def __repr__(self) -> str:
-        return self._text_representation
-
 
 class FineExpPerHour:
     _exp_per_hour           : int
