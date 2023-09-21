@@ -668,7 +668,7 @@ class ExpInfoBoard(QWidget):
         self._label.setStyleSheet(f"font: {font_size}px {font_name}; color: white;")
         # NOTE: This is crucial. Prevents from blocking mouseReleaseEvent for parent widget.
         self._label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True) 
-        self.set_description("Click on exp bar to receive data.<br>Ctrl + Shift + LMB to move this board.")
+        self.set_description("Click on in-game exp bar to receive data.<br>Ctrl + Shift + LMB to move this board.")
 
         self.oldPos = self.pos()
 
@@ -810,7 +810,7 @@ class ControlBar(QMainWindow):
         ))
         in_game_exp_tooltip_image = cv2.cvtColor(numpy.array(in_game_exp_tooltip_image), cv2.COLOR_RGB2BGR) # converts image from Pillow format to OpenCV format
 
-        reader = easyocr.Reader(['en'], gpu = True)
+        reader = easyocr.Reader(['en'], gpu = True, verbose=False)
 
         text_fragments= reader.readtext(in_game_exp_tooltip_image)
 
