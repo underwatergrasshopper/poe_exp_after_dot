@@ -67,7 +67,8 @@ class FineBareLevel:
         return self._text_representation
 
 class FineTime:
-    LENGTH_AFTER_FORMAT     : int   = 15
+    MAX_LENGTH_AFTER_FORMAT  : int   = 15
+
     # format:
     # XXwXdXXhXXmXXs (milliseconds are cut off)
     #         0sXXms (fractional part of millisecond is cut off)
@@ -242,6 +243,21 @@ class FineTime:
         return self._text_representation
 
 class FineExpPerHour:
+    MAX_LENGTH_AFTER_FORMAT  : int   = 12
+    # format:
+    #      0 exp/h
+    #    XXX exp/h
+    #   XXXU exp/h
+    #  X.XXU exp/h
+    #  XX.XU exp/h
+    #  -XXXU exp/h
+    # -X.XXU exp/h
+    # -XX.XU exp/h
+                  
+    # format for out of range:
+    # <-XXXb exp/h
+    #  >XXXb exp/h
+
     _exp_per_hour           : int
     _text_representation    : str
 
@@ -262,7 +278,11 @@ class FineExpPerHour:
         else:
             self._exp_per_hour = exp_per_hour
 
-        exp_per_hour = self._exp_per_hour
+        is_below_zero = self._exp_per_hour < 0
+
+        sign = "-" if is_below_zero else ""
+        exp_per_hour = abs(self._exp_per_hour)
+
         remain = 0
         unit = ""
 
@@ -272,7 +292,18 @@ class FineExpPerHour:
 
         if exp_per_hour >= 1000:
             exp_per_hour, remain = divmod(exp_per_hour, 1000)
-            unit = "m"
+            unit = "M"
+
+        if exp_per_hour >= 1000:
+            exp_per_hour, remain = divmod(exp_per_hour, 1000)
+            unit = "B"
+
+        if exp_per_hour >= 1000:
+            exp_per_hour, remain = (999, 0)
+            prefix = "<" if is_below_zero else ">"
+        else:
+            prefix = ""
+
 
         vb = f"<font color=\"{value_color}\">" if value_color else ""
         ve = "</font>" if value_color else ""
@@ -281,11 +312,11 @@ class FineExpPerHour:
         e = "</font>" if unit_color else ""
 
         if exp_per_hour < 10 and unit != "":
-            self._text_representation = f"{vb}{exp_per_hour:.0f}.{remain // 10:02}{ve}{b}{unit} exp/h{e}"
+            self._text_representation = f"{prefix}{sign}{vb}{exp_per_hour:.0f}.{remain // 10:02}{ve}{b}{unit} exp/h{e}"
         elif exp_per_hour < 100 and unit != "":
-            self._text_representation = f"{vb}{exp_per_hour:.0f}.{remain // 100:01}{ve}{b}{unit} exp/h{e}"
+            self._text_representation = f"{prefix}{sign}{vb}{exp_per_hour:.0f}.{remain // 100:01}{ve}{b}{unit} exp/h{e}"
         else:
-            self._text_representation = f"{vb}{exp_per_hour:.0f}{ve}{b}{unit} exp/h{e}"
+            self._text_representation = f"{prefix}{sign}{vb}{exp_per_hour:.0f}{ve}{b}{unit} exp/h{e}"
 
     def get_exp_per_hour(self) -> int:
         return self._exp_per_hour
