@@ -1,14 +1,13 @@
 from time import time as _get_time
 
-from typing import SupportsFloat, SupportsInt
+from typing import SupportsFloat, SupportsInt, Sequence
 from dataclasses import dataclass
 
 import PySide6
 from PySide6 import QtGui
-from PySide6.QtWidgets import QMainWindow, QApplication, QWidget, QLabel, QVBoxLayout
+from PySide6.QtWidgets import QMainWindow, QApplication, QWidget, QLabel, QSystemTrayIcon, QMenu
 from PySide6.QtCore import Qt, QPoint, QRect
-from PySide6.QtGui import QPainter, QPen, QColor, QMouseEvent
-from PySide6.QtWidgets import QMainWindow, QApplication, QWidget, QLabel, QVBoxLayout
+from PySide6.QtGui import QPainter, QPen, QColor, QMouseEvent, QIcon, QAction, QCloseEvent
 from PySide6.QtCore import QPoint, QRect
 
 from PIL import ImageGrab, Image
@@ -17,7 +16,7 @@ import cv2
 import numpy
 import easyocr
 import re
-import math
+import os
 
 import ctypes
 
@@ -722,7 +721,8 @@ class ControlBar(QMainWindow):
 
         self.setWindowFlags(
             Qt.WindowStaysOnTopHint | 
-            Qt.FramelessWindowHint
+            Qt.FramelessWindowHint |
+            Qt.Tool
         )
 
         self.setWindowOpacity(0.01)
@@ -796,7 +796,6 @@ class ControlBar(QMainWindow):
         screenshot = ImageGrab.grab()
         self.show()
 
-
         left    = x + self._pos_data.in_game_exp_tooltip_x_offset
         right   = self._pos_data.in_game_exp_tooltip_y
         width   = self._pos_data.in_game_exp_tooltip_width
@@ -832,6 +831,27 @@ class ControlBar(QMainWindow):
             exp = int(match_.group(1).replace(",", ""))
 
         return exp
+    
+    def closeEvent(self, event : QCloseEvent) -> None:
+        pass
+
+    
+class TrayMenu(QSystemTrayIcon):
+    _menu           : QMenu
+    _quit_action    : QAction
+
+    def __init__(self, app : QApplication):
+        super().__init__()
+
+        icon_file_name =  os.path.abspath(os.path.dirname(__file__) + "/../assets/icon.png")
+        self.setIcon(QIcon(icon_file_name))
+
+        self._menu = QMenu()
+        self._quit_action = QAction("Quit")
+        self._quit_action.triggered.connect(app.quit)
+        self._menu.addAction(self._quit_action)
+
+        self.setContextMenu(self._menu)
 
 class Overlay:
     def __init__(self):
@@ -847,6 +867,11 @@ class Overlay:
         stop_watch = StopWatch()
 
         app = QApplication(argv)
+
         control_bar = ControlBar(pos_data, measurer, stop_watch)
         control_bar.show()
-        app.exec_()
+
+        tray_menu = TrayMenu(app)
+        tray_menu.show()
+
+        result_code = app.exec_()
