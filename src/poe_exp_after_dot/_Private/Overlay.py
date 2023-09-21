@@ -3,23 +3,19 @@ from time import time as _get_time
 from typing import SupportsFloat, SupportsInt, Sequence
 from dataclasses import dataclass
 
-import PySide6
-from PySide6 import QtGui
 from PySide6.QtWidgets import QMainWindow, QApplication, QWidget, QLabel, QSystemTrayIcon, QMenu
 from PySide6.QtCore import Qt, QPoint, QRect
-from PySide6.QtGui import QPainter, QPen, QColor, QMouseEvent, QIcon, QAction, QCloseEvent
+from PySide6.QtGui import QColor, QMouseEvent, QIcon, QAction, QCloseEvent
 from PySide6.QtCore import QPoint, QRect
 
-from PIL import ImageGrab, Image
-
-import cv2
-import numpy
-import easyocr
-import re
 import os
-
+import re
+import numpy
+import cv2
+import easyocr
 import ctypes
 
+from PIL import ImageGrab
 
 _SECONDS_IN_MINUTE   = 60
 _SECONDS_IN_HOUR     = 60 * _SECONDS_IN_MINUTE
@@ -338,9 +334,9 @@ class Measurer:
         if elapsed_time > 0.0:
             info = _find_exp_threshold_info(total_exp)
 
-            self._is_gained_level = info.level > self._prev_info.level
-
             if info:
+                self._is_gained_level = info.level > self._prev_info.level
+
                 self._level = info.level
 
                 progress_in_exp = total_exp - info.base_exp                           
@@ -382,7 +378,7 @@ class Measurer:
             else:
                 self._is_update_fail = True
 
-    def get_progress(self) -> int:
+    def get_progress(self) -> float:
         """
         Returns
             Current progress to next level in percent.

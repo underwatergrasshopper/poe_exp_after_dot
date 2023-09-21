@@ -24,9 +24,10 @@ setuptools.setup(
     package_dir                     = {"": "src"},
     packages                        = setuptools.find_packages(where = "src"),
     install_requires                = [
+        "numpy>=1.26.0",
         "opencv-python-headless>=4.8.0",
         "easyocr>=1.7.1",
-        "PySide6>=6.3.2",
+        "PySide6>=6.5.2",
     ],
     license                         = "MIT",
     python_requires                 = "~=3.11",
