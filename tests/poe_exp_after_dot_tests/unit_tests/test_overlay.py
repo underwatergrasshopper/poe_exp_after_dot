@@ -34,6 +34,8 @@ def test_fine_time():
     assert str(FineTime(24 * 60 * 60)) == "1d00h00m00s"
     assert str(FineTime(1 * 24 * 60 * 60 + 2 * 60 * 60 + 3 * 60 + 4)) == "1d02h03m04s"
     assert str(FineTime(6 * 24 * 60 * 60 + 23 * 60 * 60 + 59 * 60 + 59)) == "6d23h59m59s"
+    
+    assert str(FineTime(99 * 7 * 24 * 60 * 60 + 6 * 24 * 60 * 60 + 23 * 60 * 60 + 59 * 60 + 59)) == "99w6d23h59m59s"
 
     assert str(FineTime(125, "s")) == "125s"
 
@@ -50,10 +52,26 @@ def test_fine_time():
     assert str(FineTime(0.1)) == "<1s"
 
     assert str(FineTime(2**64)) == ">99w6d23h59m59s"
-    assert str(FineTime((99 + 1) * 7 * 24 * 60 * 60 + 6 * 24 * 60 * 60 + 23 * 60 * 60 + 59 * 60 + 59)) == ">99w6d23h59m59s"
-    assert str(FineTime((999 + 1) * 5 * 24 * 60 * 60 + 4 * 24 * 60 * 60 + 3 * 60 * 60 + 2 * 60 + 1)) == ">99w6d23h59m59s"
-    assert str(FineTime((99999 + 1) * 24 * 60 * 60 + 3 * 60 * 60 + 2 * 60 + 1, max_unit = "d")) == ">9999d23h59m59s"
-    assert str(FineTime((9999999 + 1) * 60 * 60 + 2 * 60 + 1, max_unit = "h")) == ">9999999h59m59s"
+    assert str(FineTime(
+        (99 + 1)    * 7 * 24 * 60 * 60 +
+        4           * 24 * 60 * 60 + 
+        3           * 60 * 60 + 
+        2           * 60 + 
+        1
+    )) == ">99w6d23h59m59s"
+    assert str(FineTime(
+        (9999 + 1)  * 24 * 60 * 60 + 
+        3           * 60 * 60 + 
+        2           * 60 + 
+        1, 
+        max_unit = "d"
+    )) == ">9999d23h59m59s"
+    assert str(FineTime(
+        (9999999 + 1) * 60 * 60 + 
+        2 * 60 + 
+        1, 
+        max_unit = "h"
+    )) == ">9999999h59m59s"
     assert str(FineTime((9999999999 + 1) * 60 + 1, max_unit = "m")) == ">9999999999m59s"
     assert str(FineTime((9999999999999 + 1), max_unit = "s")) == ">9999999999999s"
 
