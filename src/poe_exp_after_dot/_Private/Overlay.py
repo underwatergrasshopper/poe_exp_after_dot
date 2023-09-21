@@ -631,13 +631,12 @@ class Measurer:
                 else:
                     self._progress_step_time = elapsed_time
 
-                    hours = (elapsed_time  / _SECONDS_IN_HOUR) 
-                    self._exp_per_hour = int(self._progress_step_in_exp / hours) # in seconds
+                    self._exp_per_hour = int(self._progress_step_in_exp * _SECONDS_IN_HOUR / elapsed_time)
 
-                    exp_per_second = self._progress_step_in_exp / elapsed_time
-                    if exp_per_second > 0.0:
-                        self._time_to_next_level = (info.exp_to_next - self._progress_in_exp) / exp_per_second  # in seconds
-                        self._time_to_10_percent = (info.exp_to_next / 10) / exp_per_second               # in seconds
+                    if self._progress_step_in_exp > 0.0:
+
+                        self._time_to_next_level = (info.exp_to_next - self._progress_in_exp) * elapsed_time / self._progress_step_in_exp  
+                        self._time_to_10_percent = (info.exp_to_next * elapsed_time) / (self._progress_step_in_exp * 10)
                     else:
                         self._time_to_next_level = float('inf')
                         self._time_to_10_percent = float('inf')
