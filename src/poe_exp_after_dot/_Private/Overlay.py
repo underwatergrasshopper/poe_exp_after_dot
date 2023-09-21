@@ -328,7 +328,7 @@ class FineExpPerHour:
         return self._text_representation
     
 class FinePercent:
-    MAX_LENGTH_AFTER_FORMAT : int       = 8
+    MAX_LENGTH_AFTER_FORMAT : int       = 9
 
     _percent                : float
     _integer                : int       # in percent
@@ -351,7 +351,7 @@ class FinePercent:
             self._percent = float(percent)
         else:
             self._percent = percent
-   
+
         self._integer = int(self._percent)
         self._2_dig_after_dot = int((self._percent - self._integer) * 100)
 
@@ -368,7 +368,17 @@ class FinePercent:
         else:
             sign = ""
 
-        self._text_representation = f"{sign}{ib}{abs(self._integer)}{ie}.{db}{abs(self._2_dig_after_dot):02}{de}%"
+        if self._integer > 100:
+            integer, two_dig_after_dot = (100, 00)
+            prefix = ">"
+        elif self._integer < -100:
+            integer, two_dig_after_dot = (100, 00)
+            prefix = "<"
+        else:
+            integer, two_dig_after_dot = (abs(self._integer), abs(self._2_dig_after_dot))
+            prefix = ""
+
+        self._text_representation = f"{prefix}{sign}{ib}{integer}{ie}.{db}{two_dig_after_dot:02}{de}%"
     
     def get_percent(self) -> float:
         return self._percent
