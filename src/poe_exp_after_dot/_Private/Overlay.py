@@ -22,6 +22,13 @@ _SECONDS_IN_HOUR     = 60 * _SECONDS_IN_MINUTE
 _SECONDS_IN_DAY      = 24 * _SECONDS_IN_HOUR
 _SECONDS_IN_WEEK     = 7  * _SECONDS_IN_DAY
 
+def _pad_to_length(text : str, length : int):
+        """
+        If 'text' is shorter than 'length', then adds padding to front of 'text', until length of text is equal to 'length'.
+        If 'text' is longer than 'length', then shorts 'text', until length of text is equal to 'length'.
+        """
+        return text.rjust(length)[:length]
+
 class FineTime:
     _time                   : float
     _text_representation    : str
@@ -118,6 +125,43 @@ class FineTime:
     
     def __repr__(self) -> str:
         return self._text_representation
+
+class FineBareLevel:
+    LENGTH                  : int   = 4
+
+    _level                  : int
+    _text_representation    : str
+
+    def __init__(self, level : SupportsInt = 0, *, value_color : str | None = None):
+        """
+        value_color
+            None or color of all values. 
+            Can be name: "grey", "yellow", "red", "green", "blue", "white", ...
+            Can be value: "#7F7F7F", "#FFFF00", ...
+        """
+        if not isinstance(level, int):
+            self._level = int(level)
+        else:
+            self._level = level
+
+        if level < 0:
+            self._text_representation = "<0"
+        elif level > 100:
+            self._text_representation = ">100"
+        else:
+            self._text_representation = str(self._level)
+
+        self._text_representation = _pad_to_length(self._text_representation, FineBareLevel.LENGTH)
+
+    def get_level(self) -> int:
+        return self._level
+
+    def __str__(self) -> str:
+        return self._text_representation
+    
+    def __repr__(self) -> str:
+        return self._text_representation
+
 
 class FineExpPerHour:
     _exp_per_hour           : int

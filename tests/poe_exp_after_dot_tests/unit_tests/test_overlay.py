@@ -1,6 +1,15 @@
 from math import isclose as _isclose
 
-from poe_exp_after_dot._Private.Overlay import FineTime, FineExpPerHour, FinePercent, Measurer
+from poe_exp_after_dot._Private.Overlay import FineTime, FineExpPerHour, FinePercent, Measurer, FineBareLevel
+
+def test_fine_bare_level():
+    assert str(FineBareLevel())     == "   0"
+    assert str(FineBareLevel(0))    == "   0"
+    assert str(FineBareLevel(1))    == "   1"
+    assert str(FineBareLevel(100))  == " 100"
+
+    assert str(FineBareLevel(101))  == ">100"
+    assert str(FineBareLevel(-1))  == "  <0"
 
 def test_fine_time():
     assert str(FineTime()) == "0s"
@@ -38,6 +47,9 @@ def test_fine_time():
 
     assert str(FineTime(30 * 24 * 60 * 60  + 1 * 60 * 60 + 3 * 60 + 4, "d")) == "30d01h03m04s"
     assert str(FineTime(234 * 24 * 60 * 60  + 23 * 60 * 60 + 59 * 60 + 59, "d")) == "234d23h59m59s"
+
+    
+    print(str(FineTime(2**64)))
 
     assert str(FineTime(
         999     * 7 * 24 * 60 * 60 + 
