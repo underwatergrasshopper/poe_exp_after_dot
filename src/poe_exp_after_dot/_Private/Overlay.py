@@ -328,6 +328,8 @@ class FineExpPerHour:
         return self._text_representation
     
 class FinePercent:
+    MAX_LENGTH_AFTER_FORMAT : int       = 8
+
     _percent                : float
     _integer                : int       # in percent
     _2_dig_after_dot        : int       # in centipercent
@@ -743,13 +745,15 @@ def get_pos_data(resolution_width : int, resolution_height : int) -> PosData | N
 
 
 class ExpBar(QWidget):
-    _pos_data : PosData
-    _width    : int
+    _pos_data       : PosData
+    _width          : int
+    _control_bar    : "ControlBar"
 
-    def __init__(self, pos_data : PosData):
+    def __init__(self, pos_data : PosData, control_bar : "ControlBar"):
         super().__init__()
 
         self._pos_data = pos_data
+        self._control_bar = control_bar
 
         self.setWindowFlags(
             Qt.WindowStaysOnTopHint |
@@ -790,6 +794,14 @@ class ExpBar(QWidget):
         if self._width >= 1:
             self.show()
 
+    def mousePressEvent(self, event : QMouseEvent):
+        if event.button() == Qt.MouseButton.LeftButton:
+            _move_window_to_foreground("Path of Exile")
+      
+            pos_in_screen = self.mapToGlobal(QPoint(event.x(), event.y()))
+
+            self._control_bar.measure(pos_in_screen.x(), pos_in_screen.y())
+
 
 class ExpInfoBoard(QWidget):
     _pos_data   : PosData
@@ -823,29 +835,32 @@ class ExpInfoBoard(QWidget):
         # text
         self._label = QLabel("", self)
         self._label.setStyleSheet(f"font: {font_size}px {font_name}; color: white;")
-        # NOTE: This is crucial. Prevents from blocking mouseReleaseEvent for parent widget.
+        # NOTE: This is crucial. Prevents from blocking mouseReleaseEvent in parent widget.
         self._label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True) 
-        self.set_description("Click on in-game exp bar to receive data.<br>Ctrl + Shift + LMB to move this board.")
+        self.set_description("Click on in-game exp bar to receive data.<br>Ctrl + Shift + LMB to move this board.", is_resize = True)
 
         self.oldPos = self.pos()
 
-    def set_description(self, description, is_lock_left_bottom = False):
-        if is_lock_left_bottom:
-            rect = self.geometry()
-            x = rect.x()
-            bottom = rect.y() + rect.height()
-        else:
-            x = self._pos_data.control_bar_x
-            bottom = self._pos_data.in_game_full_exp_region_y
+    def set_description(self, description, *, is_lock_left_bottom = False, is_resize = False):
+        if is_resize:
+            if is_lock_left_bottom:
+                rect = self.geometry()
+                x = rect.x()
+                bottom = rect.y() + rect.height()
+            else:
+                x = self._pos_data.control_bar_x
+                bottom = self._pos_data.in_game_full_exp_region_y
 
-        self._label.setText(description)
-        self._label.adjustSize()
-        self.adjustSize()
-        
-        pos = self.pos()
-        pos.setX(x)
-        pos.setY(bottom - self._label.height())
-        self.move(pos)
+            self._label.setText(description)
+            self._label.adjustSize()
+            self.adjustSize()
+            
+            pos = self.pos()
+            pos.setX(x)
+            pos.setY(bottom - self._label.height())
+            self.move(pos)
+        else:
+            self._label.setText(description)
     
     def mousePressEvent(self, event : QMouseEvent):
         # 'Ctrl + Shift + LMB' to move board (order matter)
@@ -855,6 +870,8 @@ class ExpInfoBoard(QWidget):
     def mouseReleaseEvent(self, event : QMouseEvent):
         if event.button() == Qt.MouseButton.LeftButton:
             self._prev_pos = None
+        
+        _move_window_to_foreground("Path of Exile")
 
     def mouseMoveEvent(self, event : QMouseEvent):
         if self._prev_pos is not None:
@@ -870,12 +887,16 @@ class ControlBar(QMainWindow):
     _exp_bar            : ExpBar
     _exp_info_board     : ExpInfoBoard
 
+    _is_first_measure   : bool
+
     def __init__(self, pos_data : PosData, measurer : Measurer, stop_watch : StopWatch):
         super().__init__()
 
         self._pos_data      = pos_data
         self._measurer      = measurer
         self._stop_watch    = stop_watch
+
+        self._is_first_measure = True
 
         self.setWindowFlags(
             Qt.WindowStaysOnTopHint | 
@@ -892,7 +913,7 @@ class ControlBar(QMainWindow):
             self._pos_data.control_bar_height,
         ))
 
-        self._exp_bar = ExpBar(self._pos_data)
+        self._exp_bar = ExpBar(self._pos_data, self)
         self._exp_info_board = ExpInfoBoard(self._pos_data)
 
     def showEvent(self, event):
@@ -905,41 +926,71 @@ class ControlBar(QMainWindow):
 
     def mousePressEvent(self, event : QMouseEvent):
         if event.button() == Qt.MouseButton.LeftButton:
-            user32 = ctypes.windll.user32
-            window_handle = user32.FindWindowW(None, "Path of Exile")
-            if window_handle:
-                user32.SetForegroundWindow(window_handle)
+            _move_window_to_foreground("Path of Exile")
       
-            self._stop_watch.update()
+            pos_in_screen = self.mapToGlobal(QPoint(event.x(), event.y()))
 
-            pos = QPoint(event.x(), event.y())
-            pos = self.mapToGlobal(pos)
+            self.measure(pos_in_screen.x(), pos_in_screen.y())
 
-            total_exp = self.fetch_exp(pos.x(), pos.y())
 
-            self._measurer.update(total_exp, self._stop_watch.get_elapsed_time())
+    def measure(self, x_in_screen : int, y_in_screen : int):
+        self._stop_watch.update()
 
-            level               = self._measurer.get_level()
-            progress            = FinePercent(self._measurer.get_progress(), integer_color = "#F8CD82", two_dig_after_dot_color = "#7F7FFF")
-            progress_step       = FinePercent(self._measurer.get_progress_step(), is_sign = True, integer_color = "#FFFF7F", two_dig_after_dot_color = "#FFFF7F")
-            progress_step_time  = FineTime(self._measurer.get_progress_step_time(), max_unit = "h", unit_color = "#8F8F8F", never_color = "#FF4F1F")
-            exp_per_hour        = FineExpPerHour(self._measurer.get_exp_per_hour(), value_color = "#6FFF6F", unit_color = "#9F9F9F")
-            time_to_10_percent  = FineTime(self._measurer.get_time_to_10_percent(), max_unit = "h", unit_color = "#9F9F9F", never_color = "#FF4F1F")
-            time_to_next_level  = FineTime(self._measurer.get_time_to_next_level(), max_unit = "h", unit_color = "#9F9F9F", never_color = "#FF4F1F")
+        total_exp = self.fetch_exp(x_in_screen, y_in_screen)
 
-            description = (
-                f"LVL {level} {progress}<br>"
-                f"{progress_step} in {progress_step_time}<br>"
-                f"{exp_per_hour}<br>"
-                f"10% in {time_to_10_percent}<br>"
-                f"next in {time_to_next_level}"
+        self._measurer.update(total_exp, self._stop_watch.get_elapsed_time())
+
+        if self._is_first_measure:
+            self.set_exp_info_board_description(
+                level               = "?" * FineBareLevel.MAX_LENGTH_AFTER_FORMAT,
+                progress            = "?" * FinePercent.MAX_LENGTH_AFTER_FORMAT,
+                progress_step       = "?" * FinePercent.MAX_LENGTH_AFTER_FORMAT,
+                progress_step_time  = "?" * FineTime.MAX_LENGTH_AFTER_FORMAT,
+                exp_per_hour        = "?" * FineExpPerHour.MAX_LENGTH_AFTER_FORMAT,
+                time_to_10_percent  = "?" * FineTime.MAX_LENGTH_AFTER_FORMAT,
+                time_to_next_level  = "?" * FineTime.MAX_LENGTH_AFTER_FORMAT,
+
+                is_resize = True,
             )
+            self._is_first_measure = False
 
-            ratio = self._measurer.get_progress()
-            ratio = ratio - int(ratio)
+        self.set_exp_info_board_description(
+            level               = FineBareLevel(self._measurer.get_level()),
+            progress            = FinePercent(self._measurer.get_progress(), integer_color = "#F8CD82", two_dig_after_dot_color = "#7F7FFF"),
+            progress_step       = FinePercent(self._measurer.get_progress_step(), is_sign = True, integer_color = "#FFFF7F", two_dig_after_dot_color = "#FFFF7F"),
+            progress_step_time  = FineTime(self._measurer.get_progress_step_time(), max_unit = "h", unit_color = "#8F8F8F", never_color = "#FF4F1F"),
+            exp_per_hour        = FineExpPerHour(self._measurer.get_exp_per_hour(), value_color = "#6FFF6F", unit_color = "#9F9F9F"),
+            time_to_10_percent  = FineTime(self._measurer.get_time_to_10_percent(), max_unit = "h", unit_color = "#9F9F9F", never_color = "#FF4F1F"),
+            time_to_next_level  = FineTime(self._measurer.get_time_to_next_level(), max_unit = "h", unit_color = "#9F9F9F", never_color = "#FF4F1F")
+        )
 
-            self._exp_bar.set_area(ratio)
-            self._exp_info_board.set_description(description, is_lock_left_bottom = True)
+        ratio = self._measurer.get_progress()
+        ratio = ratio - int(ratio)
+
+        self._exp_bar.set_area(ratio)
+
+    def set_exp_info_board_description(
+            self, 
+            level               : str | FineBareLevel, 
+            progress            : str | FinePercent, 
+            progress_step       : str | FinePercent,
+            progress_step_time  : str | FineTime,
+            exp_per_hour        : str | FineExpPerHour,
+            time_to_10_percent  : str | FineTime,
+            time_to_next_level  : str | FineTime,
+            *,
+            is_resize = False,
+                ):
+        
+        description = (
+            f"LVL {level} {progress}<br>"
+            f"{progress_step} in {progress_step_time}<br>"
+            f"{exp_per_hour}<br>"
+            f"10% in {time_to_10_percent}<br>"
+            f"next in {time_to_next_level}"
+        )
+
+        self._exp_info_board.set_description(description, is_lock_left_bottom = True, is_resize = is_resize)
 
     def fetch_exp(self, x : int, y: int) -> int:
         """
@@ -993,7 +1044,13 @@ class ControlBar(QMainWindow):
     def closeEvent(self, event : QCloseEvent) -> None:
         pass
 
-    
+def _move_window_to_foreground(window_name : str):
+    user32 = ctypes.windll.user32
+
+    window_handle = user32.FindWindowW(None, window_name)
+    if window_handle:
+        user32.SetForegroundWindow(window_handle)
+
 class TrayMenu(QSystemTrayIcon):
     _menu           : QMenu
     _quit_action    : QAction
