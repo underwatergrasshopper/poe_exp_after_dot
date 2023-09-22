@@ -953,6 +953,10 @@ class ExpInfoBoard(QMainWindow):
             self._label.setText(description)
     
     def mousePressEvent(self, event : QMouseEvent):
+        self._exp_bar.activateWindow()
+        self._click_bar.activateWindow()
+        self.activateWindow()
+
         # 'Ctrl + Shift + LMB' to move board (order matter)
         if event.button() == Qt.MouseButton.LeftButton and QApplication.keyboardModifiers() == (Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.ShiftModifier):
             self._prev_pos = event.globalPos()
