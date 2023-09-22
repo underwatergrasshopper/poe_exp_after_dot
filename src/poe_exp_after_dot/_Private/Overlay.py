@@ -1128,7 +1128,7 @@ class Overlay:
 
         def excepthook(exception_type, exception : BaseException, traceback_type):
             _exception_stash.exception = exception
-            # NOTE: With some brief testing, closeEvent was not triggered when exited with _EXIT_FAILURE. 
+            # NOTE: With some brief testing, closeEvent was not triggered when exited with _EXIT_FAILURE (or value equal 1). 
             # But for safety, do not implement closeEvent in any widget.
             QApplication.exit(_EXIT_FAILURE)
 
