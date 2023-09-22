@@ -820,14 +820,14 @@ class ExpBar(QWidget):
 
 class ClickBar(QWidget):
     _logic              : "Logic"
-    _exp_info_board     : "ExpInfoBoard"
+    _info_board         : "InfoBoard"
     _exp_bar            : ExpBar | None
 
-    def __init__(self, logic : "Logic", exp_info_board : "ExpInfoBoard"):
+    def __init__(self, logic : "Logic", info_board : "InfoBoard"):
         super().__init__()
 
         self._logic             = logic
-        self._exp_info_board    = exp_info_board
+        self._info_board        = info_board
         self._exp_bar           = None
 
         self._is_first_measure = True
@@ -859,13 +859,13 @@ class ClickBar(QWidget):
             self.measure(pos_in_screen.x(), pos_in_screen.y())
 
     def measure(self, cursor_x_in_screen : int, cursor_y_in_screen : int):
-        self._logic.measure(cursor_x_in_screen, cursor_y_in_screen, [self._exp_info_board])
+        self._logic.measure(cursor_x_in_screen, cursor_y_in_screen, [self._info_board])
 
         if self._is_first_measure:
-            self._exp_info_board.set_description(self._logic.gen_exp_description(is_control = True), is_lock_left_bottom = True, is_resize = True)
+            self._info_board.place_text(self._logic.gen_exp_info_text(is_control = True), is_lock_left_bottom = True, is_resize = True)
             self._is_first_measure = False
 
-        self._exp_info_board.set_description(self._logic.gen_exp_description(), is_lock_left_bottom = True)
+        self._info_board.place_text(self._logic.gen_exp_info_text(), is_lock_left_bottom = True)
 
         progress = self._logic.to_measurer().get_progress()
         fractional_of_progress = progress - int(progress)
@@ -881,7 +881,7 @@ def _move_window_to_foreground(window_name : str):
         user32.SetForegroundWindow(window_handle)
 
 
-class ExpInfoBoard(QMainWindow):
+class InfoBoard(QMainWindow):
     _exp_bar            : ExpBar
     _click_bar          : ClickBar
 
@@ -920,7 +920,7 @@ class ExpInfoBoard(QMainWindow):
         # NOTE: This is crucial. Prevents from blocking mouseReleaseEvent in parent widget.
         self._label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True) 
 
-        self.set_description("Click on in-game exp bar to receive data.<br>Ctrl + Shift + LMB to move this board.", is_resize = True)
+        self.place_text("Click on in-game exp bar to receive data.<br>Ctrl + Shift + LMB to move this board.", is_resize = True)
 
         #self.set_description("Click on in-game exp bar to receive data. Ctrl + Shift + LMB to move this board.")
 
@@ -928,7 +928,7 @@ class ExpInfoBoard(QMainWindow):
         self._exp_bar   = ExpBar(logic, self._click_bar)
         self._click_bar.attach_exp_bar(self._exp_bar)
 
-    def set_description(self, description, *, is_lock_left_bottom = False, is_resize = False):
+    def place_text(self, description, *, is_lock_left_bottom = False, is_resize = False):
         if is_resize:
             if is_lock_left_bottom:
                 rect = self.geometry()
@@ -983,16 +983,16 @@ class ExpInfoBoard(QMainWindow):
         self._click_bar.hide()
 
 class TrayMenu(QSystemTrayIcon):
-    _exp_info_board : ExpInfoBoard
+    _info_board     : InfoBoard
 
     _menu           : QMenu
     _quit_action    : QAction
     _hide_action    : QAction
 
-    def __init__(self, app : QApplication, exp_info_board : ExpInfoBoard):
+    def __init__(self, app : QApplication, info_board : InfoBoard):
         super().__init__()
 
-        self._exp_info_board = exp_info_board
+        self._info_board = info_board
 
         icon_file_name =  os.path.abspath(os.path.dirname(__file__) + "/../assets/icon.png")
         self.setIcon(QIcon(icon_file_name))
@@ -1000,12 +1000,12 @@ class TrayMenu(QSystemTrayIcon):
         self._menu = QMenu()
 
         self._hide_action = QAction('Hide', checkable = True)
-        def hide_exp_info_board(is_hide):
+        def hide_overlay(is_hide):
             if is_hide:
-                exp_info_board.hide()
+                info_board.hide()
             else:
-                exp_info_board.show()
-        self._hide_action.triggered.connect(hide_exp_info_board)
+                info_board.show()
+        self._hide_action.triggered.connect(hide_overlay)
         self._menu.addAction(self._hide_action)
 
         self._quit_action = QAction("Quit")
@@ -1014,8 +1014,6 @@ class TrayMenu(QSystemTrayIcon):
 
         self.setContextMenu(self._menu)
 
-
-        
 
 class Logic:
     _pos_data   : PosData
@@ -1041,7 +1039,7 @@ class Logic:
     def to_pos_data(self) -> PosData:
         return self._pos_data
 
-    def gen_exp_description(self, is_control = False):
+    def gen_exp_info_text(self, is_control = False):
         if is_control:
             level               = "?" * FineBareLevel.MAX_LENGTH_AFTER_FORMAT
             progress            = "?" * FinePercent.MAX_LENGTH_AFTER_FORMAT
@@ -1142,10 +1140,10 @@ class Overlay:
 
         app = QApplication(argv)
 
-        exp_info_board = ExpInfoBoard(logic)
-        exp_info_board.show()
+        info_board = InfoBoard(logic)
+        info_board.show()
 
-        tray_menu = TrayMenu(app, exp_info_board)
+        tray_menu = TrayMenu(app, info_board)
         tray_menu.show()
 
         def excepthook(exception_type, exception : BaseException, traceback_type):
