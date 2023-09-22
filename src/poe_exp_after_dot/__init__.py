@@ -8,5 +8,5 @@ def _main(argv : list[str]) -> int:
 if __name__ == "__main__":
     import sys as _sys
     
-    result_code = _main(_sys.argv)
-    _sys.exit(result_code)
+    exit_code = _main(_sys.argv)
+    _sys.exit(exit_code)

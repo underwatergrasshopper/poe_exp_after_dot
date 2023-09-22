@@ -1136,6 +1136,10 @@ class Overlay:
         pass
 
     def main(self, argv : list[str]) -> int:
+        """
+        Returns
+            Exit code.
+        """
         logic = Logic()
 
         app = QApplication(argv)
@@ -1155,12 +1159,12 @@ class Overlay:
         previous_excepthook = sys.excepthook
         sys.excepthook = excepthook
 
-        result_code = app.exec_()
+        exit_code = app.exec_()
 
         sys.excepthook = previous_excepthook
         
         if _exception_stash.exception:
             raise _exception_stash.exception
         
-        return result_code
+        return exit_code
 
