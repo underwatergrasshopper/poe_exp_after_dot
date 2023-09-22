@@ -872,9 +872,6 @@ class ClickBar(QWidget):
 
         if self._exp_bar:
             self._exp_bar.set_area(fractional_of_progress)
-    
-    def closeEvent(self, event : QCloseEvent) -> None:
-        pass
 
 def _move_window_to_foreground(window_name : str):
     user32 = ctypes.windll.user32
@@ -1102,10 +1099,18 @@ class Logic:
         if match_:
             exp = int(match_.group(1).replace(",", ""))
 
-        raise RuntimeError("Something.")
-
         return exp
     
+
+class ExceptionStash:
+    exception = BaseException | None
+
+    def __init__(self):
+        self.exception = None
+
+_exception_stash = ExceptionStash()
+
+
 class Overlay:
     def __init__(self):
         pass
@@ -1121,18 +1126,21 @@ class Overlay:
         tray_menu = TrayMenu(app)
         tray_menu.show()
 
-        previous_excepthook = sys.excepthook
-
-        def excepthook(type_, value, traceback_):
-            message = "".join(traceback.format_exception(type_, value, traceback_))
-            print("Exception:\n", message)
+        def excepthook(exception_type, exception : BaseException, traceback_type):
+            _exception_stash.exception = exception
+            # NOTE: With some brief testing, closeEvent was not triggered when exited with _EXIT_FAILURE. 
+            # But for safety, do not implement closeEvent in any widget.
             QApplication.exit(_EXIT_FAILURE)
 
+        previous_excepthook = sys.excepthook
         sys.excepthook = excepthook
 
         result_code = app.exec_()
 
         sys.excepthook = previous_excepthook
+        
+        if _exception_stash.exception:
+            raise _exception_stash.exception
         
         return result_code
 
