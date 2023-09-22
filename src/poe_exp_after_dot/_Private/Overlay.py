@@ -1089,7 +1089,7 @@ class Overlay:
     def __init__(self):
         pass
 
-    def main(self, argv : list[str]):
+    def main(self, argv : list[str]) -> int:
         logic = Logic()
 
         app = QApplication(argv)
@@ -1100,6 +1100,5 @@ class Overlay:
         tray_menu = TrayMenu(app)
         tray_menu.show()
 
-        result_code = app.exec_()
-        sys.exit(result_code)
+        return app.exec_()
 

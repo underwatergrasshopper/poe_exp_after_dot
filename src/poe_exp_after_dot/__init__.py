@@ -1,11 +1,12 @@
 
 from ._Private.Overlay import Overlay as _Overlay
 
-def _main(argv : list[str]):
+def _main(argv : list[str]) -> int:
     overlay = _Overlay()
-    overlay.main(argv)
+    return overlay.main(argv)
 
 if __name__ == "__main__":
     import sys as _sys
     
-    _main(_sys.argv)
+    result_code = _main(_sys.argv)
+    _sys.exit(result_code)
