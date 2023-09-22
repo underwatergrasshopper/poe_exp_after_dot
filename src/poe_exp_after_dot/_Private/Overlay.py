@@ -781,12 +781,12 @@ class ExpBar(QWidget):
         
         self.set_area(0.0, is_try_show = False)
 
-    def set_area(self, ratio : float, *, is_try_show = True):
+    def set_area(self, fractional_of_progress : float, *, is_try_show = True):
         """
         ratio
             Value from range 0 to 1.
         """
-        self._width = int(self._logic.to_pos_data().click_bar_width * ratio)
+        self._width = int(self._logic.to_pos_data().click_bar_width * fractional_of_progress)
 
         self.setGeometry(QRect(
             self._logic.to_pos_data().click_bar_x,
@@ -813,9 +813,81 @@ class ExpBar(QWidget):
 
             self._click_bar.measure(pos_in_screen.x(), pos_in_screen.y())
 
-class ExpInfoBoard(QWidget):
-    _logic      : "Logic"
-    _prev_pos   : QPoint | None
+
+class ClickBar(QWidget):
+    _logic              : "Logic"
+    _exp_info_board     : "ExpInfoBoard"
+    _exp_bar            : ExpBar | None
+
+    def __init__(self, logic : "Logic", exp_info_board : "ExpInfoBoard"):
+        super().__init__()
+
+        self._logic             = logic
+        self._exp_info_board    = exp_info_board
+        self._exp_bar           = None
+
+        self._is_first_measure = True
+
+        self.setWindowFlags(
+            Qt.WindowStaysOnTopHint | 
+            Qt.FramelessWindowHint |
+            Qt.Tool
+        )
+
+        self.setWindowOpacity(0.01)
+
+        self.setGeometry(QRect(
+            logic.to_pos_data().click_bar_x,
+            logic.to_pos_data().click_bar_y,
+            logic.to_pos_data().click_bar_width,
+            logic.to_pos_data().click_bar_height,
+        ))
+
+    def attach_exp_bar(self, exp_bar : ExpBar):
+        self._exp_bar = exp_bar
+
+    def mousePressEvent(self, event : QMouseEvent):
+        if event.button() == Qt.MouseButton.LeftButton:
+            _move_window_to_foreground("Path of Exile")
+      
+            pos_in_screen = self.mapToGlobal(QPoint(event.x(), event.y()))
+
+            self.measure(pos_in_screen.x(), pos_in_screen.y())
+
+    def measure(self, cursor_x_in_screen : int, cursor_y_in_screen : int):
+        self._logic.measure(cursor_x_in_screen, cursor_y_in_screen, [self._exp_info_board])
+
+        if self._is_first_measure:
+            self._exp_info_board.set_description(self._logic.gen_exp_description(is_control = True), is_lock_left_bottom = True, is_resize = True)
+            self._is_first_measure = False
+
+        self._exp_info_board.set_description(self._logic.gen_exp_description(), is_lock_left_bottom = True)
+
+        progress = self._logic.to_measurer().get_progress()
+        fractional_of_progress = progress - int(progress)
+
+        if self._exp_bar:
+            self._exp_bar.set_area(fractional_of_progress)
+    
+    def closeEvent(self, event : QCloseEvent) -> None:
+        pass
+
+def _move_window_to_foreground(window_name : str):
+    user32 = ctypes.windll.user32
+
+    window_handle = user32.FindWindowW(None, window_name)
+    if window_handle:
+        user32.SetForegroundWindow(window_handle)
+
+
+class ExpInfoBoard(QMainWindow):
+    _exp_bar            : ExpBar
+    _click_bar          : ClickBar
+
+    _logic              : "Logic"
+    _prev_pos           : QPoint | None
+
+    _is_first_measure   : bool
 
     def __init__(self, logic : "Logic", font_name = "Consolas", font_size = 16):
         """
@@ -840,7 +912,6 @@ class ExpInfoBoard(QWidget):
 
         # transparency
         self.setWindowOpacity(0.7)
-        self.setContentsMargins(1, 1, 1, 1)
 
         # text
         self._label = QLabel("", self)
@@ -850,12 +921,11 @@ class ExpInfoBoard(QWidget):
 
         self.set_description("Click on in-game exp bar to receive data.<br>Ctrl + Shift + LMB to move this board.", is_resize = True)
 
-        # TODO: Auto wrapping.
-        #self._label.setMinimumSize(self._label.sizeHint())
-        ##self._label.setMaximumSize(self._label.sizeHint())
-        #self._label.setWordWrap(True)  
-        #
         #self.set_description("Click on in-game exp bar to receive data. Ctrl + Shift + LMB to move this board.")
+
+        self._click_bar = ClickBar(logic, self)
+        self._exp_bar   = ExpBar(logic, self._click_bar)
+        self._click_bar.attach_exp_bar(self._exp_bar)
 
     def set_description(self, description, *, is_lock_left_bottom = False, is_resize = False):
         if is_resize:
@@ -867,15 +937,18 @@ class ExpInfoBoard(QWidget):
                 x = self._logic.to_pos_data().click_bar_x
                 bottom = self._logic.to_pos_data().in_game_full_exp_region_y
 
+            self._label.setWordWrap(False)  
             self._label.setText(description)
+
             self._label.adjustSize()
-            self.adjustSize()
+            self.resize(self._label.size())
             
             pos = self.pos()
             pos.setX(x)
             pos.setY(bottom - self._label.height())
             self.move(pos)
         else:
+            self._label.setWordWrap(True)  
             self._label.setText(description)
     
     def mousePressEvent(self, event : QMouseEvent):
@@ -896,78 +969,13 @@ class ExpInfoBoard(QWidget):
                 self.move(self.x() + offset.x(), self.y() + offset.y())
                 self._prev_pos = event.globalPos()
 
-class ClickBar(QMainWindow):
-    _logic              : "Logic"
-    _exp_bar            : ExpBar
-    _exp_info_board     : ExpInfoBoard
-
-    _is_first_measure   : bool
-
-    def __init__(self, logic : "Logic"):
-        super().__init__()
-
-        self._logic = logic
-
-        self._is_first_measure = True
-
-        self.setWindowFlags(
-            Qt.WindowStaysOnTopHint | 
-            Qt.FramelessWindowHint |
-            Qt.Tool
-        )
-
-        self.setWindowOpacity(0.01)
-
-        self.setGeometry(QRect(
-            logic.to_pos_data().click_bar_x,
-            logic.to_pos_data().click_bar_y,
-            logic.to_pos_data().click_bar_width,
-            logic.to_pos_data().click_bar_height,
-        ))
-
-        self._exp_bar = ExpBar(logic, self)
-        self._exp_info_board = ExpInfoBoard(logic)
-
     def showEvent(self, event):
         self._exp_bar.try_show()
-        self._exp_info_board.show()
+        self._click_bar.show()
 
     def hideEvent(self, event):
         self._exp_bar.hide()
-        self._exp_info_board.hide()
-
-    def mousePressEvent(self, event : QMouseEvent):
-        if event.button() == Qt.MouseButton.LeftButton:
-            _move_window_to_foreground("Path of Exile")
-      
-            pos_in_screen = self.mapToGlobal(QPoint(event.x(), event.y()))
-
-            self.measure(pos_in_screen.x(), pos_in_screen.y())
-
-    def measure(self, cursor_x_in_screen : int, cursor_y_in_screen : int):
-        self._logic.measure(cursor_x_in_screen, cursor_y_in_screen, [self])
-
-        if self._is_first_measure:
-            self._exp_info_board.set_description(self._logic.gen_exp_description(is_control = True), is_lock_left_bottom = True, is_resize = True)
-            self._is_first_measure = False
-
-        self._exp_info_board.set_description(self._logic.gen_exp_description(), is_lock_left_bottom = True)
-
-        ratio = self._logic.to_measurer().get_progress()
-        ratio = ratio - int(ratio)
-
-        self._exp_bar.set_area(ratio)
-
-    
-    def closeEvent(self, event : QCloseEvent) -> None:
-        pass
-
-def _move_window_to_foreground(window_name : str):
-    user32 = ctypes.windll.user32
-
-    window_handle = user32.FindWindowW(None, window_name)
-    if window_handle:
-        user32.SetForegroundWindow(window_handle)
+        self._click_bar.hide()
 
 class TrayMenu(QSystemTrayIcon):
     _menu           : QMenu
@@ -1101,8 +1109,8 @@ class Overlay:
 
         app = QApplication(argv)
 
-        click_bar = ClickBar(logic)
-        click_bar.show()
+        exp_info_board = ExpInfoBoard(logic)
+        exp_info_board.show()
 
         tray_menu = TrayMenu(app)
         tray_menu.show()
