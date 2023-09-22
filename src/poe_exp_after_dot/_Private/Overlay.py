@@ -10,6 +10,7 @@ import numpy
 import cv2
 import easyocr
 import ctypes
+import traceback
 
 from PIL import ImageGrab
 
@@ -17,6 +18,9 @@ from PySide6.QtWidgets import QMainWindow, QApplication, QWidget, QLabel, QSyste
 from PySide6.QtCore import Qt, QPoint, QRect
 from PySide6.QtGui import QColor, QMouseEvent, QIcon, QAction, QCloseEvent
 from PySide6.QtCore import QPoint, QRect
+
+_EXIT_SUCCESS = 0
+_EXIT_FAILURE = 1
 
 _SECONDS_IN_MINUTE   = 60
 _SECONDS_IN_HOUR     = 60 * _SECONDS_IN_MINUTE
@@ -1098,6 +1102,8 @@ class Logic:
         if match_:
             exp = int(match_.group(1).replace(",", ""))
 
+        raise RuntimeError("Something.")
+
         return exp
     
 class Overlay:
@@ -1115,5 +1121,18 @@ class Overlay:
         tray_menu = TrayMenu(app)
         tray_menu.show()
 
-        return app.exec_()
+        previous_excepthook = sys.excepthook
+
+        def excepthook(type_, value, traceback_):
+            message = "".join(traceback.format_exception(type_, value, traceback_))
+            print("Exception:\n", message)
+            QApplication.exit(_EXIT_FAILURE)
+
+        sys.excepthook = excepthook
+
+        result_code = app.exec_()
+
+        sys.excepthook = previous_excepthook
+        
+        return result_code
 
