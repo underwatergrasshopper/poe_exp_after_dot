@@ -547,7 +547,7 @@ class StopWatch:
         self._accumulator += self._stop - self._start
         self._start = self._stop
 
-        self._elapsed_time, self._accumulator = divmod(self._accumulator, 1)
+        self._elapsed_time, self._accumulator = divmod(self._accumulator, 1.0)
 
     def get_elapsed_time(self) -> float:
         """
