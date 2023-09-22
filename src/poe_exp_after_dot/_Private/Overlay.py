@@ -525,17 +525,17 @@ class StopWatch:
     _accumulator    : float     # in seconds
     _elapsed_time   : float     # in seconds
 
-    def __init__(self, *, start : float = 0.0):
+    def __init__(self, *, start : float | None = None):
         """
         start
-            Time from the epoch in seconds.
+            Time from the epoch in seconds or None.
         """
         self.reset(start = start)
 
-    def reset(self, *, start : float = 0.0):
+    def reset(self, *, start : float | None = None):
         """
         start
-            Time from the epoch in seconds.
+            Time from the epoch in seconds or None.
         """
         self._start         = _get_time() if start is None else start
         self._stop          = self._start
@@ -783,9 +783,9 @@ class ExpBar(QWidget):
         palette.setColor(self.backgroundRole(), QColor(127, 127, 255))
         self.setPalette(palette)
         
-        self.set_area(0.0, is_try_show = False)
+        self.resize_area(0.0, is_try_show = False)
 
-    def set_area(self, fractional_of_progress : float, *, is_try_show = True):
+    def resize_area(self, fractional_of_progress : float, *, is_try_show = True):
         """
         ratio
             Value from range 0 to 1.
@@ -871,7 +871,7 @@ class ClickBar(QWidget):
         fractional_of_progress = progress - int(progress)
 
         if self._exp_bar:
-            self._exp_bar.set_area(fractional_of_progress)
+            self._exp_bar.resize_area(fractional_of_progress)
 
 def _move_window_to_foreground(window_name : str):
     user32 = ctypes.windll.user32
