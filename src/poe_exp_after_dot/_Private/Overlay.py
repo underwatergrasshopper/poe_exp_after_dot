@@ -758,14 +758,15 @@ def get_pos_data(resolution_width : int, resolution_height : int) -> PosData | N
 
 
 class ExpBar(QWidget):
-    _pos_data       : PosData
+    _logic          : "Logic"
+
     _width          : int
     _control_bar    : "ControlBar"
 
-    def __init__(self, pos_data : PosData, control_bar : "ControlBar"):
+    def __init__(self, logic : "Logic", control_bar : "ControlBar"):
         super().__init__()
 
-        self._pos_data = pos_data
+        self._logic = logic
         self._control_bar = control_bar
 
         self.setWindowFlags(
@@ -788,13 +789,13 @@ class ExpBar(QWidget):
         ratio
             Value from range 0 to 1.
         """
-        self._width = int(self._pos_data.control_bar_width * ratio)
+        self._width = int(self._logic.to_pos_data().control_bar_width * ratio)
 
         self.setGeometry(QRect(
-            self._pos_data.control_bar_x,
-            self._pos_data.control_bar_y + self._pos_data.exp_bar_y_offset,
+            self._logic.to_pos_data().control_bar_x,
+            self._logic.to_pos_data().control_bar_y + self._logic.to_pos_data().exp_bar_y_offset,
             max(1, self._width),
-            self._pos_data.exp_bar_height,
+            self._logic.to_pos_data().exp_bar_height,
         ))
 
         if is_try_show:
@@ -817,18 +818,17 @@ class ExpBar(QWidget):
 
 
 class ExpInfoBoard(QWidget):
-    _pos_data   : PosData
+    _logic      : "Logic"
     _prev_pos   : QPoint | None
 
-    def __init__(self, pos_data : PosData, font_name = "Consolas", font_size = 16):
+    def __init__(self, logic : "Logic", font_name = "Consolas", font_size = 16):
         """
         font_size
             In pixels.
         """
         super().__init__()
 
-        self._pos_data = pos_data
-
+        self._logic = logic
         self._prev_pos = None
 
         self.setWindowFlags(
@@ -861,8 +861,8 @@ class ExpInfoBoard(QWidget):
                 x = rect.x()
                 bottom = rect.y() + rect.height()
             else:
-                x = self._pos_data.control_bar_x
-                bottom = self._pos_data.in_game_full_exp_region_y
+                x = self._logic.to_pos_data().control_bar_x
+                bottom = self._logic.to_pos_data().in_game_full_exp_region_y
 
             self._label.setText(description)
             self._label.adjustSize()
@@ -894,20 +894,16 @@ class ExpInfoBoard(QWidget):
                 self._prev_pos = event.globalPos()
 
 class ControlBar(QMainWindow):
-    _pos_data           : PosData
-    _measurer           : Measurer
-    _stop_watch         : StopWatch
+    _logic              : "Logic"
     _exp_bar            : ExpBar
     _exp_info_board     : ExpInfoBoard
 
     _is_first_measure   : bool
 
-    def __init__(self, pos_data : PosData, measurer : Measurer, stop_watch : StopWatch):
+    def __init__(self, logic : "Logic"):
         super().__init__()
 
-        self._pos_data      = pos_data
-        self._measurer      = measurer
-        self._stop_watch    = stop_watch
+        self._logic = logic
 
         self._is_first_measure = True
 
@@ -920,14 +916,14 @@ class ControlBar(QMainWindow):
         self.setWindowOpacity(0.01)
 
         self.setGeometry(QRect(
-            self._pos_data.control_bar_x,
-            self._pos_data.control_bar_y,
-            self._pos_data.control_bar_width,
-            self._pos_data.control_bar_height,
+            logic.to_pos_data().control_bar_x,
+            logic.to_pos_data().control_bar_y,
+            logic.to_pos_data().control_bar_width,
+            logic.to_pos_data().control_bar_height,
         ))
 
-        self._exp_bar = ExpBar(self._pos_data, self)
-        self._exp_info_board = ExpInfoBoard(self._pos_data)
+        self._exp_bar = ExpBar(logic, self)
+        self._exp_info_board = ExpInfoBoard(logic)
 
     def showEvent(self, event):
         self._exp_bar.try_show()
@@ -945,101 +941,20 @@ class ControlBar(QMainWindow):
 
             self.measure(pos_in_screen.x(), pos_in_screen.y())
 
-
-    def measure(self, x_in_screen : int, y_in_screen : int):
-        self._stop_watch.update()
-
-        total_exp = self.fetch_exp(x_in_screen, y_in_screen)
-
-        self._measurer.update(total_exp, self._stop_watch.get_elapsed_time())
-
+    def measure(self, cursor_x_in_screen : int, cursor_y_in_screen : int):
         if self._is_first_measure:
-            self.set_description_in_exp_info_board(is_resize_with_control_description = True)
+            self._exp_info_board.set_description(self._logic.gen_exp_description(is_control = True), is_lock_left_bottom = True, is_resize = True)
             self._is_first_measure = False
 
-        self.set_description_in_exp_info_board()
+        self._logic.measure(cursor_x_in_screen, cursor_y_in_screen, [self])
 
-        ratio = self._measurer.get_progress()
+        self._exp_info_board.set_description(self._logic.gen_exp_description(), is_lock_left_bottom = True)
+
+        ratio = self._logic.to_measurer().get_progress()
         ratio = ratio - int(ratio)
 
         self._exp_bar.set_area(ratio)
 
-    def set_description_in_exp_info_board(self, is_resize_with_control_description = False):
-        if is_resize_with_control_description:
-            level               = "?" * FineBareLevel.MAX_LENGTH_AFTER_FORMAT
-            progress            = "?" * FinePercent.MAX_LENGTH_AFTER_FORMAT
-            progress_step       = "?" * FinePercent.MAX_LENGTH_AFTER_FORMAT
-            progress_step_time  = "?" * FineTime.MAX_LENGTH_AFTER_FORMAT
-            exp_per_hour        = "?" * FineExpPerHour.MAX_LENGTH_AFTER_FORMAT
-            time_to_10_percent  = "?" * FineTime.MAX_LENGTH_AFTER_FORMAT
-            time_to_next_level  = "?" * FineTime.MAX_LENGTH_AFTER_FORMAT
-        else:
-            level               = FineBareLevel(self._measurer.get_level())
-            progress            = FinePercent(self._measurer.get_progress(), integer_color = "#F8CD82", two_dig_after_dot_color = "#7F7FFF")
-            progress_step       = FinePercent(self._measurer.get_progress_step(), is_sign = True, integer_color = "#FFFF7F", two_dig_after_dot_color = "#FFFF7F")
-            progress_step_time  = FineTime(self._measurer.get_progress_step_time(), max_unit = "h", unit_color = "#8F8F8F", never_color = "#FF4F1F")
-            exp_per_hour        = FineExpPerHour(self._measurer.get_exp_per_hour(), value_color = "#6FFF6F", unit_color = "#9F9F9F")
-            time_to_10_percent  = FineTime(self._measurer.get_time_to_10_percent(), max_unit = "h", unit_color = "#9F9F9F", never_color = "#FF4F1F")
-            time_to_next_level  = FineTime(self._measurer.get_time_to_next_level(), max_unit = "h", unit_color = "#9F9F9F", never_color = "#FF4F1F")
-
-        description = (
-            f"LVL {level} {progress}<br>"
-            f"{progress_step} in {progress_step_time}<br>"
-            f"{exp_per_hour}<br>"
-            f"10% in {time_to_10_percent}<br>"
-            f"next in {time_to_next_level}"
-        )
-
-        self._exp_info_board.set_description(description, is_lock_left_bottom = True, is_resize = is_resize_with_control_description)
-
-    def fetch_exp(self, x : int, y: int) -> int:
-        """
-        x
-            Position of cursor on X axis in screen.
-        y
-            Position of cursor on Y axis in screen.
-        Returns
-            Current experience.
-        """
-        self.hide()
-        screenshot = ImageGrab.grab()
-        self.show()
-
-        left    = x + self._pos_data.in_game_exp_tooltip_x_offset
-        right   = self._pos_data.in_game_exp_tooltip_y
-        width   = self._pos_data.in_game_exp_tooltip_width
-        height  = self._pos_data.in_game_exp_tooltip_height
-
-        in_game_exp_tooltip_image = screenshot.crop((
-            left,
-            right,
-            left + width,
-            right + height,
-        ))
-        in_game_exp_tooltip_image = cv2.cvtColor(numpy.array(in_game_exp_tooltip_image), cv2.COLOR_RGB2BGR) # converts image from Pillow format to OpenCV format
-
-        reader = easyocr.Reader(['en'], gpu = True, verbose=False)
-
-        text_fragments= reader.readtext(in_game_exp_tooltip_image)
-
-        width = in_game_exp_tooltip_image.shape[1]
-
-        def extract_comparison_key(text_fragment):
-            pos = text_fragment[0][0]
-            return pos[0] + width * pos[1]
-
-        text_fragments.sort(key = extract_comparison_key)
-
-        full_text = ""
-        for text_fragment in text_fragments:
-            full_text += text_fragment[1] + " "
-
-        exp = 0
-        match_ = re.search(r"^.*?Current[ ]+Exp\:[ ]+([0-9,]+)[ ]+.*$", full_text)
-        if match_:
-            exp = int(match_.group(1).replace(",", ""))
-
-        return exp
     
     def closeEvent(self, event : QCloseEvent) -> None:
         pass
@@ -1067,23 +982,123 @@ class TrayMenu(QSystemTrayIcon):
         self._menu.addAction(self._quit_action)
 
         self.setContextMenu(self._menu)
+        
 
+class Logic:
+    _pos_data   : PosData
+    _measurer   : Measurer
+
+    _stop_watch : StopWatch
+    _reader     : easyocr.Reader
+
+    def __init__(self):
+        width, height = (1920, 1080)
+        self._pos_data = get_pos_data(width, height)
+        if not self._pos_data:
+            raise RuntimeError(f"Can not receive position data for resolution: {width}x{height}.")
+        
+        self._measurer = Measurer()
+        self._stop_watch = StopWatch()
+
+        self._reader = easyocr.Reader(['en'], gpu = True, verbose = False)
+
+    def to_measurer(self) -> Measurer:
+        return self._measurer
+    
+    def to_pos_data(self) -> PosData:
+        return self._pos_data
+
+    def gen_exp_description(self, is_control = False):
+        if is_control:
+            level               = "?" * FineBareLevel.MAX_LENGTH_AFTER_FORMAT
+            progress            = "?" * FinePercent.MAX_LENGTH_AFTER_FORMAT
+            progress_step       = "?" * FinePercent.MAX_LENGTH_AFTER_FORMAT
+            progress_step_time  = "?" * FineTime.MAX_LENGTH_AFTER_FORMAT
+            exp_per_hour        = "?" * FineExpPerHour.MAX_LENGTH_AFTER_FORMAT
+            time_to_10_percent  = "?" * FineTime.MAX_LENGTH_AFTER_FORMAT
+            time_to_next_level  = "?" * FineTime.MAX_LENGTH_AFTER_FORMAT
+        else:
+            level               = FineBareLevel(self._measurer.get_level())
+            progress            = FinePercent(self._measurer.get_progress(), integer_color = "#F8CD82", two_dig_after_dot_color = "#7F7FFF")
+            progress_step       = FinePercent(self._measurer.get_progress_step(), is_sign = True, integer_color = "#FFFF7F", two_dig_after_dot_color = "#FFFF7F")
+            progress_step_time  = FineTime(self._measurer.get_progress_step_time(), max_unit = "h", unit_color = "#8F8F8F", never_color = "#FF4F1F")
+            exp_per_hour        = FineExpPerHour(self._measurer.get_exp_per_hour(), value_color = "#6FFF6F", unit_color = "#9F9F9F")
+            time_to_10_percent  = FineTime(self._measurer.get_time_to_10_percent(), max_unit = "h", unit_color = "#9F9F9F", never_color = "#FF4F1F")
+            time_to_next_level  = FineTime(self._measurer.get_time_to_next_level(), max_unit = "h", unit_color = "#9F9F9F", never_color = "#FF4F1F")
+
+        return (
+            f"LVL {level} {progress}<br>"
+            f"{progress_step} in {progress_step_time}<br>"
+            f"{exp_per_hour}<br>"
+            f"10% in {time_to_10_percent}<br>"
+            f"next in {time_to_next_level}"
+        )
+        
+    def measure(self, cursor_x_in_screen : int, cursor_y_in_screen : int, widgets_to_hide : list[QWidget]):
+        self._stop_watch.update()
+
+        current_exp = self._fetch_exp(cursor_x_in_screen, cursor_y_in_screen, widgets_to_hide)
+
+        self._measurer.update(current_exp, self._stop_watch.get_elapsed_time())
+
+    def _fetch_exp(self, cursor_x_in_screen : int, cursor_y_in_screen: int, widgets_to_hide : list[QWidget]) -> int:
+        """
+        Returns
+            Current experience.
+        """
+        for widget in widgets_to_hide:
+            widget.hide()
+
+        screenshot = ImageGrab.grab()
+
+        for widget in widgets_to_hide:
+            widget.show()
+
+        left    = cursor_x_in_screen + self._pos_data.in_game_exp_tooltip_x_offset
+        right   = self._pos_data.in_game_exp_tooltip_y
+        width   = self._pos_data.in_game_exp_tooltip_width
+        height  = self._pos_data.in_game_exp_tooltip_height
+
+        in_game_exp_tooltip_image = screenshot.crop((
+            left,
+            right,
+            left + width,
+            right + height,
+        ))
+        in_game_exp_tooltip_image = cv2.cvtColor(numpy.array(in_game_exp_tooltip_image), cv2.COLOR_RGB2BGR) # converts image from Pillow format to OpenCV format
+
+
+        text_fragments= self._reader.readtext(in_game_exp_tooltip_image)
+
+        width = in_game_exp_tooltip_image.shape[1]
+
+        def extract_comparison_key(text_fragment):
+            pos = text_fragment[0][0]
+            return pos[0] + width * pos[1]
+
+        text_fragments.sort(key = extract_comparison_key)
+
+        full_text = ""
+        for text_fragment in text_fragments:
+            full_text += text_fragment[1] + " "
+
+        exp = 0
+        match_ = re.search(r"^.*?Current[ ]+Exp\:[ ]+([0-9,]+)[ ]+.*$", full_text)
+        if match_:
+            exp = int(match_.group(1).replace(",", ""))
+
+        return exp
+    
 class Overlay:
     def __init__(self):
         pass
 
     def main(self, argv : list[str]):
-        width, height = (1920, 1080)
-        pos_data = get_pos_data(width, height)
-        if not pos_data:
-            raise RuntimeError(f"Can not receive position data for resolution: {width}x{height}.")
-
-        measurer = Measurer()
-        stop_watch = StopWatch()
+        logic = Logic()
 
         app = QApplication(argv)
 
-        control_bar = ControlBar(pos_data, measurer, stop_watch)
+        control_bar = ControlBar(logic)
         control_bar.show()
 
         tray_menu = TrayMenu(app)
