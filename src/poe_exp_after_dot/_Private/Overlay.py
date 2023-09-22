@@ -1092,6 +1092,7 @@ class Logic:
 
         full_text = ""
         for text_fragment in text_fragments:
+            # print(text_fragment) # debug
             full_text += text_fragment[1] + " "
 
         exp = 0
