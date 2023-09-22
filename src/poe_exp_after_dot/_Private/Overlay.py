@@ -983,21 +983,38 @@ class ExpInfoBoard(QMainWindow):
         self._click_bar.hide()
 
 class TrayMenu(QSystemTrayIcon):
+    _exp_info_board : ExpInfoBoard
+
     _menu           : QMenu
     _quit_action    : QAction
+    _hide_action    : QAction
 
-    def __init__(self, app : QApplication):
+    def __init__(self, app : QApplication, exp_info_board : ExpInfoBoard):
         super().__init__()
+
+        self._exp_info_board = exp_info_board
 
         icon_file_name =  os.path.abspath(os.path.dirname(__file__) + "/../assets/icon.png")
         self.setIcon(QIcon(icon_file_name))
 
         self._menu = QMenu()
+
+        self._hide_action = QAction('Hide', checkable = True)
+        def hide_exp_info_board(is_hide):
+            if is_hide:
+                exp_info_board.hide()
+            else:
+                exp_info_board.show()
+        self._hide_action.triggered.connect(hide_exp_info_board)
+        self._menu.addAction(self._hide_action)
+
         self._quit_action = QAction("Quit")
         self._quit_action.triggered.connect(app.quit)
         self._menu.addAction(self._quit_action)
 
         self.setContextMenu(self._menu)
+
+
         
 
 class Logic:
@@ -1128,7 +1145,7 @@ class Overlay:
         exp_info_board = ExpInfoBoard(logic)
         exp_info_board.show()
 
-        tray_menu = TrayMenu(app)
+        tray_menu = TrayMenu(app, exp_info_board)
         tray_menu.show()
 
         def excepthook(exception_type, exception : BaseException, traceback_type):
