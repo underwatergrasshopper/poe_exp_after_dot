@@ -840,15 +840,22 @@ class ExpInfoBoard(QWidget):
 
         # transparency
         self.setWindowOpacity(0.7)
+        self.setContentsMargins(1, 1, 1, 1)
 
         # text
         self._label = QLabel("", self)
         self._label.setStyleSheet(f"font: {font_size}px {font_name}; color: white;")
         # NOTE: This is crucial. Prevents from blocking mouseReleaseEvent in parent widget.
         self._label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True) 
+
         self.set_description("Click on in-game exp bar to receive data.<br>Ctrl + Shift + LMB to move this board.", is_resize = True)
 
-        self.oldPos = self.pos()
+        # TODO: Auto wrapping.
+        #self._label.setMinimumSize(self._label.sizeHint())
+        ##self._label.setMaximumSize(self._label.sizeHint())
+        #self._label.setWordWrap(True)  
+        #
+        #self.set_description("Click on in-game exp bar to receive data. Ctrl + Shift + LMB to move this board.")
 
     def set_description(self, description, *, is_lock_left_bottom = False, is_resize = False):
         if is_resize:
