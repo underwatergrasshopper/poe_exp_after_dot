@@ -4,6 +4,7 @@ from typing import SupportsFloat, SupportsInt, Sequence
 from dataclasses import dataclass
 
 import os
+import sys
 import re
 import numpy
 import cv2
@@ -1100,3 +1101,5 @@ class Overlay:
         tray_menu.show()
 
         result_code = app.exec_()
+        sys.exit(result_code)
+
