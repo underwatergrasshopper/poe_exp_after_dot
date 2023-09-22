@@ -1123,7 +1123,7 @@ class Logic:
     
 
 class ExceptionStash:
-    exception = BaseException | None
+    exception : BaseException | None
 
     def __init__(self):
         self.exception = None
