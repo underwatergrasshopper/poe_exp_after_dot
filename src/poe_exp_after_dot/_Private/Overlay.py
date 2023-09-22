@@ -707,14 +707,12 @@ def _find_exp_threshold_info(exp : int) -> ExpThresholdInfo | None:
             return info 
     return None
 
-
-
 @dataclass
 class PosData:
-    control_bar_x                   : int
-    control_bar_y                   : int
-    control_bar_width               : int
-    control_bar_height              : int
+    click_bar_x                   : int
+    click_bar_y                   : int
+    click_bar_width               : int
+    click_bar_height              : int
 
     exp_bar_y_offset                : int # from control bar position
     exp_bar_height                  : int
@@ -727,7 +725,6 @@ class PosData:
     in_game_exp_tooltip_width       : int 
     in_game_exp_tooltip_height      : int 
 
-
 def get_pos_data(resolution_width : int, resolution_height : int) -> PosData | None:
     """
     Returns
@@ -737,10 +734,10 @@ def get_pos_data(resolution_width : int, resolution_height : int) -> PosData | N
     match (resolution_width, resolution_height):
         case (1920, 1080):
             return PosData(
-                control_bar_x                   = 551,
-                control_bar_y                   = 1059,
-                control_bar_width               = 820,
-                control_bar_height              = 21,
+                click_bar_x                   = 551,
+                click_bar_y                   = 1059,
+                click_bar_width               = 820,
+                click_bar_height              = 21,
             
                 exp_bar_y_offset                = 10,
                 exp_bar_height                  = 5,
@@ -756,18 +753,17 @@ def get_pos_data(resolution_width : int, resolution_height : int) -> PosData | N
         
     return None
 
-
 class ExpBar(QWidget):
     _logic          : "Logic"
 
     _width          : int
-    _control_bar    : "ControlBar"
+    _click_bar      : "ClickBar"
 
-    def __init__(self, logic : "Logic", control_bar : "ControlBar"):
+    def __init__(self, logic : "Logic", click_bar : "ClickBar"):
         super().__init__()
 
         self._logic = logic
-        self._control_bar = control_bar
+        self._click_bar = click_bar
 
         self.setWindowFlags(
             Qt.WindowStaysOnTopHint |
@@ -789,11 +785,11 @@ class ExpBar(QWidget):
         ratio
             Value from range 0 to 1.
         """
-        self._width = int(self._logic.to_pos_data().control_bar_width * ratio)
+        self._width = int(self._logic.to_pos_data().click_bar_width * ratio)
 
         self.setGeometry(QRect(
-            self._logic.to_pos_data().control_bar_x,
-            self._logic.to_pos_data().control_bar_y + self._logic.to_pos_data().exp_bar_y_offset,
+            self._logic.to_pos_data().click_bar_x,
+            self._logic.to_pos_data().click_bar_y + self._logic.to_pos_data().exp_bar_y_offset,
             max(1, self._width),
             self._logic.to_pos_data().exp_bar_height,
         ))
@@ -814,8 +810,7 @@ class ExpBar(QWidget):
       
             pos_in_screen = self.mapToGlobal(QPoint(event.x(), event.y()))
 
-            self._control_bar.measure(pos_in_screen.x(), pos_in_screen.y())
-
+            self._click_bar.measure(pos_in_screen.x(), pos_in_screen.y())
 
 class ExpInfoBoard(QWidget):
     _logic      : "Logic"
@@ -861,7 +856,7 @@ class ExpInfoBoard(QWidget):
                 x = rect.x()
                 bottom = rect.y() + rect.height()
             else:
-                x = self._logic.to_pos_data().control_bar_x
+                x = self._logic.to_pos_data().click_bar_x
                 bottom = self._logic.to_pos_data().in_game_full_exp_region_y
 
             self._label.setText(description)
@@ -893,7 +888,7 @@ class ExpInfoBoard(QWidget):
                 self.move(self.x() + offset.x(), self.y() + offset.y())
                 self._prev_pos = event.globalPos()
 
-class ControlBar(QMainWindow):
+class ClickBar(QMainWindow):
     _logic              : "Logic"
     _exp_bar            : ExpBar
     _exp_info_board     : ExpInfoBoard
@@ -916,10 +911,10 @@ class ControlBar(QMainWindow):
         self.setWindowOpacity(0.01)
 
         self.setGeometry(QRect(
-            logic.to_pos_data().control_bar_x,
-            logic.to_pos_data().control_bar_y,
-            logic.to_pos_data().control_bar_width,
-            logic.to_pos_data().control_bar_height,
+            logic.to_pos_data().click_bar_x,
+            logic.to_pos_data().click_bar_y,
+            logic.to_pos_data().click_bar_width,
+            logic.to_pos_data().click_bar_height,
         ))
 
         self._exp_bar = ExpBar(logic, self)
@@ -942,11 +937,11 @@ class ControlBar(QMainWindow):
             self.measure(pos_in_screen.x(), pos_in_screen.y())
 
     def measure(self, cursor_x_in_screen : int, cursor_y_in_screen : int):
+        self._logic.measure(cursor_x_in_screen, cursor_y_in_screen, [self])
+
         if self._is_first_measure:
             self._exp_info_board.set_description(self._logic.gen_exp_description(is_control = True), is_lock_left_bottom = True, is_resize = True)
             self._is_first_measure = False
-
-        self._logic.measure(cursor_x_in_screen, cursor_y_in_screen, [self])
 
         self._exp_info_board.set_description(self._logic.gen_exp_description(), is_lock_left_bottom = True)
 
@@ -1098,8 +1093,8 @@ class Overlay:
 
         app = QApplication(argv)
 
-        control_bar = ControlBar(logic)
-        control_bar.show()
+        click_bar = ClickBar(logic)
+        click_bar.show()
 
         tray_menu = TrayMenu(app)
         tray_menu.show()
