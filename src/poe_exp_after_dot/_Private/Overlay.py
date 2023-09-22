@@ -401,15 +401,15 @@ class FineExpPerHour:
         unit = ""
 
         if exp_per_hour >= 1000:
-            exp_per_hour, remain = divmod(exp_per_hour, 1000.0)
+            exp_per_hour, remain = divmod(exp_per_hour, 1000)
             unit = "k"
 
         if exp_per_hour >= 1000:
-            exp_per_hour, remain = divmod(exp_per_hour, 1000.0)
+            exp_per_hour, remain = divmod(exp_per_hour, 1000)
             unit = "M"
 
         if exp_per_hour >= 1000:
-            exp_per_hour, remain = divmod(exp_per_hour, 1000.0)
+            exp_per_hour, remain = divmod(exp_per_hour, 1000)
             unit = "B"
 
         if exp_per_hour >= 1000:
@@ -426,11 +426,11 @@ class FineExpPerHour:
         e = "</font>" if unit_color else ""
 
         if exp_per_hour < 10 and unit != "":
-            self._text_representation = f"{prefix}{sign}{vb}{exp_per_hour:.0f}.{remain // 10:02}{ve}{b}{unit} exp/h{e}"
+            self._text_representation = f"{prefix}{sign}{vb}{exp_per_hour}.{remain // 10:02}{ve}{b}{unit} exp/h{e}"
         elif exp_per_hour < 100 and unit != "":
-            self._text_representation = f"{prefix}{sign}{vb}{exp_per_hour:.0f}.{remain // 100:01}{ve}{b}{unit} exp/h{e}"
+            self._text_representation = f"{prefix}{sign}{vb}{exp_per_hour}.{remain // 100:01}{ve}{b}{unit} exp/h{e}"
         else:
-            self._text_representation = f"{prefix}{sign}{vb}{exp_per_hour:.0f}{ve}{b}{unit} exp/h{e}"
+            self._text_representation = f"{prefix}{sign}{vb}{exp_per_hour}{ve}{b}{unit} exp/h{e}"
 
     def get_exp_per_hour(self) -> int:
         return self._exp_per_hour
