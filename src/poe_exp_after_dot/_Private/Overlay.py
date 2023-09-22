@@ -271,7 +271,7 @@ class FineTime:
         elif self._time < 1.0:
             if is_show_ms_if_below_1s:
                 milliseconds = self._time * 100
-                milliseconds, remain = divmod(milliseconds, 1)  # rounding prevention
+                milliseconds, remain = divmod(milliseconds, 1.0) # rounding prevention
 
                 if milliseconds == 0.0:
                     self._text_representation = f"<{vb}1{ve}{b}ms{e}" 
@@ -286,7 +286,7 @@ class FineTime:
             days,       remain  = divmod(remain, _SECONDS_IN_DAY)       if max_unit in ["w", "d"]                   else (0, remain)
             hours,      remain  = divmod(remain, _SECONDS_IN_HOUR)      if max_unit in ["w", "d", "h"]              else (0, remain)
             minutes,    remain  = divmod(remain, _SECONDS_IN_MINUTE)    if max_unit in ["w", "d", "h", "m"]         else (0, remain)
-            seconds,    remain  = divmod(remain, 1)                     if max_unit in ["w", "d", "h", "m", "s"]    else (0, remain)
+            seconds,    remain  = divmod(remain, 1.0)                   if max_unit in ["w", "d", "h", "m", "s"]    else (0, remain)
 
             if weeks > 99:
                 prefix = ">"
@@ -308,7 +308,7 @@ class FineTime:
 
             if is_just_weeks_if_cup and prefix == ">":
                 weeks = self._time / _SECONDS_IN_WEEK
-                weeks, _ = divmod(weeks, 1)  # rounding prevention
+                weeks, _ = divmod(weeks, 1.0)  # rounding prevention
 
                 if weeks > 9999999999999:
                     weeks = 9999999999999
@@ -401,15 +401,15 @@ class FineExpPerHour:
         unit = ""
 
         if exp_per_hour >= 1000:
-            exp_per_hour, remain = divmod(exp_per_hour, 1000)
+            exp_per_hour, remain = divmod(exp_per_hour, 1000.0)
             unit = "k"
 
         if exp_per_hour >= 1000:
-            exp_per_hour, remain = divmod(exp_per_hour, 1000)
+            exp_per_hour, remain = divmod(exp_per_hour, 1000.0)
             unit = "M"
 
         if exp_per_hour >= 1000:
-            exp_per_hour, remain = divmod(exp_per_hour, 1000)
+            exp_per_hour, remain = divmod(exp_per_hour, 1000.0)
             unit = "B"
 
         if exp_per_hour >= 1000:
