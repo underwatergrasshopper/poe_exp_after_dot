@@ -16,7 +16,7 @@ from PIL import ImageGrab
 
 from PySide6.QtWidgets import QMainWindow, QApplication, QWidget, QLabel, QSystemTrayIcon, QMenu
 from PySide6.QtCore import Qt, QPoint, QRect
-from PySide6.QtGui import QColor, QMouseEvent, QIcon, QAction, QCloseEvent
+from PySide6.QtGui import QColor, QMouseEvent, QIcon, QAction, QCloseEvent, QContextMenuEvent
 from PySide6.QtCore import QPoint, QRect
 
 _EXIT_SUCCESS = 0
@@ -884,6 +884,7 @@ def _move_window_to_foreground(window_name : str):
 class InfoBoard(QMainWindow):
     _exp_bar            : ExpBar
     _click_bar          : ClickBar
+    _context_menu       : QMenu | None
 
     _logic              : "Logic"
     _prev_pos           : QPoint | None
@@ -899,6 +900,7 @@ class InfoBoard(QMainWindow):
 
         self._logic = logic
         self._prev_pos = None
+        self._context_menu = None
 
         self.setWindowFlags(
             Qt.WindowStaysOnTopHint |
@@ -951,6 +953,9 @@ class InfoBoard(QMainWindow):
         else:
             self._label.setWordWrap(True)  
             self._label.setText(description)
+
+    def attach_context_menu(self, context_menu):
+        self._context_menu = context_menu
     
     def mousePressEvent(self, event : QMouseEvent):
         self._exp_bar.activateWindow()
@@ -973,6 +978,10 @@ class InfoBoard(QMainWindow):
             if offset:
                 self.move(self.x() + offset.x(), self.y() + offset.y())
                 self._prev_pos = event.globalPos()
+
+    def contextMenuEvent(self, event : QContextMenuEvent):
+        if self._context_menu:
+            self._context_menu.exec(event.globalPos())
 
     def showEvent(self, event):
         self._exp_bar.try_show()
@@ -1013,6 +1022,8 @@ class TrayMenu(QSystemTrayIcon):
         self._menu.addAction(self._quit_action)
 
         self.setContextMenu(self._menu)
+
+        self._info_board.attach_context_menu(self._menu)
 
 
 class Logic:
@@ -1145,9 +1156,9 @@ class Overlay:
         app = QApplication(argv)
 
         info_board = InfoBoard(logic)
-        info_board.show()
-
         tray_menu = TrayMenu(app, info_board)
+
+        info_board.show()
         tray_menu.show()
 
         def excepthook(exception_type, exception : BaseException, traceback_type):
