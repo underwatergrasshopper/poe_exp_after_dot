@@ -1,7 +1,22 @@
 from math import isclose as _isclose
 
-from poe_exp_after_dot._Private.Overlay import FineTime, FineExpPerHour, FinePercent, Measurer, FineBareLevel
+from poe_exp_after_dot._Private.Overlay import FineTime, FineExpPerHour, FinePercent, Measurer, FineBareLevel, FineExp
 from poe_exp_after_dot._Private.Overlay import _SECONDS_IN_WEEK, _SECONDS_IN_DAY, _SECONDS_IN_HOUR, _SECONDS_IN_MINUTE
+
+def test_fine_exp():
+    assert str(FineExp()) == "0exp"
+    assert str(FineExp(0)) == "0exp"
+    assert str(FineExp(1)) == "1exp"
+    assert str(FineExp(999)) == "999exp"
+    assert str(FineExp(1000)) == "1'000exp"
+    assert str(FineExp(999999)) == "999'999exp"
+    assert str(FineExp(1000000)) == "1'000'000exp"
+    assert str(FineExp(999999999)) == "999'999'999exp"
+    assert str(FineExp(1000000000)) == "1'000'000'000exp"
+    assert str(FineExp(4250334444)) == "4'250'334'444exp"
+
+    assert str(FineExp(4250334444 + 1)) == ">4'250'334'444exp"
+    assert str(FineExp(-2)) == "<0exp"
 
 def test_fine_bare_level():
     assert str(FineBareLevel())     == "0"

@@ -145,6 +145,71 @@ def _pad_to_length(text : str, length : int):
         """
         return text.rjust(length)[:length]
 
+class FineExp:
+    MAX_LENGTH_AFTER_FORMAT : int   = 17
+    # format for out of range
+    # >4'250'334'444exp
+    #             <0exp
+
+    _exp                    : int
+    _text_representation    : str
+
+    def __init__(self, exp : SupportsInt = 0, *, value_color : str | None = None, unit_color : str | None = None):
+        """
+        value_color
+            None or color of all values. 
+            Can be name: "grey", "yellow", "red", "green", "blue", "white", ...
+            Can be value: "#7F7F7F", "#FFFF00", ...
+        unit_color
+            None or color of all values. 
+            Can be name: "grey", "yellow", "red", "green", "blue", "white", ...
+            Can be value: "#7F7F7F", "#FFFF00", ...
+        """
+        if not isinstance(exp, int):
+            self._exp = int(exp)
+        else:
+            self._exp = exp
+
+        vb = f"<font color=\"{value_color}\">" if value_color else ""
+        ve = "</font>" if value_color else ""
+
+        b = f"<font color=\"{unit_color}\">" if unit_color else ""
+        e = "</font>" if unit_color else ""
+
+        if self._exp > 4250334444:
+            exp = 4250334444
+            prefix = ">"
+        elif self._exp < 0:
+            exp = 0
+            prefix = "<"
+        else:
+            exp = self._exp
+            prefix = ""
+        
+        exp, remain = divmod(exp, 1000)
+        if exp > 0:
+            exp_text = f"{remain:03}"
+        else:
+            exp_text = f"{remain}"
+
+        while exp > 0:
+            exp, remain = divmod(exp, 1000)
+            if exp > 0:
+                exp_text = f"{remain:03}{b}'{e}" + exp_text
+            else:
+                exp_text = f"{remain}{b}'{e}" + exp_text
+
+        self._text_representation = f"{prefix}{vb}{exp_text}{ve}{b}exp{e}"
+
+    def get_exp(self) -> int:
+        return self._exp
+    
+    def __str__(self) -> str:
+        return self._text_representation
+    
+    def __repr__(self) -> str:
+        return self._text_representation
+
 class FineBareLevel:
     MAX_LENGTH_AFTER_FORMAT : int   = 4
     # format for out of range:
@@ -566,6 +631,8 @@ class StopWatch:
         return self._stop
     
 class Measurer:
+    _total_exp                      : int
+
     _level                          : int
     _prev_info                      : ExpThresholdInfo
 
@@ -584,6 +651,8 @@ class Measurer:
     _is_update_fail                 : bool
 
     def __init__(self):
+        self._total_exp                     = 0
+
         self._level                         = 0
         self._prev_info                     = _find_exp_threshold_info(0)
 
@@ -608,6 +677,8 @@ class Measurer:
         elapsed_time
             In seconds.
         """
+        self._total_exp = total_exp
+
         if elapsed_time > 0.0:
             info = _find_exp_threshold_info(total_exp)
 
@@ -653,6 +724,9 @@ class Measurer:
                 self._prev_info = info
             else:
                 self._is_update_fail = True
+
+    def get_total_exp(self) -> int:
+        return self._total_exp 
 
     def get_progress(self) -> float:
         """
@@ -893,7 +967,7 @@ class InfoBoard(QMainWindow):
 
     _is_first_measure   : bool
 
-    def __init__(self, logic : "Logic", font_name = "Consolas", font_size = 16):
+    def __init__(self, logic : "Logic", font_name = "Consolas", font_size = 14):
         """
         font_size
             In pixels.
@@ -1012,6 +1086,11 @@ class TrayMenu(QSystemTrayIcon):
         self.setIcon(QIcon(icon_file_name))
 
         self._menu = QMenu()
+        #self._menu.setWindowFlag( # TODO
+        #    Qt.WindowStaysOnTopHint |
+        #    Qt.FramelessWindowHint |
+        #    Qt.Tool
+        #)
 
         self._clear_log_file_action = QAction("Clear Log File")
         def clear_log_file():
@@ -1080,6 +1159,7 @@ class Logic:
         if is_control:
             level               = "?" * FineBareLevel.MAX_LENGTH_AFTER_FORMAT
             progress            = "?" * FinePercent.MAX_LENGTH_AFTER_FORMAT
+            exp                 = "?" * FineExp.MAX_LENGTH_AFTER_FORMAT
             progress_step       = "?" * FinePercent.MAX_LENGTH_AFTER_FORMAT
             progress_step_time  = "?" * FineTime.MAX_LENGTH_AFTER_FORMAT
             exp_per_hour        = "?" * FineExpPerHour.MAX_LENGTH_AFTER_FORMAT
@@ -1088,6 +1168,7 @@ class Logic:
         else:
             level               = FineBareLevel(self._measurer.get_level())
             progress            = FinePercent(self._measurer.get_progress(), integer_color = "#F8CD82", two_dig_after_dot_color = "#7F7FFF")
+            exp                 = FineExp(self._measurer.get_total_exp(), unit_color = "#9F9F9F")
             progress_step       = FinePercent(self._measurer.get_progress_step(), is_sign = True, integer_color = "#FFFF7F", two_dig_after_dot_color = "#FFFF7F")
             progress_step_time  = FineTime(self._measurer.get_progress_step_time(), max_unit = "h", unit_color = "#8F8F8F", never_color = "#FF4F1F")
             exp_per_hour        = FineExpPerHour(self._measurer.get_exp_per_hour(), value_color = "#6FFF6F", unit_color = "#9F9F9F")
@@ -1099,7 +1180,8 @@ class Logic:
             f"{progress_step} in {progress_step_time}<br>"
             f"{exp_per_hour}<br>"
             f"10% in {time_to_10_percent}<br>"
-            f"next in {time_to_next_level}"
+            f"next in {time_to_next_level}<br>"
+            f"{exp}"
         )
         
     def measure(self, cursor_x_in_screen : int, cursor_y_in_screen : int, widgets_to_hide : list[QWidget]):
