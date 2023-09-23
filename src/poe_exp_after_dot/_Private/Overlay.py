@@ -16,7 +16,7 @@ from PIL import ImageGrab
 
 from PySide6.QtWidgets import QMainWindow, QApplication, QWidget, QLabel, QSystemTrayIcon, QMenu
 from PySide6.QtCore import Qt, QPoint, QRect
-from PySide6.QtGui import QColor, QMouseEvent, QIcon, QAction, QCloseEvent, QContextMenuEvent
+from PySide6.QtGui import QColor, QMouseEvent, QIcon, QAction, QCloseEvent, QContextMenuEvent, QFocusEvent
 from PySide6.QtCore import QPoint, QRect
 
 _EXIT_SUCCESS = 0
@@ -965,7 +965,9 @@ class InfoBoard(QMainWindow):
     _logic              : "Logic"
     _prev_pos           : QPoint | None
 
-    _is_first_measure   : bool
+    _flags_backup       : Qt.WindowType | None
+
+    _is_first_measure   : bool  
 
     def __init__(self, logic : "Logic", font_name = "Consolas", font_size = 14):
         """
@@ -977,6 +979,8 @@ class InfoBoard(QMainWindow):
         self._logic = logic
         self._prev_pos = None
         self._context_menu = None
+
+        self._flags_backup = None
 
         self.setWindowFlags(
             Qt.WindowStaysOnTopHint |
@@ -1030,9 +1034,11 @@ class InfoBoard(QMainWindow):
             self._label.setWordWrap(True)  
             self._label.setText(description)
 
-    def attach_context_menu(self, context_menu):
+    def attach_context_menu(self, context_menu : QMenu):
         self._context_menu = context_menu
-    
+        self._flags_backup = self._context_menu.windowFlags()
+
+
     def mousePressEvent(self, event : QMouseEvent):
         self._exp_bar.activateWindow()
         self._click_bar.activateWindow()
@@ -1042,9 +1048,15 @@ class InfoBoard(QMainWindow):
         if event.button() == Qt.MouseButton.LeftButton and QApplication.keyboardModifiers() == (Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.ShiftModifier):
             self._prev_pos = event.globalPos()
 
+        if event.button() == Qt.MouseButton.LeftButton and self._flags_backup:
+            self._context_menu.setWindowFlags(self._flags_backup)
+
     def mouseReleaseEvent(self, event : QMouseEvent):
         if event.button() == Qt.MouseButton.LeftButton:
             self._prev_pos = None
+
+        if event.button() == Qt.MouseButton.RightButton and self._flags_backup:
+            self._context_menu.setWindowFlags(self._flags_backup | Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint | Qt.Tool)
         
         _move_window_to_foreground("Path of Exile")
 
@@ -1076,6 +1088,8 @@ class TrayMenu(QSystemTrayIcon):
     _hide_action    : QAction
     _quit_action    : QAction
 
+    _flags_backup   : Qt.WindowType
+
     def __init__(self, app : QApplication, info_board : InfoBoard, logic : "Logic", log_manager : "LogManager"):
         super().__init__()
 
@@ -1086,22 +1100,22 @@ class TrayMenu(QSystemTrayIcon):
         self.setIcon(QIcon(icon_file_name))
 
         self._menu = QMenu()
-        #self._menu.setWindowFlag( # TODO
-        #    Qt.WindowStaysOnTopHint |
-        #    Qt.FramelessWindowHint |
-        #    Qt.Tool
-        #)
+        self._flags_backup = self._menu.windowFlags()
 
         self._clear_log_file_action = QAction("Clear Log File")
         def clear_log_file():
             log_manager.clear_log_file()
             _logger.info("Cleared runtime.log.")
+            self._menu.setWindowFlags(self._flags_backup)
+
         self._clear_log_file_action.triggered.connect(clear_log_file)
         self._menu.addAction(self._clear_log_file_action)
 
         self._open_data_folder_action = QAction("Open Data Folder")
         def open_data_folder():
             os.startfile(_try_get(self._logic.to_settings(), "data_path", str))
+            self._menu.setWindowFlags(self._flags_backup)
+
         self._open_data_folder_action.triggered.connect(open_data_folder)
         self._menu.addAction(self._open_data_folder_action)
 
@@ -1111,6 +1125,8 @@ class TrayMenu(QSystemTrayIcon):
                 info_board.hide()
             else:
                 info_board.show()
+            self._menu.setWindowFlags(self._flags_backup)
+
         self._hide_action.triggered.connect(hide_overlay)
         self._menu.addAction(self._hide_action)
 
