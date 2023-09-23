@@ -1,6 +1,6 @@
 from time import time as _get_time
 
-from typing import SupportsFloat, SupportsInt, Sequence
+from typing import SupportsFloat, SupportsInt, Sequence, Any
 from dataclasses import dataclass
 
 import os
@@ -10,7 +10,7 @@ import numpy
 import cv2
 import easyocr
 import ctypes
-import traceback
+import logging
 
 from PIL import ImageGrab
 
@@ -26,6 +26,8 @@ _SECONDS_IN_MINUTE   = 60
 _SECONDS_IN_HOUR     = 60 * _SECONDS_IN_MINUTE
 _SECONDS_IN_DAY      = 24 * _SECONDS_IN_HOUR
 _SECONDS_IN_WEEK     = 7  * _SECONDS_IN_DAY
+
+_logger = logging.getLogger("poe_exp_after_dot")
 
 @dataclass
 class ExpThresholdInfo:
@@ -993,20 +995,36 @@ class InfoBoard(QMainWindow):
 
 class TrayMenu(QSystemTrayIcon):
     _info_board     : InfoBoard
+    _logic          : "Logic"
 
     _menu           : QMenu
-    _quit_action    : QAction
+    _open_data_folder_action : QAction
     _hide_action    : QAction
+    _quit_action    : QAction
 
-    def __init__(self, app : QApplication, info_board : InfoBoard):
+    def __init__(self, app : QApplication, info_board : InfoBoard, logic : "Logic", log_manager : "LogManager"):
         super().__init__()
 
         self._info_board = info_board
+        self._logic = logic
 
         icon_file_name =  os.path.abspath(os.path.dirname(__file__) + "/../assets/icon.png")
         self.setIcon(QIcon(icon_file_name))
 
         self._menu = QMenu()
+
+        self._clear_log_file_action = QAction("Clear Log File")
+        def clear_log_file():
+            log_manager.clear_log_file()
+            _logger.info("Cleared runtime.log.")
+        self._clear_log_file_action.triggered.connect(clear_log_file)
+        self._menu.addAction(self._clear_log_file_action)
+
+        self._open_data_folder_action = QAction("Open Data Folder")
+        def open_data_folder():
+            os.startfile(_try_get(self._logic.to_settings(), "data_path", str))
+        self._open_data_folder_action.triggered.connect(open_data_folder)
+        self._menu.addAction(self._open_data_folder_action)
 
         self._hide_action = QAction('Hide', checkable = True)
         def hide_overlay(is_hide):
@@ -1016,6 +1034,8 @@ class TrayMenu(QSystemTrayIcon):
                 info_board.show()
         self._hide_action.triggered.connect(hide_overlay)
         self._menu.addAction(self._hide_action)
+
+        self._menu.addSeparator()
 
         self._quit_action = QAction("Quit")
         self._quit_action.triggered.connect(app.quit)
@@ -1027,13 +1047,16 @@ class TrayMenu(QSystemTrayIcon):
 
 
 class Logic:
+    _settings   : dict[str | Any]
     _pos_data   : PosData
     _measurer   : Measurer
 
     _stop_watch : StopWatch
     _reader     : easyocr.Reader
 
-    def __init__(self):
+    def __init__(self, settings : dict[str, Any]):
+        self._settings = settings
+
         width, height = (1920, 1080)
         self._pos_data = get_pos_data(width, height)
         if not self._pos_data:
@@ -1043,6 +1066,9 @@ class Logic:
         self._stop_watch = StopWatch()
 
         self._reader = easyocr.Reader(['en'], gpu = True, verbose = False)
+
+    def to_settings(self) -> dict[str, Any]:
+        return self._settings
 
     def to_measurer(self) -> Measurer:
         return self._measurer
@@ -1142,21 +1168,82 @@ class ExceptionStash:
 _exception_stash = ExceptionStash()
 
 
+
+def _try_get(settings : dict[str | Any], name : str, value_type : type) -> int:
+    value = settings.get(name, None)
+    if value is None:
+        raise ValueError(f"There is no option \"{name}\" in settings.")
+    return value_type(value)
+
+
+class LogManager:
+    _file_handler   : logging.FileHandler | None
+    _log_file_name  : str | None
+
+    def __init__(self):
+        self._file_handler = None
+        self._log_file_name = None
+
+    def setup_logger(self, log_file_name : str | None = None, *, is_debug : bool = False, is_stdout : bool = False):
+        formatter = logging.Formatter(fmt = "[%(asctime)s][%(name)s][%(levelname)s]: %(message)s", datefmt = "%Y-%m-%d %H:%M:%S")
+
+        if is_stdout:
+            stream_handler = logging.StreamHandler(sys.stdout)
+            stream_handler.setFormatter(formatter)
+            _logger.addHandler(stream_handler)
+
+        if log_file_name:
+            path = os.path.dirname(log_file_name)
+            os.makedirs(path, exist_ok = True)
+
+            self._file_handler = logging.FileHandler(log_file_name, "a")
+            self._file_handler.setFormatter(formatter)
+            _logger.addHandler(self._file_handler)
+
+            self._log_file_name = log_file_name
+
+        _logger.setLevel(logging.DEBUG if is_debug else logging.INFO)
+
+    def clear_log_file(self):
+        if self._file_handler and self._log_file_name:
+            formatter = self._file_handler.formatter
+            self._file_handler.close()
+            _logger.removeHandler(self._file_handler)
+
+            self._file_handler = logging.FileHandler(self._log_file_name, "w")
+            self._file_handler.setFormatter(formatter)
+            _logger.addHandler(self._file_handler)
+
 class Overlay:
+
     def __init__(self):
         pass
 
-    def main(self, argv : list[str]) -> int:
+    def run(self, *, data_path : str | None = None) -> int:
         """
         Returns
             Exit code.
         """
-        logic = Logic()
+        if data_path is None:
+            data_path = os.environ["APPDATA"] + "/../Local/poe_exp_after_dot"
+        data_path = os.path.abspath(data_path)
 
-        app = QApplication(argv)
+        os.makedirs(data_path, exist_ok = True)
+
+        log_manager = LogManager()
+        log_manager.setup_logger(data_path + "/runtime.log", is_stdout = True)
+        
+        _logger.info("====== NEW RUN ======")
+        _logger.info("Parsed command line arguments.")
+
+        settings = {"data_path" : data_path}
+
+        logic = Logic(settings)
+
+        app = QApplication([])
 
         info_board = InfoBoard(logic)
-        tray_menu = TrayMenu(app, info_board)
+        tray_menu = TrayMenu(app, info_board, logic, log_manager)
 
         info_board.show()
         tray_menu.show()
@@ -1178,4 +1265,33 @@ class Overlay:
             raise _exception_stash.exception
         
         return exit_code
+
+    def main(self, argv : list[str]) -> int:
+        """
+        Returns
+            Exit code.
+        """
+        ### parses command line options ###
+        data_path = None
+
+        for argument in argv[1:]:
+            match argument.split("="):
+                
+                case [option, _, _, *_]:
+                        raise ValueError(f"Option \"{option}\" have to many values. Only one value allowed.")
+                
+                case ["--data-path", *values]:
+                    if not values or not values[0]:
+                        raise ValueError("No path specified in option \"--data-path\".")
+                    else:
+                        data_path = values[0]
+
+                case [name, *_]:
+                    raise ValueError(f"Unknown option \"{name}\" in command line arguments.")
+                
+        return self.run(
+            data_path = data_path
+        )
+    
+
 
