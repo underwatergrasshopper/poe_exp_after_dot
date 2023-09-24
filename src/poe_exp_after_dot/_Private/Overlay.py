@@ -1342,9 +1342,10 @@ class Overlay:
         log_manager.setup_logger(data_path + "/runtime.log", is_stdout = True)
         
         _logger.info("====== NEW RUN ======")
-        _logger.info("Parsed command line arguments.")
 
         settings = {"data_path" : data_path}
+
+        _logger.info("Loaded settings.")
 
         logic = Logic(settings)
 
