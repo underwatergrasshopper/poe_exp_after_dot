@@ -847,9 +847,9 @@ class ExpBar(QWidget):
         self._click_bar = click_bar
 
         self.setWindowFlags(
-            Qt.WindowStaysOnTopHint |
-            Qt.FramelessWindowHint |
-            Qt.Tool
+            Qt.WindowType.WindowStaysOnTopHint |
+            Qt.WindowType.FramelessWindowHint |
+            Qt.WindowType.Tool
         )
 
         self.setWindowOpacity(0.5)
@@ -909,9 +909,9 @@ class ClickBar(QWidget):
         self._is_first_measure = True
 
         self.setWindowFlags(
-            Qt.WindowStaysOnTopHint | 
-            Qt.FramelessWindowHint |
-            Qt.Tool
+            Qt.WindowType.WindowStaysOnTopHint | 
+            Qt.WindowType.FramelessWindowHint |
+            Qt.WindowType.Tool
         )
 
         self.setWindowOpacity(0.01)
@@ -983,9 +983,9 @@ class InfoBoard(QMainWindow):
         self._flags_backup = None
 
         self.setWindowFlags(
-            Qt.WindowStaysOnTopHint |
-            Qt.FramelessWindowHint |
-            Qt.Tool
+            Qt.WindowType.WindowStaysOnTopHint |
+            Qt.WindowType.FramelessWindowHint |
+            Qt.WindowType.Tool
         )
 
         # background color
@@ -1056,7 +1056,7 @@ class InfoBoard(QMainWindow):
             self._prev_pos = None
 
         if event.button() == Qt.MouseButton.RightButton and self._flags_backup:
-            self._context_menu.setWindowFlags(self._flags_backup | Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint | Qt.Tool)
+            self._context_menu.setWindowFlags(self._flags_backup | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.FramelessWindowHint | Qt.WindowType.Tool)
         
         _move_window_to_foreground("Path of Exile")
 
@@ -1345,7 +1345,7 @@ class ErrorBoard(QMainWindow):
         self._screen_width  = screen_width
         self._screen_height = screen_height
 
-        self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint | Qt.Tool)
+        self.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.FramelessWindowHint | Qt.WindowType.Tool)
         palette = self.palette()
         palette.setColor(self.backgroundRole(), QColor(0, 0, 0))
         self.setPalette(palette)
@@ -1380,7 +1380,7 @@ class ErrorBoard(QMainWindow):
                 self._bottom = bottom
                 self._max_width = screen_width - x
 
-                self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint | Qt.Tool)
+                self.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.FramelessWindowHint | Qt.WindowType.Tool)
                 palette = self.palette()
                 palette.setColor(self.backgroundRole(), QColor(0, 0, 0))
                 self.setPalette(palette)
