@@ -14,6 +14,8 @@ poe_exp_after_dot.py [<option> ...]
         In that folder are stored: settings, logs, exp data and other data.
 """
 import logging as _logging
+import sys as _sys
+from tkinter import messagebox as _messagebox
 from ._Private.Overlay import Overlay as _Overlay, _EXIT_FAILURE
 
 
@@ -33,11 +35,14 @@ def _main(argv : list[str]) -> int:
 
     except Exception as exception:
         # All internal exceptions are handled here, if logger managed to setup correctly.
-        # Wrong command line arguments are not handled here.
+        # Wrong command line arguments are handled here only when stdout is not present (running through pyw).
         logger = _logging.getLogger("poe_exp_after_dot")
 
         if logger and logger.hasHandlers():
             logger.critical("", exc_info = True)
+            return _EXIT_FAILURE
+        elif not _sys.stdout:
+            _messagebox.showerror(title = "Exception (from poe_exp_after_dot module)", message = str(exception))
             return _EXIT_FAILURE
         else:
             raise exception
@@ -66,6 +71,4 @@ def main(argv : list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    import sys as _sys
-
     _sys.exit(_main(_sys.argv))
