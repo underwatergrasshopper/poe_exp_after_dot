@@ -1541,9 +1541,9 @@ class Overlay:
         data_path = None
 
         for argument in argv[1:]:
-            option_name, *_values = argument.split("=")
+            option_name, *value = argument.split("=", 1)
 
-            match (option_name, *_values):
+            match (option_name, *value):
                 ### correct ###
 
                 case ["--data-path", data_path]:
@@ -1554,8 +1554,8 @@ class Overlay:
                 
                 ### incorrect ###
 
-                case ["--data-path" | "--help" | "-h", _, *_]:
-                    raise ValueError(f"Incorrect command line argument. Option \"{option_name}\" have unexpected number of values.")
+                case ["--data-path" | "--help" | "-h", _]:
+                    raise ValueError(f"Incorrect command line argument. Option \"{option_name}\" can't have a value.")
                 
                 case ["--data-path"]:
                     raise ValueError(f"Incorrect command line argument. Option \"{option_name}\" need to have a value.")
