@@ -21,7 +21,7 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: Microsoft :: Windows",
     ],
-    package_dir                     = {"": "src"},
+    package_dir                     = {"" : "src"},
     packages                        = setuptools.find_packages(where = "src"),
     include_package_data            = True,
     package_data                    = {"poe_exp_after_dot" : ["assets/icon.png"]},
