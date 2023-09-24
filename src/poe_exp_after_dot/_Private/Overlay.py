@@ -1080,15 +1080,16 @@ class InfoBoard(QMainWindow):
         self._click_bar.hide()
 
 class TrayMenu(QSystemTrayIcon):
-    _info_board     : InfoBoard
-    _logic          : "Logic"
+    _info_board         : InfoBoard
+    _logic              : "Logic"
 
-    _menu           : QMenu
+    _menu               : QMenu
     _open_data_folder_action : QAction
-    _hide_action    : QAction
-    _quit_action    : QAction
+    _hide_action        : QAction
+    _quit_action        : QAction
+    _close_menu_action  : QAction
 
-    _flags_backup   : Qt.WindowType
+    _flags_backup       : Qt.WindowType
 
     def __init__(self, app : QApplication, info_board : InfoBoard, logic : "Logic", log_manager : "LogManager"):
         super().__init__()
@@ -1101,7 +1102,7 @@ class TrayMenu(QSystemTrayIcon):
 
         self._menu = QMenu()
         self._flags_backup = self._menu.windowFlags()
-
+        
         self._clear_log_file_action = QAction("Clear Log File")
         def clear_log_file():
             log_manager.clear_log_file()
@@ -1131,6 +1132,10 @@ class TrayMenu(QSystemTrayIcon):
         self._menu.addAction(self._hide_action)
 
         self._menu.addSeparator()
+
+        self._close_menu_action = QAction("Close Menu")
+        self._close_menu_action.triggered.connect(self._menu.close)
+        self._menu.addAction(self._close_menu_action)
 
         self._quit_action = QAction("Quit")
         self._quit_action.triggered.connect(app.quit)
