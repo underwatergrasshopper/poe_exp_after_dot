@@ -1315,8 +1315,11 @@ _HELP = """
 poe_exp_after_dot.py [<option> ...]
 
 <option>
+    --help | -h
+        Just displays this information. Application won't run.
     --data-path=<path>
-        Relative or absolute path to data folder. In that folder are stored: settings, logs, exp data and other data.
+        Relative or absolute path to data folder. 
+        In that folder are stored: settings, logs, exp data and other data.
 """.strip("\n")
 
 class Overlay:
@@ -1375,33 +1378,41 @@ class Overlay:
         """
         Returns
             Exit code.
+        Exceptions
+            ValueError
+                When any given option in argument list is incorrect
         """
         ### parses command line options ###
+        is_help = False
         data_path = None
 
         for argument in argv[1:]:
-            option, *_values = argument.split("=")
+            option_name, *_values = argument.split("=")
 
-            match (option, *_values):
-                case [option, _, _, *_]:
-                        raise ValueError(f"Option \"{option}\" have to many values. Only one value allowed.")
+            match (option_name, *_values):
+                ### correct ###
 
-                case ["--help" | "-h", _]:
-                    raise ValueError(f"Options \"{option}\" can't have any values.")
-                
-                case ["--data-path"]:
-                    raise ValueError(f"Options \"{option}\" need to have value.")
-                
                 case ["--data-path", data_path]:
                     pass
                 
                 case ["--help" | "-h"]:
-                    print(_HELP)
-                    return 0
-
-                case [name, *_]:
-                    raise ValueError(f"Unknown option \"{name}\".")
+                    is_help = True
                 
+                ### incorrect ###
+
+                case ["--data-path" | "--help" | "-h", _, *_]:
+                    raise ValueError(f"Options \"{option_name}\" have unexpected number of values.")
+                
+                case ["--data-path"]:
+                    raise ValueError(f"Options \"{option_name}\" need to have a value.")
+
+                case [option_name, *_]:
+                    raise ValueError(f"Unknown option \"{option_name}\".")
+
+        if is_help:
+            print(_HELP)
+            return 0
+        
         return self.run(
             data_path = data_path
         )
