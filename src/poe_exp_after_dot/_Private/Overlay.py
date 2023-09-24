@@ -1275,7 +1275,7 @@ _exception_stash = ExceptionStash()
 def _try_get(settings : dict[str | Any], name : str, value_type : type) -> int:
     value = settings.get(name, None)
     if value is None:
-        raise ValueError(f"There is no option \"{name}\" in settings.")
+        raise NameError(f"There is no option named \"{name}\" in settings.")
     return value_type(value)
 
 
