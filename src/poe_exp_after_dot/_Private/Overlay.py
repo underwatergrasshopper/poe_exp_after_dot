@@ -1311,6 +1311,14 @@ class LogManager:
             self._file_handler.setFormatter(formatter)
             _logger.addHandler(self._file_handler)
 
+_HELP = """
+poe_exp_after_dot.py [<option> ...]
+
+<option>
+    --data-path=<path>
+        Relative or absolute path to data folder. In that folder are stored: settings, logs, exp data and other data.
+""".strip("\n")
+
 class Overlay:
 
     def __init__(self):
@@ -1372,19 +1380,27 @@ class Overlay:
         data_path = None
 
         for argument in argv[1:]:
-            match argument.split("="):
-                
+            option, *_values = argument.split("=")
+
+            match (option, *_values):
                 case [option, _, _, *_]:
                         raise ValueError(f"Option \"{option}\" have to many values. Only one value allowed.")
+
+                case ["--help" | "-h", _]:
+                    raise ValueError(f"Options \"{option}\" can't have any values.")
                 
-                case ["--data-path", *values]:
-                    if not values or not values[0]:
-                        raise ValueError("No path specified in option \"--data-path\".")
-                    else:
-                        data_path = values[0]
+                case ["--data-path"]:
+                    raise ValueError(f"Options \"{option}\" need to have value.")
+                
+                case ["--data-path", data_path]:
+                    pass
+                
+                case ["--help" | "-h"]:
+                    print(_HELP)
+                    return 0
 
                 case [name, *_]:
-                    raise ValueError(f"Unknown option \"{name}\" in command line arguments.")
+                    raise ValueError(f"Unknown option \"{name}\".")
                 
         return self.run(
             data_path = data_path

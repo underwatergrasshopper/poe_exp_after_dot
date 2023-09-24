@@ -1,4 +1,15 @@
 
+"""
+An overlay for "Path of Exile", which displays the 2 digits after the dot from the percentage of gained experience.
+
+Works only when "Path of Exile" is in windowed full screen.
+
+poe_exp_after_dot.py [<option> ...]
+
+<option>
+    --data-path=<path>
+        Relative or absolute path to data folder. In that folder are stored: settings, logs, exp data and other data.
+"""
 import logging as _logging
 from ._Private.Overlay import Overlay as _Overlay, _EXIT_FAILURE
 
