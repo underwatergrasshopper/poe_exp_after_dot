@@ -1270,14 +1270,8 @@ class ExceptionStash:
 
 _exception_stash = ExceptionStash()
 
-
-
 def _try_get(settings : dict[str | Any], name : str, value_type : type) -> int:
-    value = settings.get(name, None)
-    if value is None:
-        raise NameError(f"There is no option named \"{name}\" in settings.")
-    return value_type(value)
-
+    return value_type(settings.get(name))
 
 class LogManager:
     _file_handler   : logging.FileHandler | None
