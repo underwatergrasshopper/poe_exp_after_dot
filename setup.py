@@ -12,7 +12,7 @@ setuptools.setup(
     long_description_content_type   = "text/markdown",
     url                             = "https://github.com/underwatergrasshopper/poe_exp_after_dot",
     project_urls                    = {
-        "Bug Tracker": "https://github.com/underwatergrasshopper/poe_exp_after_dot/issues",
+        "Bug Tracker" : "https://github.com/underwatergrasshopper/poe_exp_after_dot/issues",
     },
     keywords                        = ["Path of Exile", "poe", "overlay", "experience"],
     classifiers                     = [
