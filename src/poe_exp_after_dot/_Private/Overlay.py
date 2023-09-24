@@ -1555,10 +1555,10 @@ class Overlay:
                 ### incorrect ###
 
                 case ["--data-path" | "--help" | "-h", _, *_]:
-                    raise ValueError(f"Incorrect command line argument. Options \"{option_name}\" have unexpected number of values.")
+                    raise ValueError(f"Incorrect command line argument. Option \"{option_name}\" have unexpected number of values.")
                 
                 case ["--data-path"]:
-                    raise ValueError(f"Incorrect command line argument. Options \"{option_name}\" need to have a value.")
+                    raise ValueError(f"Incorrect command line argument. Option \"{option_name}\" need to have a value.")
 
                 case [option_name, *_]:
                     raise ValueError(f"Incorrect command line argument. Unknown option \"{option_name}\".")
