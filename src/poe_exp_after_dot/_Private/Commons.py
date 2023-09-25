@@ -1,7 +1,7 @@
+from typing import Any
+
 EXIT_SUCCESS = 0
 EXIT_FAILURE = 1
-
-from typing import Any
 
 def pad_to_length(text : str, length : int):
         """
