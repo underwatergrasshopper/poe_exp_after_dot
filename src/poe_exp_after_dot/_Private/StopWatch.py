@@ -1,4 +1,4 @@
-from time import time as _get_epoch_time
+from time import time as _get_time
 
 class StopWatch:
     _start          : float     # in seconds
@@ -18,13 +18,13 @@ class StopWatch:
         start
             Time from the epoch in seconds or None.
         """
-        self._start         = _get_epoch_time() if start is None else start
+        self._start         = _get_time() if start is None else start
         self._stop          = self._start
         self._accumulator   = 0.0
         self._elapsed_time  = 0.0
 
     def update(self):
-        self._stop = _get_epoch_time()
+        self._stop = _get_time()
         self._accumulator += self._stop - self._start
         self._start = self._stop
 
