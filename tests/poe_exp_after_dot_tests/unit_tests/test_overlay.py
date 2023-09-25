@@ -1,7 +1,8 @@
 from math import isclose as _isclose
 
-from poe_exp_after_dot._Private.Overlay import FineTime, FineExpPerHour, FinePercent, Measurer, FineBareLevel, FineExp
-from poe_exp_after_dot._Private.Overlay import SECONDS_IN_WEEK, SECONDS_IN_DAY, SECONDS_IN_HOUR, SECONDS_IN_MINUTE
+from poe_exp_after_dot._Private.FineFormatters import SECONDS_IN_WEEK, SECONDS_IN_DAY, SECONDS_IN_HOUR, SECONDS_IN_MINUTE
+from poe_exp_after_dot._Private.FineFormatters import FineTime, FineExpPerHour, FinePercent, FineBareLevel, FineExp
+from poe_exp_after_dot._Private.Logic          import Measurer
 
 def test_fine_exp():
     assert str(FineExp()) == "0exp"

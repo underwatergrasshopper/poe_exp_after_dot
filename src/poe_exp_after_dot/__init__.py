@@ -13,9 +13,9 @@ poe_exp_after_dot.py [<option> ...]
         Relative or absolute path to data folder. 
         In that folder are stored: settings, logs, exp data and other data.
 """
-import logging as _logging
 import traceback as _traceback
 import sys as _sys
+
 from ._Private.Overlay import (
     Overlay as _Overlay
 )
@@ -25,6 +25,9 @@ from ._Private.ErrorBoard import (
 )
 from ._Private.Commons import (
     EXIT_FAILURE as _EXIT_FAILURE
+)
+from ._Private.LogManager import (
+    to_logger as _to_logger
 )
 
 
@@ -46,7 +49,7 @@ def _main(argv : list[str]) -> int:
 
         # All internal exceptions are handled here, if logger managed to setup correctly.
         # Wrong command line arguments are handled here only when stdout is not present (running through pyw).
-        logger = _logging.getLogger("poe_exp_after_dot")
+        logger = _to_logger()
 
         if logger and logger.hasHandlers():
             logger.critical("", exc_info = True)
