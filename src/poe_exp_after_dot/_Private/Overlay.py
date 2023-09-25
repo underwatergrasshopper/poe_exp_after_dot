@@ -14,20 +14,17 @@ import logging
 
 from PIL import ImageGrab
 
-from PySide6.QtWidgets import QMainWindow, QApplication, QWidget, QLabel, QSystemTrayIcon, QMenu
-from PySide6.QtCore import Qt, QPoint, QRect
-from PySide6.QtGui import QColor, QMouseEvent, QIcon, QAction, QCloseEvent, QContextMenuEvent, QFocusEvent, QFont, QEnterEvent, QKeyEvent
-from PySide6.QtCore import QPoint, QRect, QEvent
+from PySide6.QtWidgets  import QMainWindow, QApplication, QWidget, QLabel, QSystemTrayIcon, QMenu
+from PySide6.QtCore     import Qt, QPoint, QRect, QEvent
+from PySide6.QtGui      import QColor, QMouseEvent, QIcon, QAction, QCloseEvent, QContextMenuEvent, QFocusEvent, QFont, QEnterEvent, QKeyEvent
 
-_EXIT_SUCCESS = 0
-_EXIT_FAILURE = 1
+from .ErrorBoard    import ErrorBoard
+from .Commons       import EXIT_FAILURE, EXIT_SUCCESS
 
-_SECONDS_IN_MINUTE   = 60
-_SECONDS_IN_HOUR     = 60 * _SECONDS_IN_MINUTE
-_SECONDS_IN_DAY      = 24 * _SECONDS_IN_HOUR
-_SECONDS_IN_WEEK     = 7  * _SECONDS_IN_DAY
-
-_logger = logging.getLogger("poe_exp_after_dot")
+SECONDS_IN_MINUTE   = 60
+SECONDS_IN_HOUR     = 60 * SECONDS_IN_MINUTE
+SECONDS_IN_DAY      = 24 * SECONDS_IN_HOUR
+SECONDS_IN_WEEK     = 7  * SECONDS_IN_DAY
 
 @dataclass
 class ExpThresholdInfo:
@@ -35,7 +32,7 @@ class ExpThresholdInfo:
     base_exp    : int
     exp_to_next : int
 
-_EXP_THRESHOLD_INFO_TABLE = (
+EXP_THRESHOLD_INFO_TABLE = (
     ExpThresholdInfo(1, 0, 525),
     ExpThresholdInfo(2, 525, 1235),
     ExpThresholdInfo(3, 1760, 2021),
@@ -138,12 +135,9 @@ _EXP_THRESHOLD_INFO_TABLE = (
     ExpThresholdInfo(100, 4250334444, 0),
 )
 
-def _pad_to_length(text : str, length : int):
-        """
-        If 'text' is shorter than 'length', then adds padding to front of 'text', until length of text is equal to 'length'.
-        If 'text' is longer than 'length', then shorts 'text', until length of text is equal to 'length'.
-        """
-        return text.rjust(length)[:length]
+_logger = logging.getLogger("poe_exp_after_dot")
+
+
 
 class FineExp:
     MAX_LENGTH_AFTER_FORMAT : int   = 17
@@ -349,10 +343,10 @@ class FineTime:
                 self._text_representation = f"<{vb}1{ve}{b}s{e}" 
 
         else:
-            weeks,      remain  = divmod(self._time, _SECONDS_IN_WEEK)  if max_unit in ["w"]                        else (0, self._time)
-            days,       remain  = divmod(remain, _SECONDS_IN_DAY)       if max_unit in ["w", "d"]                   else (0, remain)
-            hours,      remain  = divmod(remain, _SECONDS_IN_HOUR)      if max_unit in ["w", "d", "h"]              else (0, remain)
-            minutes,    remain  = divmod(remain, _SECONDS_IN_MINUTE)    if max_unit in ["w", "d", "h", "m"]         else (0, remain)
+            weeks,      remain  = divmod(self._time, SECONDS_IN_WEEK)  if max_unit in ["w"]                        else (0, self._time)
+            days,       remain  = divmod(remain, SECONDS_IN_DAY)       if max_unit in ["w", "d"]                   else (0, remain)
+            hours,      remain  = divmod(remain, SECONDS_IN_HOUR)      if max_unit in ["w", "d", "h"]              else (0, remain)
+            minutes,    remain  = divmod(remain, SECONDS_IN_MINUTE)    if max_unit in ["w", "d", "h", "m"]         else (0, remain)
             seconds,    remain  = divmod(remain, 1.0)                   if max_unit in ["w", "d", "h", "m", "s"]    else (0, remain)
 
             if weeks > 99:
@@ -374,7 +368,7 @@ class FineTime:
                 prefix = ""
 
             if is_just_weeks_if_cup and prefix == ">":
-                weeks = self._time / _SECONDS_IN_WEEK
+                weeks = self._time / SECONDS_IN_WEEK
                 weeks, _ = divmod(weeks, 1.0)  # rounding prevention
 
                 if weeks > 9999999999999:
@@ -709,7 +703,7 @@ class Measurer:
                 else:
                     self._progress_step_time = elapsed_time
 
-                    self._exp_per_hour = int(self._progress_step_in_exp * _SECONDS_IN_HOUR / elapsed_time)
+                    self._exp_per_hour = int(self._progress_step_in_exp * SECONDS_IN_HOUR / elapsed_time)
 
                     if self._progress_step_in_exp > 0.0:
 
@@ -783,7 +777,7 @@ class Measurer:
         return self._is_update_fail
     
 def _find_exp_threshold_info(exp : int) -> ExpThresholdInfo | None:
-    for info in _EXP_THRESHOLD_INFO_TABLE:
+    for info in EXP_THRESHOLD_INFO_TABLE:
         if exp < (info.base_exp + info.exp_to_next):
             return info 
     return None
@@ -1312,149 +1306,7 @@ class LogManager:
             _logger.addHandler(self._file_handler)
 
 
-class ErrorBoard(QMainWindow):
-    @dataclass
-    class Share:
-        x       : int
-        bottom  : int | None
 
-    _share = Share(0, None)
-
-    _screen_width    : int
-    _screen_height   : int
-
-    _message        : str
-    _short_message  : str
-
-    def __init__(
-            self, 
-            message         : str, 
-            short_message   : str,
-            screen_width    : int,
-            screen_height   : int
-                ):
-        super().__init__()
-
-        self._message = message
-        self._short_message = short_message
-
-        if self._share.bottom is None:
-            _app = QApplication.instance() if QApplication.instance() else QApplication([])
-            self._share.bottom = _app.primaryScreen().size().height()
-
-        self._screen_width  = screen_width
-        self._screen_height = screen_height
-
-        self.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.FramelessWindowHint | Qt.WindowType.Tool)
-        palette = self.palette()
-        palette.setColor(self.backgroundRole(), QColor(0, 0, 0))
-        self.setPalette(palette)
-        self.setWindowOpacity(0.7)
-
-        self._label = QLabel("", self)
-        self._label.setStyleSheet(f"font: 12px Courier New; font-weight: bold; color: white;")
-        self._label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True) 
-
-
-        b = ""
-        e = ""
-        self._place_notice(f"{b}ERROR{e} (Click to quit)<br>Hover to see message.<br>Hold RMB to see details.", is_resize = True)
-
-        b = "<font color=\"#FF0000\">"
-        e = "</font>"
-        b2 = "<font color=\"#AFAFAF\">"
-        e2 = "</font>"
-        self._place_notice(f"{b}ERROR{e} (Click to quit)<br>Hover to see message.<br>{b2}Hold RMB to see details.{e2}")
-
-        class ToolTip(QWidget):
-            _label  : QLabel
-
-            _x      : int
-            _bottom : int
-            _max_width : int
-
-            def __init__(self, parent : QWidget, x : int, bottom : int,  screen_width : int):
-                super().__init__(parent)
-
-                self._x = x
-                self._bottom = bottom
-                self._max_width = screen_width - x
-
-                self.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.FramelessWindowHint | Qt.WindowType.Tool)
-                palette = self.palette()
-                palette.setColor(self.backgroundRole(), QColor(0, 0, 0))
-                self.setPalette(palette)
-                self.setWindowOpacity(0.9)
-
-                self._label = QLabel("", self)
-                self._label.setStyleSheet(f"font: 12px Courier New; color: #AFAFAF;")
-                self._label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
-
-            def place_message(self, message):
-                self._label.setWordWrap(False)  
-                self._label.setMaximumWidth(self._max_width)
-                self._label.setText(message)
-                self._label.adjustSize()
-                self.resize(self._label.size())
-
-                self.move( self._x,  self._bottom - self.height())
-
-        self._tooltip = ToolTip(self, self._share.x, self._share.bottom - self._label.height(), screen_width)
-        self._tooltip.place_message(short_message)
-
-    def _place_notice(self, notice, *, is_resize = False):
-        if is_resize:
-            self._label.setWordWrap(False)  
-            self._label.setText(notice)
-
-            self._label.adjustSize()
-            self.resize(self._label.size())
-            self.move(QPoint(self._share.x, self._share.bottom - self._label.height()))
-        else:
-            self._label.setWordWrap(True)  
-            self._label.setText(notice)
-
-    @staticmethod
-    def set_default_pos(x : int, bottom : int):
-        ErrorBoard._share.x = x
-        ErrorBoard._share.bottom = bottom
-
-    def mousePressEvent(self, event: QMouseEvent) -> None:
-       if event.button() == Qt.MouseButton.RightButton:
-            self._tooltip.place_message(self._message)
-
-    def mouseReleaseEvent(self, event : QMouseEvent):
-        if event.button() == Qt.MouseButton.LeftButton:
-            QApplication.instance().quit()
-        elif event.button() == Qt.MouseButton.RightButton:
-            self._tooltip.place_message(self._short_message)
-
-    def enterEvent(self, event: QEnterEvent):
-        self._tooltip.show()
-
-    def leaveEvent(self, event: QEvent):
-        self._tooltip.hide()
-
-def hide_abs_paths(traceback_message : str) -> str:
-    lines = traceback_message.split("\n")
-    formatted_lines = []
-    for line in lines:
-        formatted_lines.append(re.sub(r"File \".*([\\/]poe_exp_after_dot.*\.py)\"|File \".*([\\/][^\\/]+\.py)\"", "File \"...\\1\"", line))
-    return ("\n".join(formatted_lines)).strip("\n")
-
-def run_error_board(message : str, short_message : str) -> int:
-        app = QApplication.instance() if QApplication.instance() else QApplication([])
-        app.closeAllWindows()
-
-        screen_size = app.primaryScreen().size()
-        exception_board = ErrorBoard(
-            message, 
-            short_message,
-            screen_width    = screen_size.width(),
-            screen_height   = screen_size.height()
-        )
-        exception_board.show()
-        return app.exec_()
         
 
 _HELP = """
@@ -1512,7 +1364,7 @@ class Overlay:
             _exception_stash.exception = exception
             # NOTE: With some brief testing, closeEvent was not triggered when exited with _EXIT_FAILURE (or value equal 1). 
             # But for safety, do not implement closeEvent in any widget.
-            QApplication.exit(_EXIT_FAILURE)
+            QApplication.exit(EXIT_FAILURE)
 
         previous_excepthook = sys.excepthook
         sys.excepthook = excepthook

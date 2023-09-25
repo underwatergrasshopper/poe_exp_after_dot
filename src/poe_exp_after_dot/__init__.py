@@ -17,10 +17,14 @@ import logging as _logging
 import traceback as _traceback
 import sys as _sys
 from ._Private.Overlay import (
-    _EXIT_FAILURE, 
-    Overlay as _Overlay, 
+    Overlay as _Overlay
+)
+from ._Private.ErrorBoard import (
     run_error_board as _run_error_board,
     hide_abs_paths as _hide_abs_paths
+)
+from ._Private.Commons import (
+    EXIT_FAILURE as _EXIT_FAILURE
 )
 
 

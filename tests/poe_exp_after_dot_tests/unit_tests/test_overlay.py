@@ -1,7 +1,7 @@
 from math import isclose as _isclose
 
 from poe_exp_after_dot._Private.Overlay import FineTime, FineExpPerHour, FinePercent, Measurer, FineBareLevel, FineExp
-from poe_exp_after_dot._Private.Overlay import _SECONDS_IN_WEEK, _SECONDS_IN_DAY, _SECONDS_IN_HOUR, _SECONDS_IN_MINUTE
+from poe_exp_after_dot._Private.Overlay import SECONDS_IN_WEEK, SECONDS_IN_DAY, SECONDS_IN_HOUR, SECONDS_IN_MINUTE
 
 def test_fine_exp():
     assert str(FineExp()) == "0exp"
@@ -64,10 +64,10 @@ def test_fine_time():
     assert str(FineTime(30 * 24 * 60 * 60  + 1 * 60 * 60 + 3 * 60 + 4, "d")) == "30d01h03m04s"
     assert str(FineTime(234 * 24 * 60 * 60  + 23 * 60 * 60 + 59 * 60 + 59, "d")) == "234d23h59m59s"
 
-    assert str(FineTime((99 + 1) * _SECONDS_IN_WEEK - 1))                           == "99w6d23h59m59s"
-    assert str(FineTime((9999 + 1) * _SECONDS_IN_DAY - 1, max_unit = "d"))          == "9999d23h59m59s"
-    assert str(FineTime((9999999 + 1) * _SECONDS_IN_HOUR - 1, max_unit = "h"))      == "9999999h59m59s"
-    assert str(FineTime((9999999999 + 1) * _SECONDS_IN_MINUTE - 1, max_unit = "m")) == "9999999999m59s"
+    assert str(FineTime((99 + 1) * SECONDS_IN_WEEK - 1))                           == "99w6d23h59m59s"
+    assert str(FineTime((9999 + 1) * SECONDS_IN_DAY - 1, max_unit = "d"))          == "9999d23h59m59s"
+    assert str(FineTime((9999999 + 1) * SECONDS_IN_HOUR - 1, max_unit = "h"))      == "9999999h59m59s"
+    assert str(FineTime((9999999999 + 1) * SECONDS_IN_MINUTE - 1, max_unit = "m")) == "9999999999m59s"
     assert str(FineTime(9999999999999, max_unit = "s"))                             == "9999999999999s"
 
     ### out of visible range ###
@@ -86,10 +86,10 @@ def test_fine_time():
     assert str(FineTime(2**64))                                 == ">9999999999999w"
     assert str(FineTime(2**64, is_just_weeks_if_cup = False))   == ">99w6d23h59m59s"
 
-    assert str(FineTime((99 + 1) * _SECONDS_IN_WEEK))                           == "100w"
-    assert str(FineTime((9999 + 1) * _SECONDS_IN_DAY, max_unit = "d"))          == "1428w"
-    assert str(FineTime((9999999 + 1) * _SECONDS_IN_HOUR, max_unit = "h"))      == "59523w"
-    assert str(FineTime((9999999999 + 1) * _SECONDS_IN_MINUTE, max_unit = "m")) == "992063w"
+    assert str(FineTime((99 + 1) * SECONDS_IN_WEEK))                           == "100w"
+    assert str(FineTime((9999 + 1) * SECONDS_IN_DAY, max_unit = "d"))          == "1428w"
+    assert str(FineTime((9999999 + 1) * SECONDS_IN_HOUR, max_unit = "h"))      == "59523w"
+    assert str(FineTime((9999999999 + 1) * SECONDS_IN_MINUTE, max_unit = "m")) == "992063w"
     assert str(FineTime(9999999999999 + 1, max_unit = "s"))                     == "16534391w"
 
     assert str(FineTime(
