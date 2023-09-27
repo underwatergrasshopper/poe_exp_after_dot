@@ -4,6 +4,8 @@ import json
 from typing import Any
 from copy import deepcopy as _deepcopy
 
+from .Commons import merge_on_all_levels as _merge_on_all_levels
+
 class Settings:
     _file_name  : str
     _default    : dict[str, Any]
@@ -24,8 +26,8 @@ class Settings:
             with open(self._file_name, "w") as file:
                 file.write(json.dumps(self._default, indent = 4))
 
-        self._settings = _deepcopy(self._default | self._settings)
-        self._temporal = _deepcopy(self._settings | temporal)
+        self._settings = _deepcopy(_merge_on_all_levels(self._default, self._settings))
+        self._temporal = _deepcopy(_merge_on_all_levels(self._settings, temporal))
 
     def set_val(self, full_name : str, value, value_type : type, *, is_temporal_only : bool = False):
         """

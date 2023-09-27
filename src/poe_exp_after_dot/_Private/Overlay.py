@@ -12,7 +12,7 @@ from PySide6.QtCore     import Qt, QPoint, QRect, QEvent
 from PySide6.QtGui      import QColor, QMouseEvent, QIcon, QAction, QCloseEvent, QContextMenuEvent, QFocusEvent, QFont, QEnterEvent, QKeyEvent
 
 from .ErrorBoard        import ErrorBoard
-from .Commons           import EXIT_FAILURE, EXIT_SUCCESS, try_get, to_app
+from .Commons           import EXIT_FAILURE, EXIT_SUCCESS, to_app
 from .Logic             import Logic, PosData, CustomPosData
 from .LogManager        import to_log_manager, to_logger
 from .Settings          import Settings
@@ -26,6 +26,20 @@ poe_exp_after_dot.py [<option> ...]
     --data-path=<path>
         Relative or absolute path to data folder. 
         In that folder are stored: settings, logs, exp data and other data.
+    --font="<name>,<size>,<style>"
+        <name>
+            Font name.
+        <size>
+            Size of font in pixels. Only positive integers are allowed.
+        <style>
+            [bold]
+
+        Only not skipped values will override font properties from settings. 
+
+        Examples
+            --font="Courier New,16,bold"
+            --font=",14,"
+            --font="Arial,,"
     --custom="<info_board>;<click_bar>;<in_game_exp_bar>;<in_game_exp_tooltip>"
         <info_board>
             [<x>],[<bottom>]
@@ -39,9 +53,10 @@ poe_exp_after_dot.py [<option> ...]
             Offset on X axis from cursor position.
 
         Custom position data for overlay elements and game gui elements.
-        Only not skipped values will override current position data. 
+        Only not skipped values will override position data from settings. 
 
-        Example: --custom="10,100;,,,;,,,;,,,"
+        Examples
+            --custom="10,100;,,,;,,,;,,,"
 """.strip("\n")
 
 
@@ -182,7 +197,7 @@ class InfoBoard(QMainWindow):
 
     _is_first_measure   : bool  
 
-    def __init__(self, logic : Logic, font_name = "Consolas", font_size = 14):
+    def __init__(self, logic : Logic, font_data : "FontData"):
         """
         font_size
             In pixels.
@@ -211,7 +226,7 @@ class InfoBoard(QMainWindow):
 
         # text
         self._label = QLabel("", self)
-        self._label.setStyleSheet(f"font: {font_size}px {font_name}; color: white;")
+        self._label.setStyleSheet(f"font: {font_data.size}px {font_data.name}; color: white;")
         # NOTE: This is crucial. Prevents from blocking mouseReleaseEvent in parent widget.
         self._label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True) 
 
@@ -328,7 +343,7 @@ class TrayMenu(QSystemTrayIcon):
 
         self._open_data_folder_action = QAction("Open Data Folder")
         def open_data_folder():
-            os.startfile(try_get(self._logic.to_settings(), "data_path", str))
+            os.startfile(self._logic.to_settings().get_val("data_path", str))
             self._menu.setWindowFlags(self._flags_backup)
 
         self._open_data_folder_action.triggered.connect(open_data_folder)
@@ -368,12 +383,24 @@ class _ExceptionStash:
 
 _exception_stash = _ExceptionStash()
 
+@dataclass
+class FontData:
+    name        : str | None
+    size        : int | None    # in pixels
+    is_bold     : bool | None
 
 class Overlay:
     def __init__(self):
         pass
 
-    def run(self, *, is_debug : bool = False, data_path : str | None = None, custom_pos_data : CustomPosData | None = None) -> int:
+    def run(
+            self, 
+            *, 
+            is_debug        : bool                  = False, 
+            font_data       : FontData | None       = None,
+            data_path       : str | None            = None, 
+            custom_pos_data : CustomPosData | None  = None
+                ) -> int:
         """
         Returns
             Exit code.
@@ -391,6 +418,11 @@ class Overlay:
         to_logger().debug(f"custom_pos_data={custom_pos_data}")
 
         settings = Settings(data_path + "/settings.json", {
+            "font" : {
+                "name" : "Courier New",
+                "size" : 14,
+                "is_bold" : False
+            },
             "pos_data" : {
                 "1920x1080" : {
                     "info_board_x"      : 551,
@@ -413,9 +445,20 @@ class Overlay:
                 }
             }
         })
-        settings.load_and_add_temporal({
+        temporal_settings = {
             "data_path" : data_path
-        })
+        }
+        if font_data is not None:
+            font_settings = {}
+            if font_data.name is not None:
+                font_settings["name"] = font_data.name
+            if font_data.size is not None:
+                font_settings["size"] = font_data.size
+            if font_data.is_bold is not None:
+                font_settings["is_bold"] = font_data.is_bold
+
+            temporal_settings["font"] = font_settings
+        settings.load_and_add_temporal(temporal_settings)
 
         to_logger().info("Loaded settings.")
 
@@ -428,7 +471,15 @@ class Overlay:
 
         app = to_app() # initializes global QApplication object
 
-        info_board = InfoBoard(logic)
+        font_data = FontData(
+            name = settings.get_val("font.name", str),
+            size = settings.get_val("font.size", int),
+            is_bold = settings.get_val("font.is_bold", bool),
+        )
+        font_style = "bold" if font_data.is_bold else "normal"
+        to_logger().info(f"Font: {font_data.name}, {font_data.size}px, {font_style}.")
+
+        info_board = InfoBoard(logic, font_data = font_data)
         tray_menu = TrayMenu(info_board, logic)
 
         info_board.show()
@@ -468,11 +519,12 @@ class Overlay:
                 When any given option in argument list is incorrect
         """
         ### parses command line options ###
-        is_help = False
-        data_path : str | None = None
-        custom_pos_data : CustomPosData | None = None
-        raw_custom_pos_data : str | None = None
-        is_debug = False
+        is_help                                     = False
+        is_debug                                    = False
+        font_data           : FontData | None       = None
+        custom_pos_data     : CustomPosData | None  = None
+        raw_custom_pos_data : str | None            = None
+        data_path           : str | None            = None
 
 
         for argument in argv[1:]:
@@ -481,11 +533,28 @@ class Overlay:
             match (option_name, *value):
                 ### correct ###
 
-                case ["--data-path", data_path]:
-                    pass
+                case ["--help" | "-h"]:
+                    is_help = True
 
                 case ["--debug"]:
                     is_debug = True
+
+                case ["--data-path", data_path]:
+                    pass
+
+                case ["--font", font_data_text]:
+                    name_format = r"([^,]*)"
+                    size_format = r"(|0|[1-9][0-9]*)"
+                    style_format = r"(|bold)"
+                    match_ = re.search(fr"^{name_format},{size_format},{style_format}$", font_data_text)
+                    if match_:
+                        font_data = FontData(
+                            name               = match_.group(1),
+                            size               = int(match_.group(2)),
+                            is_bold            = match_.group(3) == "bold",
+                        )
+                    else:
+                        raise ValueError(f"Incorrect command line argument. Option \"{option_name}\" have wrong format.")
 
                 case ["--custom", raw_custom_pos_data]:
                     n = r"(|0|[1-9][0-9]*)"
@@ -520,15 +589,12 @@ class Overlay:
                     else:
                         raise ValueError(f"Incorrect command line argument. Option \"{option_name}\" have wrong format.")
                 
-                case ["--help" | "-h"]:
-                    is_help = True
-                
                 ### incorrect ###
 
-                case ["--help" | "-h", _]:
+                case ["--help" | "-h" | "--debug", _]:
                     raise ValueError(f"Incorrect command line argument. Option \"{option_name}\" can't have a value.")
                 
-                case ["--data-path" | "--custom"]:
+                case ["--data-path" | "--custom" | "--font"]:
                     raise ValueError(f"Incorrect command line argument. Option \"{option_name}\" need to have a value.")
 
                 case [option_name, *_]:
@@ -540,6 +606,7 @@ class Overlay:
         
         return self.run(
             is_debug = is_debug,
+            font_data = font_data,
             data_path = data_path,
             custom_pos_data = custom_pos_data,
         )

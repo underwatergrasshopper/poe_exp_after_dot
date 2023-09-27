@@ -12,11 +12,21 @@ def pad_to_length(text : str, length : int):
     """
     return text.rjust(length)[:length]
 
-def try_get(settings : dict[str, Any], name : str, value_type : type) -> int:
-    return value_type(settings.get(name))
-
 def to_app() -> QApplication:
     app = QApplication.instance()
     if app:
         return typing.cast(QApplication, app)
     return QApplication([])
+
+def merge_on_all_levels(a : dict, b : dict) -> dict:
+    """
+    Merges 'b' into 'a' on all levels.
+    """
+    c = {}
+    c.update(a)
+    for k, v in b.items():
+        if isinstance(v, dict) and k in c and isinstance(c[k], dict):
+            c[k] = merge_on_all_levels(c[k], v)
+        else:
+            c[k] = v
+    return c

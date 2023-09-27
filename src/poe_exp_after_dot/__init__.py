@@ -12,6 +12,20 @@ poe_exp_after_dot.py [<option> ...]
     --data-path=<path>
         Relative or absolute path to data folder. 
         In that folder are stored: settings, logs, exp data and other data.
+    --font="<name>,<size>,<style>"
+        <name>
+            Font name.
+        <size>
+            Size of font in pixels. Only positive integers are allowed.
+        <style>
+            [bold]
+
+        Only not skipped values will override font properties from settings. 
+
+        Examples
+            --font="Courier New,16,bold"
+            --font=",14,"
+            --font="Arial,,"
     --custom="<info_board>;<click_bar>;<in_game_exp_bar>;<in_game_exp_tooltip>"
         <info_board>
             [<x>],[<bottom>]
@@ -25,9 +39,10 @@ poe_exp_after_dot.py [<option> ...]
             Offset on X axis from cursor position.
 
         Custom position data for overlay elements and game gui elements.
-        Only not skipped values will override current position data. 
+        Only not skipped values will override position data from settings. 
 
-        Example: --custom="10,100;,,,;,,,;,,,"
+        Examples
+            --custom="10,100;,,,;,,,;,,,"
 """
 __author__  = "underwatergrasshopper"
 __version__ = "0.1.0"
