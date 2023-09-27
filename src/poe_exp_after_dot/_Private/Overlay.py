@@ -1,6 +1,7 @@
 import os
 import sys
 import ctypes
+import json
 
 from typing import SupportsFloat, SupportsInt, Sequence, Any
 from dataclasses import dataclass
@@ -347,6 +348,68 @@ class _ExceptionStash:
         self.exception = None
 
 _exception_stash = _ExceptionStash()
+
+class Settings:
+    _file_name  : str
+    _default    : dict[str, Any]
+    _temporal   : dict[str, Any]
+    _settings   : dict[str, Any]
+
+    def __init__(self, file_name : str, default : dict[str, Any]):
+        self._file_name = file_name
+        self._default = default
+
+    def load_and_add_temporal(self, temporal : dict[str, Any]):
+        with open(self._file_name, "r") as file:
+            self._settings = json.load(file)
+
+        self._settings = self._default | self._settings
+        self._temporal = self._settings | temporal
+
+    def set_val(self, full_name : str, value, type_ : type, is_temporal_only : bool = False):
+        names = full_name.split(".")
+
+        try:
+            self._set_val(self._temporal, names, value, type_)
+        except Exception as exception:
+            raise RuntimeError(f"Can not assigns value to temporal settings variable with name path \"{full_name}\".") from exception
+
+        if not is_temporal_only:
+            try:
+                self._set_val(self._settings, names, value, type_)
+            except Exception as exception:
+                raise RuntimeError(f"Can not assigns value to settings variable with name path \"{full_name}\".") from exception
+
+    def get_val(self, full_name : str, type_ : type, is_temporal : bool = True) -> Any:
+        names = full_name.split(".")
+
+        if is_temporal:
+            try:
+                return self._get_val(self._temporal, names, type_)
+            except Exception as exception:
+                raise RuntimeError(f"Can not assigns value to temporal settings variable with name path \"{full_name}\".") from exception
+    
+        else:
+            try:
+                return self._get_val(self._settings, names, type_)
+            except Exception as exception:
+                raise RuntimeError(f"Can not assigns value to settings variable with name path \"{full_name}\".") from exception
+
+    def save(self):
+        with open(self._file_name, "w") as file:
+            file.write(self._settings)
+
+    def _set_val(self, settings : dict[str, Any], names : list[str], value, type_ : type):
+        level = settings
+        for ix in range(len(names) - 1):
+            level = level[names[ix]]
+        level[names[-1]] = type_(value)
+
+    def _get_val(self, settings : dict[str, Any], names : list[str], type_ : type) -> Any:
+        level = settings
+        for ix in range(len(names) - 1):
+            level = level[names[ix]]
+        return type_(level[names[-1]])
 
 
 class Overlay:
