@@ -13,6 +13,9 @@ poe_exp_after_dot.py [<option> ...]
         Relative or absolute path to data folder. 
         In that folder are stored: settings, logs, exp data and other data.
 """
+__author__  = "underwatergrasshopper"
+__version__ = "0.1.0"
+
 import traceback as _traceback
 import sys as _sys
 
@@ -48,7 +51,6 @@ def _main(argv : list[str]) -> int:
         _run_error_board(_hide_abs_paths(_traceback.format_exc()), str(exception))
 
         # All internal exceptions are handled here, if logger managed to setup correctly.
-        # Wrong command line arguments are handled here only when stdout is not present (running through pyw).
         logger = _to_logger()
 
         if logger and logger.hasHandlers():
