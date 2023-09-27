@@ -12,6 +12,22 @@ poe_exp_after_dot.py [<option> ...]
     --data-path=<path>
         Relative or absolute path to data folder. 
         In that folder are stored: settings, logs, exp data and other data.
+    --custom="<info_board>;<click_bar>;<in_game_exp_bar>;<in_game_exp_tooltip>"
+        <info_board>
+            [<x>],[<bottom>]
+        <click_bar>
+            [<x>],[<y>],[<width>],[<height>]
+        <in_game_exp_bar>
+            [<x>],[<y>],[<width>],[<height>]
+        <in_game_exp_tooltip>
+            [<x_offset>],[<y>],[<width>],[<height>]
+        <x_offset>
+            Offset on X axis from cursor position.
+
+        Custom position data for overlay elements and game gui elements.
+        Only not skipped values will override current position data. 
+
+        Example: --custom="10,100;,,,;,,,;,,,"
 """
 __author__  = "underwatergrasshopper"
 __version__ = "0.1.0"

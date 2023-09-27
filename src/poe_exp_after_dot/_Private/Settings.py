@@ -47,7 +47,7 @@ class Settings:
             except Exception as exception:
                 raise RuntimeError(f"Can not assigns value to settings with name path \"{full_name}\".") from exception
 
-    def get_val(self, full_name : str, value_type : type = Any, *, is_temporal : bool = True) -> Any:
+    def get_val(self, full_name : str, value_type : type = object, *, is_temporal : bool = True) -> Any:
         """
         full_name
             Names of levels and variable separated by '.'. 
@@ -85,6 +85,6 @@ class Settings:
             if name not in level:
                 level[name] = {}
             level = level[name]
-        if value_type == Any:
+        if value_type == object:
             return level[names[-1]]
         return value_type(level[names[-1]])

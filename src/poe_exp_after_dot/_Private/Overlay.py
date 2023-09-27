@@ -1,7 +1,7 @@
 import os
 import sys
 import ctypes
-import json
+import re
 
 from typing import SupportsFloat, SupportsInt, Sequence, Any
 from dataclasses import dataclass
@@ -13,7 +13,7 @@ from PySide6.QtGui      import QColor, QMouseEvent, QIcon, QAction, QCloseEvent,
 
 from .ErrorBoard        import ErrorBoard
 from .Commons           import EXIT_FAILURE, EXIT_SUCCESS, try_get, to_app
-from .Logic             import Logic
+from .Logic             import Logic, PosData, CustomPosData
 from .LogManager        import to_log_manager, to_logger
 from .Settings          import Settings
 
@@ -26,6 +26,22 @@ poe_exp_after_dot.py [<option> ...]
     --data-path=<path>
         Relative or absolute path to data folder. 
         In that folder are stored: settings, logs, exp data and other data.
+    --custom="<info_board>;<click_bar>;<in_game_exp_bar>;<in_game_exp_tooltip>"
+        <info_board>
+            [<x>],[<bottom>]
+        <click_bar>
+            [<x>],[<y>],[<width>],[<height>]
+        <in_game_exp_bar>
+            [<x>],[<y>],[<width>],[<height>]
+        <in_game_exp_tooltip>
+            [<x_offset>],[<y>],[<width>],[<height>]
+        <x_offset>
+            Offset on X axis from cursor position.
+
+        Custom position data for overlay elements and game gui elements.
+        Only not skipped values will override current position data. 
+
+        Example: --custom="10,100;,,,;,,,;,,,"
 """.strip("\n")
 
 
@@ -357,7 +373,7 @@ class Overlay:
     def __init__(self):
         pass
 
-    def run(self, *, data_path : str | None = None) -> int:
+    def run(self, *, is_debug : bool = False, data_path : str | None = None, custom_pos_data : CustomPosData | None = None) -> int:
         """
         Returns
             Exit code.
@@ -368,9 +384,11 @@ class Overlay:
 
         os.makedirs(data_path, exist_ok = True)
 
-        to_log_manager().setup_logger(data_path + "/runtime.log", is_stdout = True)
+        to_log_manager().setup_logger(data_path + "/runtime.log", is_debug = is_debug, is_stdout = True)
         
         to_logger().info("====== NEW RUN ======")
+        to_logger().debug(f"data_path={data_path}")
+        to_logger().debug(f"custom_pos_data={custom_pos_data}")
 
         settings = Settings(data_path + "/settings.json", {
             "pos_data" : {
@@ -401,7 +419,7 @@ class Overlay:
 
         to_logger().info("Loaded settings.")
 
-        logic = Logic(settings)
+        logic = Logic(settings, custom_pos_data)
 
         ErrorBoard.set_default_pos(
             x = logic.to_pos_data().click_bar_x,
@@ -452,6 +470,10 @@ class Overlay:
         ### parses command line options ###
         is_help = False
         data_path : str | None = None
+        custom_pos_data : CustomPosData | None = None
+        raw_custom_pos_data : str | None = None
+        is_debug = False
+
 
         for argument in argv[1:]:
             option_name, *value = argument.split("=", 1)
@@ -461,16 +483,52 @@ class Overlay:
 
                 case ["--data-path", data_path]:
                     pass
+
+                case ["--debug"]:
+                    is_debug = True
+
+                case ["--custom", raw_custom_pos_data]:
+                    n = r"(|0|[1-9][0-9]*)"
+                    match_ = re.search(fr"^{n},{n};{n},{n},{n},{n};{n},{n},{n},{n};{n},{n},{n},{n}$", raw_custom_pos_data)
+                    if match_:
+                        index = 1
+                        def next_group():
+                            nonlocal index
+                            group = match_.group(index)
+                            index += 1
+                            return int(group) if group else None
+                        
+                        custom_pos_data = CustomPosData(
+                            info_board_x                    = next_group(),
+                            info_board_bottom               = next_group(),
+
+                            click_bar_x                     = next_group(),
+                            click_bar_y                     = next_group(),
+                            click_bar_width                 = next_group(),
+                            click_bar_height                = next_group(),
+
+                            in_game_exp_bar_x               = next_group(),
+                            in_game_exp_bar_y               = next_group(),
+                            in_game_exp_bar_width           = next_group(),
+                            in_game_exp_bar_height          = next_group(),
+
+                            in_game_exp_tooltip_x_offset    = next_group(),
+                            in_game_exp_tooltip_y           = next_group(), 
+                            in_game_exp_tooltip_width       = next_group(), 
+                            in_game_exp_tooltip_height      = next_group()
+                        )
+                    else:
+                        raise ValueError(f"Incorrect command line argument. Option \"{option_name}\" have wrong format.")
                 
                 case ["--help" | "-h"]:
                     is_help = True
                 
                 ### incorrect ###
 
-                case ["--data-path" | "--help" | "-h", _]:
+                case ["--help" | "-h", _]:
                     raise ValueError(f"Incorrect command line argument. Option \"{option_name}\" can't have a value.")
                 
-                case ["--data-path"]:
+                case ["--data-path" | "--custom"]:
                     raise ValueError(f"Incorrect command line argument. Option \"{option_name}\" need to have a value.")
 
                 case [option_name, *_]:
@@ -481,5 +539,7 @@ class Overlay:
             return 0
         
         return self.run(
-            data_path = data_path
+            is_debug = is_debug,
+            data_path = data_path,
+            custom_pos_data = custom_pos_data,
         )
