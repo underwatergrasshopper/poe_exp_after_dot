@@ -4,7 +4,7 @@ from dataclasses import dataclass
 import re
 import numpy
 import cv2
-import easyocr
+import easyocr # type: ignore
 
 from PIL import ImageGrab
 
@@ -306,7 +306,7 @@ class PosData:
     in_game_exp_tooltip_height      : int 
 
 
-def get_pos_data(resolution_width : int, resolution_height : int) -> PosData | None:
+def get_pos_data(resolution_width : int, resolution_height : int) -> PosData:
     """
     Returns
         PosData for resolution if resolution is supported.
@@ -331,12 +331,12 @@ def get_pos_data(resolution_width : int, resolution_height : int) -> PosData | N
                 in_game_exp_tooltip_width       = 446,
                 in_game_exp_tooltip_height      = 73,
             )
-        
-    return None
+        case _:
+            raise RuntimeError(f"Can not receive position data for resolution: {resolution_width}x{resolution_height}.")
 
 
 class Logic:
-    _settings   : dict[str | Any]
+    _settings   : dict[str, Any]
     _pos_data   : PosData
     _measurer   : Measurer
 
@@ -348,8 +348,6 @@ class Logic:
 
         width, height = (1920, 1080)
         self._pos_data = get_pos_data(width, height)
-        if not self._pos_data:
-            raise RuntimeError(f"Can not receive position data for resolution: {width}x{height}.")
         
         self._measurer = Measurer()
         self._stop_watch = StopWatch()
@@ -427,10 +425,9 @@ class Logic:
         ))
         in_game_exp_tooltip_image = cv2.cvtColor(numpy.array(in_game_exp_tooltip_image), cv2.COLOR_RGB2BGR) # converts image from Pillow format to OpenCV format
 
-
         text_fragments= self._reader.readtext(in_game_exp_tooltip_image)
 
-        width = in_game_exp_tooltip_image.shape[1]
+        width = in_game_exp_tooltip_image.shape[1] # type: ignore
 
         def extract_comparison_key(text_fragment):
             pos = text_fragment[0][0]

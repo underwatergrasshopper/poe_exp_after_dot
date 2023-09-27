@@ -91,9 +91,9 @@ class FineBareLevel:
         else:
             self._level = level
 
-        if level < 0:
+        if self._level < 0:
             self._text_representation = "<0"
-        elif level > 100:
+        elif self._level > 100:
             self._text_representation = ">100"
         else:
             self._text_representation = str(self._level)

@@ -7,6 +7,8 @@ from PySide6.QtCore     import Qt, QPoint, QEvent
 from PySide6.QtWidgets  import QMainWindow, QApplication, QWidget, QLabel
 from PySide6.QtGui      import QColor, QMouseEvent, QEnterEvent
 
+from .Commons import to_app
+
 class ErrorBoard(QMainWindow):
     @dataclass
     class Share:
@@ -34,8 +36,7 @@ class ErrorBoard(QMainWindow):
         self._short_message = short_message
 
         if self._share.bottom is None:
-            _app = QApplication.instance() if QApplication.instance() else QApplication([])
-            self._share.bottom = _app.primaryScreen().size().height()
+            self._share.bottom = to_app().primaryScreen().size().height() 
 
         self._screen_width  = screen_width
         self._screen_height = screen_height
@@ -120,7 +121,7 @@ class ErrorBoard(QMainWindow):
 
     def mouseReleaseEvent(self, event : QMouseEvent):
         if event.button() == Qt.MouseButton.LeftButton:
-            QApplication.instance().quit()
+            to_app().quit()
         elif event.button() == Qt.MouseButton.RightButton:
             self._tooltip.place_message(self._short_message)
 
@@ -138,10 +139,9 @@ def hide_abs_paths(traceback_message : str) -> str:
     return ("\n".join(formatted_lines)).strip("\n")
 
 def run_error_board(message : str, short_message : str) -> int:
-        app = QApplication.instance() if QApplication.instance() else QApplication([])
-        app.closeAllWindows()
+        to_app().closeAllWindows()
 
-        screen_size = app.primaryScreen().size()
+        screen_size = to_app().primaryScreen().size()
         exception_board = ErrorBoard(
             message, 
             short_message,
@@ -149,4 +149,4 @@ def run_error_board(message : str, short_message : str) -> int:
             screen_height   = screen_size.height()
         )
         exception_board.show()
-        return app.exec_()
+        return to_app().exec_()

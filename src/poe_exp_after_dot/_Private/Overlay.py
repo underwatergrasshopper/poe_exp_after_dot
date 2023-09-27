@@ -11,7 +11,7 @@ from PySide6.QtCore     import Qt, QPoint, QRect, QEvent
 from PySide6.QtGui      import QColor, QMouseEvent, QIcon, QAction, QCloseEvent, QContextMenuEvent, QFocusEvent, QFont, QEnterEvent, QKeyEvent
 
 from .ErrorBoard        import ErrorBoard
-from .Commons           import EXIT_FAILURE, EXIT_SUCCESS, try_get
+from .Commons           import EXIT_FAILURE, EXIT_SUCCESS, try_get, to_app
 from .Logic             import Logic
 from .LogManager        import to_log_manager, to_logger
 
@@ -242,14 +242,14 @@ class InfoBoard(QMainWindow):
         if event.button() == Qt.MouseButton.LeftButton and QApplication.keyboardModifiers() == (Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.ShiftModifier):
             self._prev_pos = event.globalPos()
 
-        if event.button() == Qt.MouseButton.LeftButton and self._flags_backup:
+        if event.button() == Qt.MouseButton.LeftButton and self._flags_backup and self._context_menu:
             self._context_menu.setWindowFlags(self._flags_backup)
 
     def mouseReleaseEvent(self, event : QMouseEvent):
         if event.button() == Qt.MouseButton.LeftButton:
             self._prev_pos = None
 
-        if event.button() == Qt.MouseButton.RightButton and self._flags_backup:
+        if event.button() == Qt.MouseButton.RightButton and self._flags_backup and self._context_menu:
             self._context_menu.setWindowFlags(self._flags_backup | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.FramelessWindowHint | Qt.WindowType.Tool)
         
         _move_window_to_foreground("Path of Exile")
@@ -286,7 +286,7 @@ class TrayMenu(QSystemTrayIcon):
 
     _flags_backup       : Qt.WindowType
 
-    def __init__(self, app : QApplication, info_board : InfoBoard, logic : Logic):
+    def __init__(self, info_board : InfoBoard, logic : Logic):
         super().__init__()
 
         self._info_board = info_board
@@ -315,7 +315,7 @@ class TrayMenu(QSystemTrayIcon):
         self._open_data_folder_action.triggered.connect(open_data_folder)
         self._menu.addAction(self._open_data_folder_action)
 
-        self._hide_action = QAction('Hide', checkable = True)
+        self._hide_action = QAction("Hide", checkable = True) # type: ignore
         def hide_overlay(is_hide):
             if is_hide:
                 info_board.hide()
@@ -333,7 +333,7 @@ class TrayMenu(QSystemTrayIcon):
         self._menu.addAction(self._close_menu_action)
 
         self._quit_action = QAction("Quit")
-        self._quit_action.triggered.connect(app.quit)
+        self._quit_action.triggered.connect(to_app().quit)
         self._menu.addAction(self._quit_action)
 
         self.setContextMenu(self._menu)
@@ -442,10 +442,11 @@ class Overlay:
             x = logic.to_pos_data().click_bar_x,
             bottom = logic.to_pos_data().click_bar_y,
         )
-        app = QApplication([])
+
+        app = to_app()
 
         info_board = InfoBoard(logic)
-        tray_menu = TrayMenu(app, info_board, logic)
+        tray_menu = TrayMenu(info_board, logic)
 
         info_board.show()
         tray_menu.show()
@@ -459,12 +460,12 @@ class Overlay:
         previous_excepthook = sys.excepthook
         sys.excepthook = excepthook
 
-        exit_code = app.exec_()
+        exit_code = to_app().exec_()
 
         sys.excepthook = previous_excepthook
 
         del app
-        
+
         if _exception_stash.exception:
             raise _exception_stash.exception
         
@@ -480,7 +481,7 @@ class Overlay:
         """
         ### parses command line options ###
         is_help = False
-        data_path = None
+        data_path : str | None = None
 
         for argument in argv[1:]:
             option_name, *value = argument.split("=", 1)
