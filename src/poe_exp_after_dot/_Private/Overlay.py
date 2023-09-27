@@ -5,6 +5,7 @@ import json
 
 from typing import SupportsFloat, SupportsInt, Sequence, Any
 from dataclasses import dataclass
+from copy import deepcopy as _deepcopy
 
 from PySide6.QtWidgets  import QMainWindow, QApplication, QWidget, QLabel, QSystemTrayIcon, QMenu
 from PySide6.QtCore     import Qt, QPoint, QRect, QEvent
@@ -357,63 +358,83 @@ class Settings:
 
     def __init__(self, file_name : str, default : dict[str, Any]):
         self._file_name = file_name
-        self._default = default
+        self._default   = default
+        self._temporal  = {}
+        self._settings  = {}
 
     def load_and_add_temporal(self, temporal : dict[str, Any]):
-        with open(self._file_name, "r") as file:
-            self._settings = json.load(file)
+        if os.path.isfile(self._file_name):
+            with open(self._file_name, "r") as file:
+                self._settings = json.load(file)
+        else:
+            with open(self._file_name, "w") as file:
+                file.write(json.dumps(self._default, indent = 4))
 
-        self._settings = self._default | self._settings
-        self._temporal = self._settings | temporal
+        self._settings = _deepcopy(self._default | self._settings)
+        self._temporal = _deepcopy(self._settings | temporal)
 
-    def set_val(self, full_name : str, value, type_ : type, is_temporal_only : bool = False):
+    def set_val(self, full_name : str, value, value_type : type, *, is_temporal_only : bool = False):
+        """
+        full_name
+            Names of levels and variable separated by '.'. 
+            For Example: "ui.box.size".
+            If value with levels do not exist, then will be created.
+        """
         names = full_name.split(".")
 
         try:
-            self._set_val(self._temporal, names, value, type_)
+            self._set_val(self._temporal, names, value, value_type)
         except Exception as exception:
-            raise RuntimeError(f"Can not assigns value to temporal settings variable with name path \"{full_name}\".") from exception
+            raise RuntimeError(f"Can not assigns value to temporal settings with name path \"{full_name}\".") from exception
 
         if not is_temporal_only:
             try:
-                self._set_val(self._settings, names, value, type_)
+                self._set_val(self._settings, names, value, value_type)
             except Exception as exception:
-                raise RuntimeError(f"Can not assigns value to settings variable with name path \"{full_name}\".") from exception
+                raise RuntimeError(f"Can not assigns value to settings with name path \"{full_name}\".") from exception
 
-    def get_val(self, full_name : str, type_ : type, is_temporal : bool = True) -> Any:
+    def get_val(self, full_name : str, value_type : type, *, is_temporal : bool = True) -> Any:
+        """
+        full_name
+            Names of levels and variable separated by '.'. 
+            For Example: "ui.box.size".
+        """
         names = full_name.split(".")
 
         if is_temporal:
             try:
-                return self._get_val(self._temporal, names, type_)
+                return self._get_val(self._temporal, names, value_type)
             except Exception as exception:
-                raise RuntimeError(f"Can not assigns value to temporal settings variable with name path \"{full_name}\".") from exception
+                raise RuntimeError(f"Can not get value from temporal settings with full name \"{full_name}\".") from exception
     
         else:
             try:
-                return self._get_val(self._settings, names, type_)
+                return self._get_val(self._settings, names, value_type)
             except Exception as exception:
-                raise RuntimeError(f"Can not assigns value to settings variable with name path \"{full_name}\".") from exception
+                raise RuntimeError(f"Can not get value from settings with full name \"{full_name}\".") from exception
 
     def save(self):
         with open(self._file_name, "w") as file:
-            file.write(self._settings)
+            file.write(json.dumps(self._settings, indent = 4))
 
-    def _set_val(self, settings : dict[str, Any], names : list[str], value, type_ : type):
+    def _set_val(self, settings : dict[str, Any], names : list[str], value, value_type : type):
         level = settings
-        for ix in range(len(names) - 1):
-            level = level[names[ix]]
-        level[names[-1]] = type_(value)
+        for name in names[:-1]:
+            if name not in level:
+                level[name] = {}
+            level = level[name]
+        level[names[-1]] = value_type(value)
 
-    def _get_val(self, settings : dict[str, Any], names : list[str], type_ : type) -> Any:
+    def _get_val(self, settings : dict[str, Any], names : list[str], value_type : type) -> Any:
         level = settings
-        for ix in range(len(names) - 1):
-            level = level[names[ix]]
-        return type_(level[names[-1]])
+        for name in names[:-1]:
+            if name not in level:
+                level[name] = {}
+            level = level[name]
+        return value_type(level[names[-1]])
 
 
 class Overlay:
-
     def __init__(self):
         pass
 
@@ -443,7 +464,7 @@ class Overlay:
             bottom = logic.to_pos_data().click_bar_y,
         )
 
-        app = to_app()
+        app = to_app() # initializes global QApplication object
 
         info_board = InfoBoard(logic)
         tray_menu = TrayMenu(info_board, logic)
