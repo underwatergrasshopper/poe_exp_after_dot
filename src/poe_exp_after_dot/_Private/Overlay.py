@@ -15,7 +15,7 @@ from .ErrorBoard        import ErrorBoard
 from .Commons           import EXIT_FAILURE, EXIT_SUCCESS, try_get, to_app
 from .Logic             import Logic
 from .LogManager        import to_log_manager, to_logger
-
+from .Settings          import Settings
 
 _HELP_TEXT = """
 poe_exp_after_dot.py [<option> ...]
@@ -61,13 +61,15 @@ class ExpBar(QWidget):
         ratio
             Value from range 0 to 1.
         """
-        self._width = int(self._logic.to_pos_data().click_bar_width * fractional_of_progress)
+        pos_data = self._logic.to_pos_data()
+
+        self._width = int(pos_data.in_game_exp_bar_width * fractional_of_progress)
 
         self.setGeometry(QRect(
-            self._logic.to_pos_data().click_bar_x,
-            self._logic.to_pos_data().click_bar_y + self._logic.to_pos_data().exp_bar_y_offset,
+            pos_data.in_game_exp_bar_x,
+            pos_data.in_game_exp_bar_y,
             max(1, self._width),
-            self._logic.to_pos_data().exp_bar_height,
+            pos_data.in_game_exp_bar_height
         ))
 
         if is_try_show:
@@ -212,8 +214,8 @@ class InfoBoard(QMainWindow):
                 x = rect.x()
                 bottom = rect.y() + rect.height()
             else:
-                x = self._logic.to_pos_data().click_bar_x
-                bottom = self._logic.to_pos_data().in_game_full_exp_region_y
+                x = self._logic.to_pos_data().info_board_x
+                bottom = self._logic.to_pos_data().info_board_bottom
 
             self._label.setWordWrap(False)  
             self._label.setText(description)
@@ -350,89 +352,6 @@ class _ExceptionStash:
 
 _exception_stash = _ExceptionStash()
 
-class Settings:
-    _file_name  : str
-    _default    : dict[str, Any]
-    _temporal   : dict[str, Any]
-    _settings   : dict[str, Any]
-
-    def __init__(self, file_name : str, default : dict[str, Any]):
-        self._file_name = file_name
-        self._default   = default
-        self._temporal  = {}
-        self._settings  = {}
-
-    def load_and_add_temporal(self, temporal : dict[str, Any]):
-        if os.path.isfile(self._file_name):
-            with open(self._file_name, "r") as file:
-                self._settings = json.load(file)
-        else:
-            with open(self._file_name, "w") as file:
-                file.write(json.dumps(self._default, indent = 4))
-
-        self._settings = _deepcopy(self._default | self._settings)
-        self._temporal = _deepcopy(self._settings | temporal)
-
-    def set_val(self, full_name : str, value, value_type : type, *, is_temporal_only : bool = False):
-        """
-        full_name
-            Names of levels and variable separated by '.'. 
-            For Example: "ui.box.size".
-            If value with levels do not exist, then will be created.
-        """
-        names = full_name.split(".")
-
-        try:
-            self._set_val(self._temporal, names, value, value_type)
-        except Exception as exception:
-            raise RuntimeError(f"Can not assigns value to temporal settings with name path \"{full_name}\".") from exception
-
-        if not is_temporal_only:
-            try:
-                self._set_val(self._settings, names, value, value_type)
-            except Exception as exception:
-                raise RuntimeError(f"Can not assigns value to settings with name path \"{full_name}\".") from exception
-
-    def get_val(self, full_name : str, value_type : type, *, is_temporal : bool = True) -> Any:
-        """
-        full_name
-            Names of levels and variable separated by '.'. 
-            For Example: "ui.box.size".
-        """
-        names = full_name.split(".")
-
-        if is_temporal:
-            try:
-                return self._get_val(self._temporal, names, value_type)
-            except Exception as exception:
-                raise RuntimeError(f"Can not get value from temporal settings with full name \"{full_name}\".") from exception
-    
-        else:
-            try:
-                return self._get_val(self._settings, names, value_type)
-            except Exception as exception:
-                raise RuntimeError(f"Can not get value from settings with full name \"{full_name}\".") from exception
-
-    def save(self):
-        with open(self._file_name, "w") as file:
-            file.write(json.dumps(self._settings, indent = 4))
-
-    def _set_val(self, settings : dict[str, Any], names : list[str], value, value_type : type):
-        level = settings
-        for name in names[:-1]:
-            if name not in level:
-                level[name] = {}
-            level = level[name]
-        level[names[-1]] = value_type(value)
-
-    def _get_val(self, settings : dict[str, Any], names : list[str], value_type : type) -> Any:
-        level = settings
-        for name in names[:-1]:
-            if name not in level:
-                level[name] = {}
-            level = level[name]
-        return value_type(level[names[-1]])
-
 
 class Overlay:
     def __init__(self):
@@ -453,7 +372,32 @@ class Overlay:
         
         to_logger().info("====== NEW RUN ======")
 
-        settings = {"data_path" : data_path}
+        settings = Settings(data_path + "/settings.json", {
+            "pos_data" : {
+                "1920x1080" : {
+                    "info_board_x"      : 551,
+                    "info_board_bottom" : 1056,
+
+                    "click_bar_x"       : 551,
+                    "click_bar_y"       : 1059,
+                    "click_bar_width"   : 820,
+                    "click_bar_height"  : 21,
+
+                    "in_game_exp_bar_x"         : 551,
+                    "in_game_exp_bar_y"         : 1069,
+                    "in_game_exp_bar_width"     : 820,
+                    "in_game_exp_bar_height"    : 5,
+
+                    "in_game_exp_tooltip_x_offset"  : 64,
+                    "in_game_exp_tooltip_y"         : 1007,
+                    "in_game_exp_tooltip_width"     : 446,
+                    "in_game_exp_tooltip_height"    : 73,
+                }
+            }
+        })
+        settings.load_and_add_temporal({
+            "data_path" : data_path
+        })
 
         to_logger().info("Loaded settings.")
 
@@ -489,6 +433,11 @@ class Overlay:
 
         if _exception_stash.exception:
             raise _exception_stash.exception
+        
+        settings.save()
+        to_logger().info("Saved settings.")
+
+        to_logger().info("Exit.")
         
         return exit_code
 

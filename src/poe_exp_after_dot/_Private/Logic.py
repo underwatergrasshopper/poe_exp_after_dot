@@ -14,6 +14,7 @@ from .Commons           import EXIT_FAILURE, EXIT_SUCCESS
 from .StopWatch         import StopWatch
 from .FineFormatters    import FineBareLevel, FineExp, FineExpPerHour, FinePercent, FineTime
 from .FineFormatters    import SECONDS_IN_DAY, SECONDS_IN_HOUR, SECONDS_IN_MINUTE, SECONDS_IN_WEEK
+from .Settings          import Settings
 
 
 @dataclass
@@ -289,16 +290,18 @@ class Measurer:
 
 @dataclass
 class PosData:
-    click_bar_x                   : int
-    click_bar_y                   : int
-    click_bar_width               : int
-    click_bar_height              : int
+    info_board_x                    : int
+    info_board_bottom               : int
 
-    exp_bar_y_offset                : int # from control bar position
-    exp_bar_height                  : int
+    click_bar_x                     : int
+    click_bar_y                     : int
+    click_bar_width                 : int
+    click_bar_height                : int
 
-    in_game_full_exp_region_y       : int
-    in_game_full_exp_region_height  : int
+    in_game_exp_bar_x               : int
+    in_game_exp_bar_y               : int
+    in_game_exp_bar_width           : int
+    in_game_exp_bar_height          : int
 
     in_game_exp_tooltip_x_offset    : int # from cursor pos
     in_game_exp_tooltip_y           : int 
@@ -306,48 +309,36 @@ class PosData:
     in_game_exp_tooltip_height      : int 
 
 
-def get_pos_data(resolution_width : int, resolution_height : int) -> PosData:
-    """
-    Returns
-        PosData for resolution if resolution is supported.
-        None if resolution is not supported.
-    """
-    match (resolution_width, resolution_height):
-        case (1920, 1080):
-            return PosData(
-                click_bar_x                   = 551,
-                click_bar_y                   = 1059,
-                click_bar_width               = 820,
-                click_bar_height              = 21,
-            
-                exp_bar_y_offset                = 10,
-                exp_bar_height                  = 5,
-                
-                in_game_full_exp_region_y       = 1056,
-                in_game_full_exp_region_height  = 24,
-
-                in_game_exp_tooltip_x_offset    = 64,
-                in_game_exp_tooltip_y           = 1007,
-                in_game_exp_tooltip_width       = 446,
-                in_game_exp_tooltip_height      = 73,
-            )
-        case _:
-            raise RuntimeError(f"Can not receive position data for resolution: {resolution_width}x{resolution_height}.")
-
-
 class Logic:
-    _settings   : dict[str, Any]
+    _settings   : Settings
     _pos_data   : PosData
     _measurer   : Measurer
 
     _stop_watch : StopWatch
     _reader     : easyocr.Reader
 
-    def __init__(self, settings : dict[str, Any]):
+    def __init__(self, settings : Settings):
         self._settings = settings
 
-        width, height = (1920, 1080)
-        self._pos_data = get_pos_data(width, height)
+        self._pos_data = PosData(
+            info_board_x                    = settings.get_val("pos_data.1920x1080.info_board_x", int),
+            info_board_bottom               = settings.get_val("pos_data.1920x1080.info_board_bottom", int),
+
+            click_bar_x                     = settings.get_val("pos_data.1920x1080.click_bar_x", int),
+            click_bar_y                     = settings.get_val("pos_data.1920x1080.click_bar_y", int),
+            click_bar_width                 = settings.get_val("pos_data.1920x1080.click_bar_width", int),
+            click_bar_height                = settings.get_val("pos_data.1920x1080.click_bar_height", int),
+        
+            in_game_exp_bar_x               = settings.get_val("pos_data.1920x1080.in_game_exp_bar_x", int),
+            in_game_exp_bar_y               = settings.get_val("pos_data.1920x1080.in_game_exp_bar_y", int),
+            in_game_exp_bar_width           = settings.get_val("pos_data.1920x1080.in_game_exp_bar_width", int),
+            in_game_exp_bar_height          = settings.get_val("pos_data.1920x1080.in_game_exp_bar_height", int),
+
+            in_game_exp_tooltip_x_offset    = settings.get_val("pos_data.1920x1080.in_game_exp_tooltip_x_offset", int),
+            in_game_exp_tooltip_y           = settings.get_val("pos_data.1920x1080.in_game_exp_tooltip_y", int),
+            in_game_exp_tooltip_width       = settings.get_val("pos_data.1920x1080.in_game_exp_tooltip_width", int),
+            in_game_exp_tooltip_height      = settings.get_val("pos_data.1920x1080.in_game_exp_tooltip_height", int),
+        )
         
         self._measurer = Measurer()
         self._stop_watch = StopWatch()
