@@ -10,7 +10,7 @@ from PIL import ImageGrab
 
 from PySide6.QtWidgets  import QWidget
 
-from .Commons           import EXIT_FAILURE, EXIT_SUCCESS
+from .Commons           import EXIT_FAILURE, EXIT_SUCCESS, time_unit_to_short
 from .StopWatch         import StopWatch
 from .FineFormatters    import FineBareLevel, FineExp, FineExpPerHour, FinePercent, FineTime
 from .FineFormatters    import SECONDS_IN_DAY, SECONDS_IN_HOUR, SECONDS_IN_MINUTE, SECONDS_IN_WEEK
@@ -376,6 +376,8 @@ class Logic:
         return self._pos_data
 
     def gen_exp_info_text(self, is_control = False):
+        max_unit = time_unit_to_short(self._settings.get_val("time_max_unit", str))
+
         if is_control:
             level               = "?" * FineBareLevel.MAX_LENGTH_AFTER_FORMAT
             progress            = "?" * FinePercent.MAX_LENGTH_AFTER_FORMAT
@@ -390,10 +392,10 @@ class Logic:
             progress            = FinePercent(self._measurer.get_progress(), integer_color = "#F8CD82", two_dig_after_dot_color = "#7F7FFF")
             exp                 = FineExp(self._measurer.get_total_exp(), unit_color = "#9F9F9F")
             progress_step       = FinePercent(self._measurer.get_progress_step(), is_sign = True, integer_color = "#FFFF7F", two_dig_after_dot_color = "#FFFF7F")
-            progress_step_time  = FineTime(self._measurer.get_progress_step_time(), max_unit = "h", unit_color = "#8F8F8F", never_color = "#FF4F1F")
+            progress_step_time  = FineTime(self._measurer.get_progress_step_time(), max_unit = max_unit, unit_color = "#8F8F8F", never_color = "#FF4F1F")
             exp_per_hour        = FineExpPerHour(self._measurer.get_exp_per_hour(), value_color = "#6FFF6F", unit_color = "#9F9F9F")
-            time_to_10_percent  = FineTime(self._measurer.get_time_to_10_percent(), max_unit = "h", unit_color = "#9F9F9F", never_color = "#FF4F1F")
-            time_to_next_level  = FineTime(self._measurer.get_time_to_next_level(), max_unit = "h", unit_color = "#9F9F9F", never_color = "#FF4F1F")
+            time_to_10_percent  = FineTime(self._measurer.get_time_to_10_percent(), max_unit = max_unit, unit_color = "#9F9F9F", never_color = "#FF4F1F")
+            time_to_next_level  = FineTime(self._measurer.get_time_to_next_level(), max_unit = max_unit, unit_color = "#9F9F9F", never_color = "#FF4F1F")
 
         return (
             f"LVL {level} {progress}<br>"

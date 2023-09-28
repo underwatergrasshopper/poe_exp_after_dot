@@ -4,45 +4,8 @@ An overlay for "Path of Exile", which displays the 2 digits after the dot from t
 
 Works only when "Path of Exile" is in windowed full screen.
 
+poe_exp_after_dot.py --help
 poe_exp_after_dot.py [<option> ...]
-
-<option>
-    --help | -h
-        Just displays this information. Application won't run.
-    --data-path=<path>
-        Relative or absolute path to data folder. 
-        In that folder are stored: settings, logs, exp data and other data.
-    --font="<name>,<size>,<style>"
-        <name>
-            Font name.
-        <size>
-            Size of font in pixels. Only positive integers are allowed.
-        <style>
-            [bold]
-
-        Only not skipped values will override font properties from settings. 
-
-        Examples
-            --font="Courier New,16,bold"
-            --font=",14,"
-            --font="Arial,,"
-    --custom="<info_board>;<click_bar>;<in_game_exp_bar>;<in_game_exp_tooltip>"
-        <info_board>
-            [<x>],[<bottom>]
-        <click_bar>
-            [<x>],[<y>],[<width>],[<height>]
-        <in_game_exp_bar>
-            [<x>],[<y>],[<width>],[<height>]
-        <in_game_exp_tooltip>
-            [<x_offset>],[<y>],[<width>],[<height>]
-        <x_offset>
-            Offset on X axis from cursor position.
-
-        Custom position data for overlay elements and game gui elements.
-        Only not skipped values will override position data from settings. 
-
-        Examples
-            --custom="10,100;,,,;,,,;,,,"
 """
 __author__  = "underwatergrasshopper"
 __version__ = "0.1.0"

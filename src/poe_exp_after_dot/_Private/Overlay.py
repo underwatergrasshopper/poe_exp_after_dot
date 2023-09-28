@@ -22,7 +22,11 @@ poe_exp_after_dot.py [<option> ...]
 
 <option>
     --help | -h
-        Just displays this information. Application won't run.
+        Just displays this information. 
+        Application won't run.
+    --settings-help
+        Display information about possible values in settings.json. 
+        Application won't run.
     --data-path=<path>
         Relative or absolute path to data folder. 
         In that folder are stored: settings, logs, exp data and other data.
@@ -57,6 +61,38 @@ poe_exp_after_dot.py [<option> ...]
 
         Examples
             --custom="10,100;,,,;,,,;,,,"
+    --time-max-unit=<unit>
+        <unit>
+            second
+            minute
+            hour
+            day
+            week
+
+        Sets max time unit for displaying time in info board.
+
+        Examples
+            --time-max-unit=hour
+""".strip("\n")
+
+_SETTINGS_HELP_TEXT = """
+* - Wildcard
+
+font.name
+    Quoted text.
+font.size
+    Natural number.
+font.is_bold
+    true
+    false
+time_max_unit
+    "second"
+    "minute"
+    "hour"
+    "day"
+    "week"
+pos_data.*.*
+    Integer number.
 """.strip("\n")
 
 
@@ -399,7 +435,8 @@ class Overlay:
             is_debug        : bool                  = False, 
             font_data       : FontData | None       = None,
             data_path       : str | None            = None, 
-            custom_pos_data : CustomPosData | None  = None
+            custom_pos_data : CustomPosData | None  = None,
+            time_max_unit   : str | None            = None
                 ) -> int:
         """
         Returns
@@ -423,6 +460,7 @@ class Overlay:
                 "size" : 16,
                 "is_bold" : False
             },
+            "time_max_unit" : "hour",
             "pos_data" : {
                 "1920x1080" : {
                     "info_board_x"      : 551,
@@ -458,6 +496,10 @@ class Overlay:
                 font_settings["is_bold"] = font_data.is_bold
 
             temporal_settings["font"] = font_settings
+
+        if time_max_unit is not None:
+            temporal_settings["time_max_unit"] = time_max_unit
+
         settings.load_and_add_temporal(temporal_settings)
 
         to_logger().info("Loaded settings.")
@@ -519,12 +561,13 @@ class Overlay:
                 When any given option in argument list is incorrect
         """
         ### parses command line options ###
-        is_help                                     = False
+        is_run                                      = True
         is_debug                                    = False
         font_data           : FontData | None       = None
         custom_pos_data     : CustomPosData | None  = None
         raw_custom_pos_data : str | None            = None
         data_path           : str | None            = None
+        time_max_unit       : str | None            = None
 
 
         for argument in argv[1:]:
@@ -534,13 +577,22 @@ class Overlay:
                 ### correct ###
 
                 case ["--help" | "-h"]:
-                    is_help = True
+                    print(_HELP_TEXT)
+                    is_run = False
+
+                case ["--settings-help"]:
+                    print(_SETTINGS_HELP_TEXT)
+                    is_run = False
 
                 case ["--debug"]:
                     is_debug = True
 
                 case ["--data-path", data_path]:
                     pass
+
+                case ["--time-max-unit", time_max_unit]:
+                    if time_max_unit not in ["second", "minute", "hour", "day", "week"]:
+                        raise ValueError(f"Incorrect command line argument. Option \"{option_name}\" have unknown value.")
 
                 case ["--font", font_data_text]:
                     name_format = r"(|[^,]+)"
@@ -591,22 +643,21 @@ class Overlay:
                 
                 ### incorrect ###
 
-                case ["--help" | "-h" | "--debug", _]:
+                case ["--help" | "-h" | "--debug" | "--settings-help", _]:
                     raise ValueError(f"Incorrect command line argument. Option \"{option_name}\" can't have a value.")
                 
-                case ["--data-path" | "--custom" | "--font"]:
+                case ["--data-path" | "--custom" | "--font" | "--time-max-unit"]:
                     raise ValueError(f"Incorrect command line argument. Option \"{option_name}\" need to have a value.")
 
                 case [option_name, *_]:
                     raise ValueError(f"Incorrect command line argument. Unknown option \"{option_name}\".")
-
-        if is_help:
-            print(_HELP_TEXT)
-            return 0
         
-        return self.run(
-            is_debug = is_debug,
-            font_data = font_data,
-            data_path = data_path,
-            custom_pos_data = custom_pos_data,
-        )
+        if is_run:
+            return self.run(
+                is_debug = is_debug,
+                font_data = font_data,
+                data_path = data_path,
+                custom_pos_data = custom_pos_data,
+                time_max_unit = time_max_unit,
+            )
+        return EXIT_SUCCESS
