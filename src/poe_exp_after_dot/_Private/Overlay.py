@@ -419,8 +419,8 @@ class Overlay:
 
         settings = Settings(data_path + "/settings.json", {
             "font" : {
-                "name" : "Courier New",
-                "size" : 14,
+                "name" : "Consolas",
+                "size" : 16,
                 "is_bold" : False
             },
             "pos_data" : {
@@ -543,13 +543,13 @@ class Overlay:
                     pass
 
                 case ["--font", font_data_text]:
-                    name_format = r"([^,]*)"
+                    name_format = r"(|[^,]+)"
                     size_format = r"(|0|[1-9][0-9]*)"
                     style_format = r"(|bold)"
                     match_ = re.search(fr"^{name_format},{size_format},{style_format}$", font_data_text)
                     if match_:
                         font_data = FontData(
-                            name               = match_.group(1),
+                            name               = match_.group(1) if match_.group(1) else None,
                             size               = int(match_.group(2)),
                             is_bold            = match_.group(3) == "bold",
                         )
