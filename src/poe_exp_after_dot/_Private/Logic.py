@@ -15,6 +15,7 @@ from .StopWatch         import StopWatch
 from .FineFormatters    import FineBareLevel, FineExp, FineExpPerHour, FinePercent, FineTime
 from .FineFormatters    import SECONDS_IN_DAY, SECONDS_IN_HOUR, SECONDS_IN_MINUTE, SECONDS_IN_WEEK
 from .Settings          import Settings
+from .LogManager        import to_logger
 
 
 @dataclass
@@ -127,54 +128,79 @@ EXP_THRESHOLD_INFO_TABLE = (
     ExpThresholdInfo(100, 4250334444, 0),
 )
 
+_REVERSED_EXP_THRESHOLD_INFO_TABLE = tuple(reversed(EXP_THRESHOLD_INFO_TABLE))
 
-def find_exp_threshold_info(exp : int) -> ExpThresholdInfo | None:
-    for info in EXP_THRESHOLD_INFO_TABLE:
-        if exp < (info.base_exp + info.exp_to_next):
+class ExpOutOfRange(Exception):
+    pass
+
+def find_exp_threshold_info(total_exp : int) -> ExpThresholdInfo:
+    for info in _REVERSED_EXP_THRESHOLD_INFO_TABLE:
+        if total_exp >= info.base_exp:
+            if total_exp > (info.base_exp + info.exp_to_next):
+                raise ExpOutOfRange(f"Total experience with value equal to {total_exp} is out of expected range.")
             return info 
-    return None
+    raise ExpOutOfRange(f"Total experience with value equal to {total_exp} is out of expected range.")
 
+@dataclass
+class Entry:
+    total_exp               : int
+    info                    : ExpThresholdInfo
+
+    progress                : float     # in percent
+    progress_in_exp         : int
+
+    progress_step           : float     # in percent
+    progress_step_in_exp    : int   
+
+    progress_step_time      : float     # in seconds
+    exp_per_hour            : int       
+
+    time_to_10_percent      : float     # in seconds
+    time_to_next_level      : float     # in seconds
+
+class Register:
+    _entries : list[Entry]
+
+    def __init__(self, entry : Entry):
+        self._entries = [entry]
+
+    def add_new(self, entry : Entry):
+        self._entries.append(entry)
+
+    def try_revert(self) -> bool:
+        if len(self._entries) > 1:
+            self._entries.pop()
+            return True
+        return False
+
+    def to_last(self) -> Entry:
+        return self._entries[-1]
 
 class Measurer:
-    _total_exp                      : int
-
-    _level                          : int
-    _prev_info                      : ExpThresholdInfo
-
-    _progress                       : float     # in percent
-    _progress_in_exp                : int
-
-    _progress_step                  : float     # in percent
-    _progress_step_in_exp           : int   
-
-    _progress_step_time             : float     # in seconds
-    _exp_per_hour                   : int       
-
-    _time_to_10_percent             : float     # in seconds
-    _time_to_next_level             : float     # in seconds
-
-    _is_update_fail                 : bool
+    _register           : Register
+    _is_gained_level    : bool
+    _is_update_fail     : bool
 
     def __init__(self):
-        self._total_exp                     = 0
+        self._register = Register(Entry(
+            total_exp               = 0,
 
-        self._level                         = 0
-        self._prev_info                     = find_exp_threshold_info(0)
+            info                    = find_exp_threshold_info(0),
 
-        self._progress                      = 0.0
-        self._progress_in_exp               = 0
+            progress                = 0.0,
+            progress_in_exp         = 0,
 
-        self._progress_step                 = 0.0
-        self._progress_step_in_exp          = 0
+            progress_step           = 0.0,
+            progress_step_in_exp    = 0,
 
-        self._progress_step_time            = 0.0
-        self._exp_per_hour                  = 0
+            progress_step_time      = 0.0,
+            exp_per_hour            = 0,
 
-        self._time_to_10_percent            = float('inf')
-        self._time_to_next_level            = float('inf')
+            time_to_10_percent      = float('inf'),
+            time_to_next_level      = float('inf')
+        ))
 
         self._is_gained_level               = False
-
         self._is_update_fail                = False
 
     def update(self, total_exp : int, elapsed_time : float):
@@ -182,104 +208,113 @@ class Measurer:
         elapsed_time
             In seconds.
         """
-        self._total_exp = total_exp
-
         if elapsed_time > 0.0:
-            info = find_exp_threshold_info(total_exp)
+            previous = self._register.to_last()
 
-            if info:
-                self._is_gained_level = info.level > self._prev_info.level
+            try:
+                info = find_exp_threshold_info(total_exp)
+            except ExpOutOfRange as exception:
+                to_logger().error(f"Update failed. f{str(exception)}")
+                self._is_update_fail = True
+            else:
+                self._is_gained_level = info.level > previous.info.level
 
-                self._level = info.level
-
-                progress_in_exp = total_exp - info.base_exp                           
-                progress        = (progress_in_exp / info.exp_to_next) * 100    
+                progress_in_exp = total_exp - info.base_exp  
+                if progress_in_exp == 0:
+                    progress = 0.0
+                else:
+                    progress = (progress_in_exp / info.exp_to_next) * 100    
 
                 if self._is_gained_level:
-                    self._progress_step_in_exp  = progress_in_exp                               
-                    self._progress_step         = progress                                   
+                    progress_step_in_exp    = progress_in_exp                               
+                    progress_step           = progress   
+                
+                    exp_per_hour            = 0
+                    progress_step_time      = 0.0
+
+                    time_to_next_level      = float('inf')
+                    time_to_10_percent      = float('inf')
                 else:
-                    self._progress_step_in_exp  = progress_in_exp - self._progress_in_exp
-                    self._progress_step         = progress - self._progress
+                    progress_step_in_exp    = progress_in_exp - previous.progress_in_exp
+                    progress_step           = progress - previous.progress
 
-                self._progress_in_exp   = progress_in_exp
-                self._progress          = progress
+                    exp_per_hour            = int(progress_step_in_exp * SECONDS_IN_HOUR / elapsed_time)
+                    progress_step_time      = elapsed_time
 
-                if self._is_gained_level:
-                    self._exp_per_hour       = 0
-                    self._progress_step_time = 0.0
-
-                    self._time_to_next_level = float('inf')
-                    self._time_to_10_percent = float('inf')
-                else:
-                    self._progress_step_time = elapsed_time
-
-                    self._exp_per_hour = int(self._progress_step_in_exp * SECONDS_IN_HOUR / elapsed_time)
-
-                    if self._progress_step_in_exp > 0.0:
-
-                        self._time_to_next_level = (info.exp_to_next - self._progress_in_exp) * elapsed_time / self._progress_step_in_exp  
-                        self._time_to_10_percent = (info.exp_to_next * elapsed_time) / (self._progress_step_in_exp * 10)
+                    if progress_step_in_exp > 0:
+                        time_to_next_level = (info.exp_to_next - progress_in_exp) * elapsed_time / progress_step_in_exp  
+                        time_to_10_percent = (info.exp_to_next * elapsed_time) / (progress_step_in_exp * 10)
                     else:
-                        self._time_to_next_level = float('inf')
-                        self._time_to_10_percent = float('inf')
+                        time_to_next_level = float('inf')
+                        time_to_10_percent = float('inf')
 
+                self._register.add_new(Entry(
+                    total_exp               = total_exp,
+                    info                    = info,                    
+                    progress                = progress,               
+                    progress_in_exp         = progress_in_exp,
+                    progress_step           = progress_step,
+                    progress_step_in_exp    = progress_step_in_exp,
+                    progress_step_time      = progress_step_time,
+                    exp_per_hour            = exp_per_hour,
+                    time_to_10_percent      = time_to_10_percent,
+                    time_to_next_level      = time_to_next_level
+                ))
+
+                to_logger().debug(f"entry={self._register.to_last()}")
                 self._is_update_fail = False
 
-                self._prev_info = info
-            else:
-                self._is_update_fail = True
 
     def get_total_exp(self) -> int:
-        return self._total_exp 
+        return self._register.to_last().total_exp 
 
     def get_progress(self) -> float:
         """
         Returns
             Current progress to next level in percent.
         """
-        return self._progress
+        return self._register.to_last().progress
     
     def get_progress_step(self) -> float:
         """
         Returns
             Last progress step to next level in percent.
         """
-        return self._progress_step
+        return self._register.to_last().progress_step
     
     def get_progress_step_in_exp(self) -> int:
         """
         Returns
             Last progress step to next level in experience.
         """
-        return self._progress_step_in_exp
+        return self._register.to_last().progress_step_in_exp
     
     def get_progress_step_time(self) -> float:
         """
         Returns
             Time of last progress step to next level in seconds.
         """
-        return self._progress_step_time
+        return self._register.to_last().progress_step_time
     
     def get_time_to_10_percent(self) -> float:
         """
         Returns
             Estimated time in second needed to get 10 percent of current level exp.
         """
-        return self._time_to_10_percent
+        return self._register.to_last().time_to_10_percent
     
     def get_time_to_next_level(self) -> float:
         """
         Returns
             Estimated time in second to next level.
         """
-        return self._time_to_next_level
+        return self._register.to_last().time_to_next_level
     
     def get_exp_per_hour(self) -> int:
-        return self._exp_per_hour
+        return self._register.to_last().exp_per_hour
     
     def get_level(self) -> int:
-        return self._level
+        return self._register.to_last().info.level
     
     def is_gained_level(self) -> bool:
         return self._is_gained_level

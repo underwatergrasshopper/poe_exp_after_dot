@@ -9,7 +9,7 @@ def test_measurer():
 
     assert measurer.is_update_fail() == False
 
-    assert measurer.get_level() == 0
+    assert measurer.get_level() == 1
 
     assert measurer.get_progress() == 0.0
 
