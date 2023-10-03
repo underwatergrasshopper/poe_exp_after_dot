@@ -146,7 +146,7 @@ class Entry:
     total_exp               : int
     info                    : ExpThresholdInfo
     time_                   : int       # since epoch, in seconds
-    
+
     is_other_level          : bool
     is_gained_level         : bool
 
@@ -183,9 +183,14 @@ class Register:
             self._index += 1
 
     def go_to_last(self):
-        self._index = len(self._entries) - 1
+        if self._index >= 0:
+            self._index = len(self._entries) - 1
 
     def go_to_first(self):
+        if self._index >= 0:
+            self._index = 0
+
+    def go_to_head(self):
         self._index = -1
     
     def to_current(self) -> Entry | None:
@@ -196,6 +201,9 @@ class Register:
     
     def is_first(self) -> bool:
         return self._index == 0
+    
+    def is_head(self) -> bool:
+        return self._index == -1
     
     def is_last(self) -> bool:
         return self._index >= 0 and self._index == (len(self._entries) - 1)
