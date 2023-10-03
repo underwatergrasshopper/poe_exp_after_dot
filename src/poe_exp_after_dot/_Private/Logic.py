@@ -164,7 +164,7 @@ class Entry:
 
 class Register:
     _entries    : list[Entry]
-    _index      : int           # -1 - no entry
+    _index      : int           # -1 - before first, no entry
 
     def __init__(self):
         self._entries = []
@@ -190,7 +190,7 @@ class Register:
         if self._index >= 0:
             self._index = 0
 
-    def go_to_head(self):
+    def go_to_before_first(self):
         self._index = -1
     
     def to_current(self) -> Entry | None:
@@ -202,7 +202,7 @@ class Register:
     def is_first(self) -> bool:
         return self._index == 0
     
-    def is_head(self) -> bool:
+    def is_before_first(self) -> bool:
         return self._index == -1
     
     def is_last(self) -> bool:
