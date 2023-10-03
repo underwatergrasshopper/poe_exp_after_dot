@@ -81,6 +81,14 @@ def test_settings_no_default_no_file_no_temporal(tmpdir):
     assert settings.get_val("bbb.eee", str) == "67"
     assert settings.get_val("bbb.ddd", int, is_temporal = True) == 45
 
+    assert settings.try_get_val("xxx", int) == None
+
+    assert settings.try_get_val("aaa", int) == 12
+    assert settings.try_get_val("bbb.ccc", int) == 23
+    assert settings.try_get_val("bbb.eee", int) == 67
+    assert settings.try_get_val("bbb.eee", str) == "67"
+    assert settings.try_get_val("bbb.ddd", int, is_temporal = True) == 45
+
     ### save ###
 
     settings.save()

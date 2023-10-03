@@ -287,7 +287,6 @@ class Measurer:
     def is_update_fail(self) -> bool:
         return self._is_update_fail
 
-
 @dataclass
 class PosData:
     info_board_x                    : int
@@ -308,26 +307,6 @@ class PosData:
     in_game_exp_tooltip_width       : int 
     in_game_exp_tooltip_height      : int 
 
-@dataclass
-class CustomPosData:
-    info_board_x                    : int | None
-    info_board_bottom               : int | None
-
-    click_bar_x                     : int | None
-    click_bar_y                     : int | None
-    click_bar_width                 : int | None
-    click_bar_height                : int | None
-
-    in_game_exp_bar_x               : int | None
-    in_game_exp_bar_y               : int | None
-    in_game_exp_bar_width           : int | None
-    in_game_exp_bar_height          : int | None
-
-    in_game_exp_tooltip_x_offset    : int | None # from cursor pos
-    in_game_exp_tooltip_y           : int | None
-    in_game_exp_tooltip_width       : int | None
-    in_game_exp_tooltip_height      : int | None
-
 class Logic:
     _settings   : Settings
     _pos_data   : PosData
@@ -336,31 +315,35 @@ class Logic:
     _stop_watch : StopWatch
     _reader     : easyocr.Reader
 
-    def __init__(self, settings : Settings, custom_pos_data : CustomPosData):
+    def __init__(self, settings : Settings):
         self._settings = settings
 
+        def get_val(resolution_name : str, data_name : str) -> int:
+            value = settings.try_get_val(f"pos_data._command_line_custom.{data_name}", int)
+            if value is not None:
+                return value
+            return settings.get_val(f"pos_data.{resolution_name}.{data_name}", int) 
+
         self._pos_data = PosData(
-            info_board_x                    = settings.get_val("pos_data.1920x1080.info_board_x", int) if custom_pos_data is None or custom_pos_data.info_board_x is None else custom_pos_data.info_board_x,
-            info_board_bottom               = settings.get_val("pos_data.1920x1080.info_board_bottom", int) if custom_pos_data is None or custom_pos_data.info_board_bottom is None else custom_pos_data.info_board_bottom,
+            info_board_x                    = get_val("1920x1080", "info_board_x"),       
+            info_board_bottom               = get_val("1920x1080", "info_board_bottom"),  
 
-            click_bar_x                     = settings.get_val("pos_data.1920x1080.click_bar_x", int) if custom_pos_data is None or custom_pos_data.click_bar_x is None else custom_pos_data.click_bar_x,
-            click_bar_y                     = settings.get_val("pos_data.1920x1080.click_bar_y", int) if custom_pos_data is None or custom_pos_data.click_bar_y is None  else custom_pos_data.click_bar_y,
-            click_bar_width                 = settings.get_val("pos_data.1920x1080.click_bar_width", int) if custom_pos_data is None or custom_pos_data.click_bar_width is None  else custom_pos_data.click_bar_width,
-            click_bar_height                = settings.get_val("pos_data.1920x1080.click_bar_height", int) if custom_pos_data is None or custom_pos_data.click_bar_height is None  else custom_pos_data.click_bar_height,
+            click_bar_x                     = get_val("1920x1080", "click_bar_x"),        
+            click_bar_y                     = get_val("1920x1080", "click_bar_y"),        
+            click_bar_width                 = get_val("1920x1080", "click_bar_width"),    
+            click_bar_height                = get_val("1920x1080", "click_bar_height"),   
         
-            in_game_exp_bar_x               = settings.get_val("pos_data.1920x1080.in_game_exp_bar_x", int) if custom_pos_data is None or custom_pos_data.in_game_exp_bar_x is None  else custom_pos_data.in_game_exp_bar_x,
-            in_game_exp_bar_y               = settings.get_val("pos_data.1920x1080.in_game_exp_bar_y", int) if custom_pos_data is None or custom_pos_data.in_game_exp_bar_y is None  else custom_pos_data.in_game_exp_bar_y,
-            in_game_exp_bar_width           = settings.get_val("pos_data.1920x1080.in_game_exp_bar_width", int) if custom_pos_data is None or custom_pos_data.in_game_exp_bar_width is None  else custom_pos_data.in_game_exp_bar_width,
-            in_game_exp_bar_height          = settings.get_val("pos_data.1920x1080.in_game_exp_bar_height", int) if custom_pos_data is None or custom_pos_data.in_game_exp_bar_height is None  else custom_pos_data.in_game_exp_bar_height,
+            in_game_exp_bar_x               = get_val("1920x1080", "in_game_exp_bar_x"),  
+            in_game_exp_bar_y               = get_val("1920x1080", "in_game_exp_bar_y"),      
+            in_game_exp_bar_width           = get_val("1920x1080", "in_game_exp_bar_width"),  
+            in_game_exp_bar_height          = get_val("1920x1080", "in_game_exp_bar_height"), 
 
-            in_game_exp_tooltip_x_offset    = settings.get_val("pos_data.1920x1080.in_game_exp_tooltip_x_offset", int) if custom_pos_data is None or custom_pos_data.in_game_exp_tooltip_x_offset is None  else custom_pos_data.in_game_exp_tooltip_x_offset,
-            in_game_exp_tooltip_y           = settings.get_val("pos_data.1920x1080.in_game_exp_tooltip_y", int) if custom_pos_data is None or custom_pos_data.in_game_exp_tooltip_y is None  else custom_pos_data.in_game_exp_tooltip_y,
-            in_game_exp_tooltip_width       = settings.get_val("pos_data.1920x1080.in_game_exp_tooltip_width", int) if custom_pos_data is None or custom_pos_data.in_game_exp_tooltip_width is None  else custom_pos_data.in_game_exp_tooltip_width,
-            in_game_exp_tooltip_height      = settings.get_val("pos_data.1920x1080.in_game_exp_tooltip_height", int) if custom_pos_data is None or custom_pos_data.in_game_exp_tooltip_height is None  else custom_pos_data.in_game_exp_tooltip_height,
+            in_game_exp_tooltip_x_offset    = get_val("1920x1080", "in_game_exp_tooltip_x_offset"),
+            in_game_exp_tooltip_y           = get_val("1920x1080", "in_game_exp_tooltip_y"),       
+            in_game_exp_tooltip_width       = get_val("1920x1080", "in_game_exp_tooltip_width"),   
+            in_game_exp_tooltip_height      = get_val("1920x1080", "in_game_exp_tooltip_height"),  
         )
 
-
-        
         self._measurer = Measurer()
         self._stop_watch = StopWatch()
 

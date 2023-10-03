@@ -12,8 +12,8 @@ from PySide6.QtCore     import Qt, QPoint, QRect, QEvent
 from PySide6.QtGui      import QColor, QMouseEvent, QIcon, QAction, QCloseEvent, QContextMenuEvent, QFocusEvent, QFont, QEnterEvent, QKeyEvent
 
 from .ErrorBoard        import ErrorBoard
-from .Commons           import EXIT_FAILURE, EXIT_SUCCESS, to_app
-from .Logic             import Logic, PosData, CustomPosData
+from .Commons           import EXIT_FAILURE, EXIT_SUCCESS, to_app, merge_on_all_levels
+from .Logic             import Logic, PosData
 from .LogManager        import to_log_manager, to_logger
 from .Settings          import Settings
 
@@ -435,8 +435,25 @@ class Overlay:
             is_debug        : bool                  = False, 
             font_data       : FontData | None       = None,
             data_path       : str | None            = None, 
-            custom_pos_data : CustomPosData | None  = None,
-            time_max_unit   : str | None            = None
+            time_max_unit   : str | None            = None,
+
+            info_board_x                    : int | None    = None,
+            info_board_bottom               : int | None    = None,
+
+            click_bar_x                     : int | None    = None,
+            click_bar_y                     : int | None    = None,
+            click_bar_width                 : int | None    = None,
+            click_bar_height                : int | None    = None,
+
+            in_game_exp_bar_x               : int | None    = None,
+            in_game_exp_bar_y               : int | None    = None,
+            in_game_exp_bar_width           : int | None    = None,
+            in_game_exp_bar_height          : int | None    = None,
+
+            in_game_exp_tooltip_x_offset    : int | None    = None,
+            in_game_exp_tooltip_y           : int | None    = None,
+            in_game_exp_tooltip_width       : int | None    = None,
+            in_game_exp_tooltip_height      : int | None    = None,
                 ) -> int:
         """
         Returns
@@ -452,7 +469,6 @@ class Overlay:
         
         to_logger().info("====== NEW RUN ======")
         to_logger().debug(f"data_path={data_path}")
-        to_logger().debug(f"custom_pos_data={custom_pos_data}")
 
         settings = Settings(data_path + "/settings.json", {
             "font" : {
@@ -500,11 +516,34 @@ class Overlay:
         if time_max_unit is not None:
             temporal_settings["time_max_unit"] = time_max_unit
 
+        temporal_settings.update(merge_on_all_levels(temporal_settings, {"pos_data" : {"_command_line_custom" : {}}}))
+        _custom_pos_data = temporal_settings["pos_data"]["_command_line_custom"]
+
+        if info_board_x:                    _custom_pos_data["info_board_x"]                    = info_board_x
+        if info_board_bottom:               _custom_pos_data["info_board_bottom"]               = info_board_bottom
+
+        if click_bar_x:                     _custom_pos_data["click_bar_x"]                     = click_bar_x
+        if click_bar_y:                     _custom_pos_data["click_bar_y"]                     = click_bar_y
+        if click_bar_width:                 _custom_pos_data["click_bar_width"]                 = click_bar_width
+        if click_bar_height:                _custom_pos_data["click_bar_height"]                = click_bar_height
+
+        if in_game_exp_bar_x:               _custom_pos_data["in_game_exp_bar_x"]               = in_game_exp_bar_x
+        if in_game_exp_bar_y:               _custom_pos_data["in_game_exp_bar_y"]               = in_game_exp_bar_y
+        if in_game_exp_bar_width:           _custom_pos_data["in_game_exp_bar_width"]           = in_game_exp_bar_width
+        if in_game_exp_bar_height:          _custom_pos_data["in_game_exp_bar_height"]          = in_game_exp_bar_height
+
+        if in_game_exp_tooltip_x_offset:    _custom_pos_data["in_game_exp_tooltip_x_offset"]    = in_game_exp_tooltip_x_offset
+        if in_game_exp_tooltip_y:           _custom_pos_data["in_game_exp_tooltip_y"]           = in_game_exp_tooltip_y
+        if in_game_exp_tooltip_width:       _custom_pos_data["in_game_exp_tooltip_width"]       = in_game_exp_tooltip_width
+        if in_game_exp_tooltip_height:      _custom_pos_data["in_game_exp_tooltip_height"]      = in_game_exp_tooltip_height
+
+        to_logger().debug(f"temporal_settings={temporal_settings}")
+
         settings.load_and_add_temporal(temporal_settings)
 
         to_logger().info("Loaded settings.")
 
-        logic = Logic(settings, custom_pos_data)
+        logic = Logic(settings)
 
         ErrorBoard.set_default_pos(
             x = logic.to_pos_data().click_bar_x,
@@ -561,13 +600,30 @@ class Overlay:
                 When any given option in argument list is incorrect
         """
         ### parses command line options ###
-        is_run                                      = True
-        is_debug                                    = False
-        font_data           : FontData | None       = None
-        custom_pos_data     : CustomPosData | None  = None
-        raw_custom_pos_data : str | None            = None
-        data_path           : str | None            = None
-        time_max_unit       : str | None            = None
+        is_run                                          = True
+        is_debug                                        = False
+        font_data           : FontData | None           = None
+        raw_custom_pos_data : str | None                = None
+        data_path           : str | None                = None
+        time_max_unit       : str | None                = None
+
+        info_board_x                    : int | None    = None
+        info_board_bottom               : int | None    = None
+
+        click_bar_x                     : int | None    = None
+        click_bar_y                     : int | None    = None
+        click_bar_width                 : int | None    = None
+        click_bar_height                : int | None    = None
+
+        in_game_exp_bar_x               : int | None    = None
+        in_game_exp_bar_y               : int | None    = None
+        in_game_exp_bar_width           : int | None    = None
+        in_game_exp_bar_height          : int | None    = None
+
+        in_game_exp_tooltip_x_offset    : int | None    = None
+        in_game_exp_tooltip_y           : int | None    = None
+        in_game_exp_tooltip_width       : int | None    = None
+        in_game_exp_tooltip_height      : int | None    = None
 
 
         for argument in argv[1:]:
@@ -619,25 +675,25 @@ class Overlay:
                             index += 1
                             return int(group) if group else None
                         
-                        custom_pos_data = CustomPosData(
-                            info_board_x                    = next_group(),
-                            info_board_bottom               = next_group(),
+                        info_board_x                    = next_group()
+                        info_board_bottom               = next_group()
 
-                            click_bar_x                     = next_group(),
-                            click_bar_y                     = next_group(),
-                            click_bar_width                 = next_group(),
-                            click_bar_height                = next_group(),
+                        click_bar_x                     = next_group()
+                        click_bar_y                     = next_group()
+                        click_bar_width                 = next_group()
+                        click_bar_height                = next_group()
 
-                            in_game_exp_bar_x               = next_group(),
-                            in_game_exp_bar_y               = next_group(),
-                            in_game_exp_bar_width           = next_group(),
-                            in_game_exp_bar_height          = next_group(),
+                        in_game_exp_bar_x               = next_group()
+                        in_game_exp_bar_y               = next_group()
+                        in_game_exp_bar_width           = next_group()
+                        in_game_exp_bar_height          = next_group()
 
-                            in_game_exp_tooltip_x_offset    = next_group(),
-                            in_game_exp_tooltip_y           = next_group(), 
-                            in_game_exp_tooltip_width       = next_group(), 
-                            in_game_exp_tooltip_height      = next_group()
-                        )
+                        in_game_exp_tooltip_x_offset    = next_group()
+                        in_game_exp_tooltip_y           = next_group()
+                        in_game_exp_tooltip_width       = next_group()
+                        in_game_exp_tooltip_height      = next_group()
+                        
+
                     else:
                         raise ValueError(f"Incorrect command line argument. Option \"{option_name}\" have wrong format.")
                 
@@ -654,10 +710,27 @@ class Overlay:
         
         if is_run:
             return self.run(
-                is_debug = is_debug,
-                font_data = font_data,
-                data_path = data_path,
-                custom_pos_data = custom_pos_data,
-                time_max_unit = time_max_unit,
+                is_debug                        = is_debug,
+                font_data                       = font_data,
+                data_path                       = data_path,
+                time_max_unit                   = time_max_unit,
+
+                info_board_x                    = info_board_x,
+                info_board_bottom               = info_board_bottom,
+
+                click_bar_x                     = click_bar_x,
+                click_bar_y                     = click_bar_y,
+                click_bar_width                 = click_bar_width,
+                click_bar_height                = click_bar_height,
+
+                in_game_exp_bar_x               = in_game_exp_bar_x,
+                in_game_exp_bar_y               = in_game_exp_bar_y,
+                in_game_exp_bar_width           = in_game_exp_bar_width,
+                in_game_exp_bar_height          = in_game_exp_bar_height,
+
+                in_game_exp_tooltip_x_offset    = in_game_exp_tooltip_x_offset,
+                in_game_exp_tooltip_y           = in_game_exp_tooltip_y,
+                in_game_exp_tooltip_width       = in_game_exp_tooltip_width,
+                in_game_exp_tooltip_height      = in_game_exp_tooltip_height
             )
         return EXIT_SUCCESS

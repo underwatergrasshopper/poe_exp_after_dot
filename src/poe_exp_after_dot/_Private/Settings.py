@@ -68,6 +68,17 @@ class Settings:
                 return self._get_val(self._settings, names, value_type)
             except Exception as exception:
                 raise RuntimeError(f"Can not get value from settings with full name \"{full_name}\".") from exception
+            
+    def try_get_val(self, full_name : str, value_type : type = object, *, is_temporal : bool = True) -> Any | None:
+        """
+        full_name
+            Names of levels and variable separated by '.'. 
+            For Example: "ui.box.size".
+        """
+        try:
+            return self.get_val(full_name, value_type, is_temporal = is_temporal)
+        except RuntimeError:
+            return None
 
     def save(self):
         with open(self._file_name, "w") as file:
