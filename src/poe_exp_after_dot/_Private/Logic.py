@@ -6,6 +6,7 @@ import numpy
 import cv2
 import easyocr # type: ignore
 
+from time import time as _get_time_since_epoch
 from PIL import ImageGrab
 
 from PySide6.QtWidgets  import QWidget
@@ -23,7 +24,6 @@ class ExpThresholdInfo:
     level       : int
     base_exp    : int
     exp_to_next : int
-
 
 EXP_THRESHOLD_INFO_TABLE = (
     ExpThresholdInfo(1, 0, 525),
@@ -145,6 +145,8 @@ def find_exp_threshold_info(total_exp : int) -> ExpThresholdInfo:
 class Entry:
     total_exp               : int
     info                    : ExpThresholdInfo
+    time_                   : int       # since epoch, in seconds
+    is_gained_level         : bool
 
     progress                : float     # in percent
     progress_in_exp         : int
@@ -159,165 +161,207 @@ class Entry:
     time_to_next_level      : float     # in seconds
 
 class Register:
-    _entries : list[Entry]
+    _entries    : list[Entry]
+    _index      : int           # -1 - no entry
 
-    def __init__(self, entry : Entry):
-        self._entries = [entry]
+    def __init__(self):
+        self._entries = []
+        self._index = -1
 
     def add_new(self, entry : Entry):
-        self._entries.append(entry)
+        self._index += 1
+        self._entries = self._entries[:self._index] + [entry]
 
-    def try_revert(self) -> bool:
-        if len(self._entries) > 1:
-            self._entries.pop()
-            return True
-        return False
+    def go_to_previous(self):
+        if self._index >= 0: 
+            self._index -= 1
 
-    def to_last(self) -> Entry:
-        return self._entries[-1]
+    def go_to_next(self):
+        if (self._index + 1) < len(self._entries):
+            self._index += 1
+
+    def go_to_last(self):
+        self._index = len(self._entries) - 1
+
+    def go_to_first(self):
+        self._index = -1
+    
+    def to_current(self) -> Entry | None:
+        return self._entries[self._index] if self._index >= 0 else None
+    
+    def is_any(self) -> int:
+        return len(self._entries) > 0
+    
+    def is_first(self) -> bool:
+        return self._index == 0
+    
+    def is_last(self) -> bool:
+        return self._index >= 0 and self._index == (len(self._entries) - 1)
+    
+_EMPTY_ENTRY = Entry(
+    total_exp               = 0,
+    info                    = ExpThresholdInfo(0, 0, 0),
+    time_                   = 0,
+    is_gained_level         = False,
+
+    progress                = 0.0,
+    progress_in_exp         = 0,
+
+    progress_step           = 0.0,
+    progress_step_in_exp    = 0,
+
+    progress_step_time      = 0.0,
+    exp_per_hour            = 0,
+
+    time_to_10_percent      = float('inf'),
+    time_to_next_level      = float('inf')
+)
 
 class Measurer:
     _register           : Register
-    _is_gained_level    : bool
     _is_update_fail     : bool
 
     def __init__(self):
-        self._register = Register(Entry(
-            total_exp               = 0,
-
-            info                    = find_exp_threshold_info(0),
-
-            progress                = 0.0,
-            progress_in_exp         = 0,
-
-            progress_step           = 0.0,
-            progress_step_in_exp    = 0,
-
-            progress_step_time      = 0.0,
-            exp_per_hour            = 0,
-
-            time_to_10_percent      = float('inf'),
-            time_to_next_level      = float('inf')
-        ))
-
-        self._is_gained_level               = False
+        self._register = Register()
         self._is_update_fail                = False
 
-    def update(self, total_exp : int, elapsed_time : float):
+    def update(self, total_exp : int, time_ : float):
         """
-        elapsed_time
-            In seconds.
+        time_
+            In seconds. Since epoch.
         """
-        if elapsed_time > 0.0:
-            previous = self._register.to_last()
+        previous = self._register.to_current()
 
-            try:
-                info = find_exp_threshold_info(total_exp)
-            except ExpOutOfRange as exception:
-                to_logger().error(f"Update failed. f{str(exception)}")
-                self._is_update_fail = True
+        try:
+            info = find_exp_threshold_info(total_exp)
+        except ExpOutOfRange as exception:
+            to_logger().error(f"Update failed. f{str(exception)}")
+            self._is_update_fail = True
+        else:
+            is_gained_level = previous is None or info.level > previous.info.level
+
+            progress_in_exp = total_exp - info.base_exp  
+            if progress_in_exp == 0:
+                progress = 0.0
             else:
-                self._is_gained_level = info.level > previous.info.level
+                progress = (progress_in_exp / info.exp_to_next) * 100    
 
-                progress_in_exp = total_exp - info.base_exp  
-                if progress_in_exp == 0:
-                    progress = 0.0
+            if is_gained_level:
+                progress_step_in_exp    = progress_in_exp                               
+                progress_step           = progress   
+            
+                exp_per_hour            = 0
+                progress_step_time      = 0.0
+
+                time_to_next_level      = float('inf')
+                time_to_10_percent      = float('inf')
+            else:
+                elapsed_time            = time_ - previous.time_
+
+                progress_step_in_exp    = progress_in_exp - previous.progress_in_exp
+                progress_step           = progress - previous.progress
+
+                exp_per_hour            = int(progress_step_in_exp * SECONDS_IN_HOUR / elapsed_time)
+                progress_step_time      = elapsed_time
+
+                if progress_step_in_exp > 0:
+                    time_to_next_level = (info.exp_to_next - progress_in_exp) * elapsed_time / progress_step_in_exp  
+                    time_to_10_percent = (info.exp_to_next * elapsed_time) / (progress_step_in_exp * 10)
                 else:
-                    progress = (progress_in_exp / info.exp_to_next) * 100    
+                    time_to_next_level = float('inf')
+                    time_to_10_percent = float('inf')
 
-                if self._is_gained_level:
-                    progress_step_in_exp    = progress_in_exp                               
-                    progress_step           = progress   
-                
-                    exp_per_hour            = 0
-                    progress_step_time      = 0.0
+            self._register.add_new(Entry(
+                total_exp               = total_exp,
+                info                    = info,     
+                time_                   = time_,
+                is_gained_level         = is_gained_level,               
+                progress                = progress,               
+                progress_in_exp         = progress_in_exp,
+                progress_step           = progress_step,
+                progress_step_in_exp    = progress_step_in_exp,
+                progress_step_time      = progress_step_time,
+                exp_per_hour            = exp_per_hour,
+                time_to_10_percent      = time_to_10_percent,
+                time_to_next_level      = time_to_next_level
+            ))
 
-                    time_to_next_level      = float('inf')
-                    time_to_10_percent      = float('inf')
-                else:
-                    progress_step_in_exp    = progress_in_exp - previous.progress_in_exp
-                    progress_step           = progress - previous.progress
+            to_logger().debug(f"entry={self._register.to_current()}")
+            self._is_update_fail = False
 
-                    exp_per_hour            = int(progress_step_in_exp * SECONDS_IN_HOUR / elapsed_time)
-                    progress_step_time      = elapsed_time
-
-                    if progress_step_in_exp > 0:
-                        time_to_next_level = (info.exp_to_next - progress_in_exp) * elapsed_time / progress_step_in_exp  
-                        time_to_10_percent = (info.exp_to_next * elapsed_time) / (progress_step_in_exp * 10)
-                    else:
-                        time_to_next_level = float('inf')
-                        time_to_10_percent = float('inf')
-
-                self._register.add_new(Entry(
-                    total_exp               = total_exp,
-                    info                    = info,                    
-                    progress                = progress,               
-                    progress_in_exp         = progress_in_exp,
-                    progress_step           = progress_step,
-                    progress_step_in_exp    = progress_step_in_exp,
-                    progress_step_time      = progress_step_time,
-                    exp_per_hour            = exp_per_hour,
-                    time_to_10_percent      = time_to_10_percent,
-                    time_to_next_level      = time_to_next_level
-                ))
-
-                to_logger().debug(f"entry={self._register.to_last()}")
-                self._is_update_fail = False
-
+    def to_register(self) -> Register:
+        return self._register
+    
+    def to_entry_safe(self) -> Entry:
+        """
+        Returns
+            Current entry if exists.
+            Empty entry if current entry do not exist.
+        """
+        entry = self._register.to_current()
+        return entry if entry is not None else _EMPTY_ENTRY
+    
+    def is_entry(self) -> bool:
+        """
+        Returns
+            True    - If current entry exists.
+            False   - Otherwise.
+        """
+        return self._register.to_current() is None
 
     def get_total_exp(self) -> int:
-        return self._register.to_last().total_exp 
+        return self.to_entry_safe().total_exp 
 
     def get_progress(self) -> float:
         """
         Returns
             Current progress to next level in percent.
         """
-        return self._register.to_last().progress
+        return self.to_entry_safe().progress
     
     def get_progress_step(self) -> float:
         """
         Returns
             Last progress step to next level in percent.
         """
-        return self._register.to_last().progress_step
+        return self.to_entry_safe().progress_step
     
     def get_progress_step_in_exp(self) -> int:
         """
         Returns
             Last progress step to next level in experience.
         """
-        return self._register.to_last().progress_step_in_exp
+        return self.to_entry_safe().progress_step_in_exp
     
     def get_progress_step_time(self) -> float:
         """
         Returns
             Time of last progress step to next level in seconds.
         """
-        return self._register.to_last().progress_step_time
+        return self.to_entry_safe().progress_step_time
     
     def get_time_to_10_percent(self) -> float:
         """
         Returns
             Estimated time in second needed to get 10 percent of current level exp.
         """
-        return self._register.to_last().time_to_10_percent
+        return self.to_entry_safe().time_to_10_percent
     
     def get_time_to_next_level(self) -> float:
         """
         Returns
             Estimated time in second to next level.
         """
-        return self._register.to_last().time_to_next_level
+        return self.to_entry_safe().time_to_next_level
     
     def get_exp_per_hour(self) -> int:
-        return self._register.to_last().exp_per_hour
+        return self.to_entry_safe().exp_per_hour
     
     def get_level(self) -> int:
-        return self._register.to_last().info.level
+        return self.to_entry_safe().info.level
     
     def is_gained_level(self) -> bool:
-        return self._is_gained_level
+        return self.to_entry_safe().is_gained_level
     
     def is_update_fail(self) -> bool:
         return self._is_update_fail
@@ -347,7 +391,6 @@ class Logic:
     _pos_data   : PosData
     _measurer   : Measurer
 
-    _stop_watch : StopWatch
     _reader     : easyocr.Reader
 
     def __init__(self, settings : Settings):
@@ -380,7 +423,6 @@ class Logic:
         )
 
         self._measurer = Measurer()
-        self._stop_watch = StopWatch()
 
         self._reader = easyocr.Reader(['en'], gpu = True, verbose = False)
 
@@ -425,11 +467,11 @@ class Logic:
         )
         
     def measure(self, cursor_x_in_screen : int, cursor_y_in_screen : int, widgets_to_hide : list[QWidget]):
-        self._stop_watch.update()
+        time_ = _get_time_since_epoch()
 
         current_exp = self._fetch_exp(cursor_x_in_screen, cursor_y_in_screen, widgets_to_hide)
 
-        self._measurer.update(current_exp, self._stop_watch.get_elapsed_time())
+        self._measurer.update(current_exp, time_)
 
     def _fetch_exp(self, cursor_x_in_screen : int, cursor_y_in_screen: int, widgets_to_hide : list[QWidget]) -> int:
         """

@@ -1,15 +1,18 @@
 from math import isclose as _isclose
+from time import time as _get_time
 
 from poe_exp_after_dot._Private.FineFormatters import SECONDS_IN_WEEK, SECONDS_IN_DAY, SECONDS_IN_HOUR, SECONDS_IN_MINUTE
 from poe_exp_after_dot._Private.FineFormatters import FineTime, FineExpPerHour, FinePercent, FineBareLevel, FineExp
 from poe_exp_after_dot._Private.Logic          import Measurer
 
 def test_measurer():
+    time_ = 0
+
     measurer = Measurer()
 
     assert measurer.is_update_fail() == False
 
-    assert measurer.get_level() == 1
+    assert measurer.get_level() == 0
 
     assert measurer.get_progress() == 0.0
 
@@ -22,7 +25,8 @@ def test_measurer():
 
     measurer = Measurer()
 
-    measurer.update(900, 5.0 * 60)
+    time_ += 5.0 * 60
+    measurer.update(900, time_)
     
     assert measurer.is_update_fail() == False
 
@@ -37,7 +41,8 @@ def test_measurer():
     assert measurer.get_time_to_10_percent() == float('inf')
     assert measurer.get_time_to_next_level() == float('inf')
 
-    measurer.update(1000, 2.0 * 60)
+    time_ += 2.0 * 60
+    measurer.update(1000, time_)
     
     assert measurer.is_update_fail() == False
 
@@ -63,7 +68,7 @@ def test_measurer():
 
     assert _update(measurer, 0, 1) == (
         "LVL 1 0.00%\n"
-        "+0.00% in 1s\n"
+        "+0.00% in 0s\n"
         "0 exp/h\n"
         "10% in never\n"
         "next in never\n"
@@ -174,8 +179,12 @@ def test_measurer():
     #print(_update(measurer, 2750, 60 * 60))
     #print(_update(measurer, 3000, 60 * 60))
 
+_time_accumulator = 0
+
 def _update(measurer : Measurer, total_exp : int, elapsed_time : float) -> str:
-    measurer.update(total_exp, elapsed_time)
+    global _time_accumulator
+    _time_accumulator += elapsed_time
+    measurer.update(total_exp, _time_accumulator)
 
     return (
         f"LVL {measurer.get_level()} {FinePercent(measurer.get_progress())}\n"
