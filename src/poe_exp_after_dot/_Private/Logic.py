@@ -322,7 +322,7 @@ class Measurer:
             True    - If current entry exists.
             False   - Otherwise.
         """
-        return self._register.to_current() is None
+        return self._register.to_current() is not None
 
     def get_total_exp(self) -> int:
         return self._to_entry_safe().total_exp 
