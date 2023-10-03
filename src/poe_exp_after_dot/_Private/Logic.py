@@ -146,6 +146,8 @@ class Entry:
     total_exp               : int
     info                    : ExpThresholdInfo
     time_                   : int       # since epoch, in seconds
+    
+    is_other_level          : bool
     is_gained_level         : bool
 
     progress                : float     # in percent
@@ -202,6 +204,8 @@ _EMPTY_ENTRY = Entry(
     total_exp               = 0,
     info                    = ExpThresholdInfo(0, 0, 0),
     time_                   = 0,
+
+    is_other_level          = False,
     is_gained_level         = False,
 
     progress                = 0.0,
@@ -238,7 +242,12 @@ class Measurer:
             to_logger().error(f"Update failed. f{str(exception)}")
             self._is_update_fail = True
         else:
-            is_gained_level = previous is None or info.level > previous.info.level
+            if previous is None:
+                is_other_level  = True
+                is_gained_level = False
+            else:
+                is_other_level  = info.level != previous.info.level
+                is_gained_level = info.level > previous.info.level
 
             progress_in_exp = total_exp - info.base_exp  
             if progress_in_exp == 0:
@@ -246,7 +255,7 @@ class Measurer:
             else:
                 progress = (progress_in_exp / info.exp_to_next) * 100    
 
-            if is_gained_level:
+            if is_other_level:
                 progress_step_in_exp    = progress_in_exp                               
                 progress_step           = progress   
             
@@ -275,6 +284,7 @@ class Measurer:
                 total_exp               = total_exp,
                 info                    = info,     
                 time_                   = time_,
+                is_other_level          = is_other_level,  
                 is_gained_level         = is_gained_level,               
                 progress                = progress,               
                 progress_in_exp         = progress_in_exp,
