@@ -307,10 +307,7 @@ class Measurer:
             to_logger().debug(f"entry={self._register.to_current()}")
             self._is_update_fail = False
 
-    def to_register(self) -> Register:
-        return self._register
-    
-    def to_entry_safe(self) -> Entry:
+    def _to_entry_safe(self) -> Entry:
         """
         Returns
             Current entry if exists.
@@ -328,58 +325,58 @@ class Measurer:
         return self._register.to_current() is None
 
     def get_total_exp(self) -> int:
-        return self.to_entry_safe().total_exp 
+        return self._to_entry_safe().total_exp 
 
     def get_progress(self) -> float:
         """
         Returns
             Current progress to next level in percent.
         """
-        return self.to_entry_safe().progress
+        return self._to_entry_safe().progress
     
     def get_progress_step(self) -> float:
         """
         Returns
             Last progress step to next level in percent.
         """
-        return self.to_entry_safe().progress_step
+        return self._to_entry_safe().progress_step
     
     def get_progress_step_in_exp(self) -> int:
         """
         Returns
             Last progress step to next level in experience.
         """
-        return self.to_entry_safe().progress_step_in_exp
+        return self._to_entry_safe().progress_step_in_exp
     
     def get_progress_step_time(self) -> float:
         """
         Returns
             Time of last progress step to next level in seconds.
         """
-        return self.to_entry_safe().progress_step_time
+        return self._to_entry_safe().progress_step_time
     
     def get_time_to_10_percent(self) -> float:
         """
         Returns
             Estimated time in second needed to get 10 percent of current level exp.
         """
-        return self.to_entry_safe().time_to_10_percent
+        return self._to_entry_safe().time_to_10_percent
     
     def get_time_to_next_level(self) -> float:
         """
         Returns
             Estimated time in second to next level.
         """
-        return self.to_entry_safe().time_to_next_level
+        return self._to_entry_safe().time_to_next_level
     
     def get_exp_per_hour(self) -> int:
-        return self.to_entry_safe().exp_per_hour
+        return self._to_entry_safe().exp_per_hour
     
     def get_level(self) -> int:
-        return self.to_entry_safe().info.level
+        return self._to_entry_safe().info.level
     
     def is_gained_level(self) -> bool:
-        return self.to_entry_safe().is_gained_level
+        return self._to_entry_safe().is_gained_level
     
     def is_update_fail(self) -> bool:
         return self._is_update_fail
