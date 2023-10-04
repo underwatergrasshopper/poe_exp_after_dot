@@ -1,0 +1,2 @@
+class TemplateLoadFail(Exception):
+    pass

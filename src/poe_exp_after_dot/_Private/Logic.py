@@ -2,6 +2,7 @@ from typing import SupportsFloat, SupportsInt, Sequence, Any
 from dataclasses import dataclass
 
 import re
+import os
 import numpy
 import cv2
 import easyocr # type: ignore
@@ -535,107 +536,3 @@ class Logic:
             exp = int(match_.group(1).replace(",", ""))
 
         return exp
-    
-
-@dataclass
-class Template:
-    """
-    <template>
-        --- <name> (\| <name>)* (, <delay> \-\> <next_name>)? ---
-        <content>
-    """
-    content     : str
-
-    delay       : float
-    next_name   : str   
-
-
-class TemplateLoadFail(Exception):
-    pass
-
-class TemplateLoader:
-    """
-    Loads text templates for info board.
-    """
-    _templates : dict[str, Template]
-
-    def __init__(self):
-        self._templates = {}
-
-    def load(self, file_name : str):
-        with open(file_name, "r") as file:
-            self.load_from_content(file.read())
-
-    def load_from_content(self, content : str):
-        self._templates = {}
-            
-        COMMENT_PATTERN = r"#[^\n]*"
-
-        names = []
-        delay = 0.0
-        next_name = ""
-        content = ""
-
-        lines = content.split("\n")
-        line_id = 0
-        for line in lines:
-            line_id += 1
-
-            match_ = re.search(fr"^(.*?){COMMENT_PATTERN}$", line)
-            if match_:
-                # comment
-                line = match_.group(1)
-            
-            match_ = re.search(fr"^[ \t]*---[ \t]+([^\-]+)[ \t]+---[ \t]*$", line)
-            if match_:
-                # store current template
-                if names:
-                    for name in names:
-                        self._templates[name] = Template(content, delay, next_name)
-
-                    names = []
-                    delay = 0.0
-                    next_name = ""
-                    content = ""
-
-                # template head
-                template_head = match_.group(1)
-
-                names, *next_data = template_head.split(",", 1)
-                names = [name.strip() for name in names]
-                if "" in names:
-                    raise TemplateLoadFail(f"Empty template name. Line: {line_id}.")
-
-                if next_data:
-                    delay, next_name = next_data[0].split("->")
-
-                    match_ = re.search(fr"^(0|[1-9][0-9]*)s$", delay.strip())
-                    if match_:
-                        delay = float(match_.group(1))
-                    else:
-                        raise TemplateLoadFail(f"Delay is not a valid number. Should be a natural number. Line: {line_id}.")
-
-                    next_name = next_name.strip()
-                    if next_name == "":
-                        raise TemplateLoadFail(f"Empty next template name. Line: {line_id}.")
-
-            else:
-                # template body
-                content += line
-
-        # store current template
-        if names:
-            for name in names:
-                self._templates[name] = Template(content, delay, next_name)
-                
-            names = []
-            delay = 0.0
-            next_name = ""
-            content = ""
-
-
-            
-
-    def to_templates(self) -> dict[str, Template]:
-        return self._templates
-
