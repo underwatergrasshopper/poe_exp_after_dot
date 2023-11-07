@@ -45,10 +45,10 @@ poe_exp_after_dot.py [<option> ...]
             --font="Courier New,16,bold"
             --font=",14,"
             --font="Arial,,"
-    --custom="<info_board>;<click_bar>;<in_game_exp_bar>;<in_game_exp_tooltip>"
+    --custom="<info_board>;<control_region>;<in_game_exp_bar>;<in_game_exp_tooltip>"
         <info_board>
             [<x>],[<bottom>]
-        <click_bar>
+        <control_region>
             [<x>],[<y>],[<width>],[<height>]
         <in_game_exp_bar>
             [<x>],[<y>],[<width>],[<height>]
@@ -101,13 +101,13 @@ class ExpBar(QWidget):
     _logic          : Logic
 
     _width          : int
-    _click_bar      : "ClickBar"
+    _control_region      : "ControlRegion"
 
-    def __init__(self, logic : Logic, click_bar : "ClickBar"):
+    def __init__(self, logic : Logic, control_region : "ControlRegion"):
         super().__init__()
 
         self._logic = logic
-        self._click_bar = click_bar
+        self._control_region = control_region
 
         self.setWindowFlags(
             Qt.WindowType.WindowStaysOnTopHint |
@@ -156,10 +156,10 @@ class ExpBar(QWidget):
       
             pos_in_screen = self.mapToGlobal(QPoint(event.x(), event.y()))
 
-            self._click_bar.measure(pos_in_screen.x(), pos_in_screen.y())
+            self._control_region.measure(pos_in_screen.x(), pos_in_screen.y())
 
 
-class ClickBar(QWidget):
+class ControlRegion(QWidget):
     _logic              : Logic
     _info_board         : "InfoBoard"
     _exp_bar            : ExpBar | None
@@ -182,10 +182,10 @@ class ClickBar(QWidget):
         self.setWindowOpacity(0.01)
 
         self.setGeometry(QRect(
-            logic.to_pos_data().click_bar_x,
-            logic.to_pos_data().click_bar_y,
-            logic.to_pos_data().click_bar_width,
-            logic.to_pos_data().click_bar_height,
+            logic.to_pos_data().control_region_x,
+            logic.to_pos_data().control_region_y,
+            logic.to_pos_data().control_region_width,
+            logic.to_pos_data().control_region_height,
         ))
 
     def attach_exp_bar(self, exp_bar : ExpBar):
@@ -224,7 +224,7 @@ def _move_window_to_foreground(window_name : str):
 
 class InfoBoard(QMainWindow):
     _exp_bar            : ExpBar
-    _click_bar          : ClickBar
+    _control_region          : ControlRegion
     _context_menu       : QMenu | None
 
     _logic              : Logic
@@ -271,9 +271,9 @@ class InfoBoard(QMainWindow):
 
         #self.set_description("Click on in-game exp bar to receive data. Ctrl + Shift + LMB to move this board.")
 
-        self._click_bar = ClickBar(logic, self)
-        self._exp_bar   = ExpBar(logic, self._click_bar)
-        self._click_bar.attach_exp_bar(self._exp_bar)
+        self._control_region = ControlRegion(logic, self)
+        self._exp_bar   = ExpBar(logic, self._control_region)
+        self._control_region.attach_exp_bar(self._exp_bar)
 
     def place_text(self, description, *, is_lock_left_bottom = False, is_resize = False):
         if is_resize:
@@ -306,7 +306,7 @@ class InfoBoard(QMainWindow):
 
     def mousePressEvent(self, event : QMouseEvent):
         self._exp_bar.activateWindow()
-        self._click_bar.activateWindow()
+        self._control_region.activateWindow()
         self.activateWindow()
 
         # 'Ctrl + Shift + LMB' to move board (order matter)
@@ -338,11 +338,11 @@ class InfoBoard(QMainWindow):
 
     def showEvent(self, event):
         self._exp_bar.try_show()
-        self._click_bar.show()
+        self._control_region.show()
 
     def hideEvent(self, event):
         self._exp_bar.hide()
-        self._click_bar.hide()
+        self._control_region.hide()
 
 
 class TrayMenu(QSystemTrayIcon):
@@ -441,10 +441,10 @@ class Overlay:
             info_board_x                    : int | None    = None,
             info_board_bottom               : int | None    = None,
 
-            click_bar_x                     : int | None    = None,
-            click_bar_y                     : int | None    = None,
-            click_bar_width                 : int | None    = None,
-            click_bar_height                : int | None    = None,
+            control_region_x                     : int | None    = None,
+            control_region_y                     : int | None    = None,
+            control_region_width                 : int | None    = None,
+            control_region_height                : int | None    = None,
 
             in_game_exp_bar_x               : int | None    = None,
             in_game_exp_bar_y               : int | None    = None,
@@ -483,10 +483,10 @@ class Overlay:
                     "info_board_x"      : 551,
                     "info_board_bottom" : 1056,
 
-                    "click_bar_x"       : 551,
-                    "click_bar_y"       : 1059,
-                    "click_bar_width"   : 820,
-                    "click_bar_height"  : 21,
+                    "control_region_x"       : 551,
+                    "control_region_y"       : 1059,
+                    "control_region_width"   : 820,
+                    "control_region_height"  : 21,
 
                     "in_game_exp_bar_x"         : 551,
                     "in_game_exp_bar_y"         : 1069,
@@ -523,10 +523,10 @@ class Overlay:
         if info_board_x:                    _custom_pos_data["info_board_x"]                    = info_board_x
         if info_board_bottom:               _custom_pos_data["info_board_bottom"]               = info_board_bottom
 
-        if click_bar_x:                     _custom_pos_data["click_bar_x"]                     = click_bar_x
-        if click_bar_y:                     _custom_pos_data["click_bar_y"]                     = click_bar_y
-        if click_bar_width:                 _custom_pos_data["click_bar_width"]                 = click_bar_width
-        if click_bar_height:                _custom_pos_data["click_bar_height"]                = click_bar_height
+        if control_region_x:                     _custom_pos_data["control_region_x"]                     = control_region_x
+        if control_region_y:                     _custom_pos_data["control_region_y"]                     = control_region_y
+        if control_region_width:                 _custom_pos_data["control_region_width"]                 = control_region_width
+        if control_region_height:                _custom_pos_data["control_region_height"]                = control_region_height
 
         if in_game_exp_bar_x:               _custom_pos_data["in_game_exp_bar_x"]               = in_game_exp_bar_x
         if in_game_exp_bar_y:               _custom_pos_data["in_game_exp_bar_y"]               = in_game_exp_bar_y
@@ -547,8 +547,8 @@ class Overlay:
         logic = Logic(settings)
 
         ErrorBoard.set_default_pos(
-            x = logic.to_pos_data().click_bar_x,
-            bottom = logic.to_pos_data().click_bar_y,
+            x = logic.to_pos_data().control_region_x,
+            bottom = logic.to_pos_data().control_region_y,
         )
 
         app = to_app() # initializes global QApplication object
@@ -611,10 +611,10 @@ class Overlay:
         info_board_x                    : int | None    = None
         info_board_bottom               : int | None    = None
 
-        click_bar_x                     : int | None    = None
-        click_bar_y                     : int | None    = None
-        click_bar_width                 : int | None    = None
-        click_bar_height                : int | None    = None
+        control_region_x                     : int | None    = None
+        control_region_y                     : int | None    = None
+        control_region_width                 : int | None    = None
+        control_region_height                : int | None    = None
 
         in_game_exp_bar_x               : int | None    = None
         in_game_exp_bar_y               : int | None    = None
@@ -679,10 +679,10 @@ class Overlay:
                         info_board_x                    = next_group()
                         info_board_bottom               = next_group()
 
-                        click_bar_x                     = next_group()
-                        click_bar_y                     = next_group()
-                        click_bar_width                 = next_group()
-                        click_bar_height                = next_group()
+                        control_region_x                     = next_group()
+                        control_region_y                     = next_group()
+                        control_region_width                 = next_group()
+                        control_region_height                = next_group()
 
                         in_game_exp_bar_x               = next_group()
                         in_game_exp_bar_y               = next_group()
@@ -719,10 +719,10 @@ class Overlay:
                 info_board_x                    = info_board_x,
                 info_board_bottom               = info_board_bottom,
 
-                click_bar_x                     = click_bar_x,
-                click_bar_y                     = click_bar_y,
-                click_bar_width                 = click_bar_width,
-                click_bar_height                = click_bar_height,
+                control_region_x                     = control_region_x,
+                control_region_y                     = control_region_y,
+                control_region_width                 = control_region_width,
+                control_region_height                = control_region_height,
 
                 in_game_exp_bar_x               = in_game_exp_bar_x,
                 in_game_exp_bar_y               = in_game_exp_bar_y,

@@ -387,10 +387,10 @@ class PosData:
     info_board_x                    : int
     info_board_bottom               : int
 
-    click_bar_x                     : int
-    click_bar_y                     : int
-    click_bar_width                 : int
-    click_bar_height                : int
+    control_region_x                     : int
+    control_region_y                     : int
+    control_region_width                 : int
+    control_region_height                : int
 
     in_game_exp_bar_x               : int
     in_game_exp_bar_y               : int
@@ -422,10 +422,10 @@ class Logic:
             info_board_x                    = get_val("1920x1080", "info_board_x"),       
             info_board_bottom               = get_val("1920x1080", "info_board_bottom"),  
 
-            click_bar_x                     = get_val("1920x1080", "click_bar_x"),        
-            click_bar_y                     = get_val("1920x1080", "click_bar_y"),        
-            click_bar_width                 = get_val("1920x1080", "click_bar_width"),    
-            click_bar_height                = get_val("1920x1080", "click_bar_height"),   
+            control_region_x                     = get_val("1920x1080", "control_region_x"),        
+            control_region_y                     = get_val("1920x1080", "control_region_y"),        
+            control_region_width                 = get_val("1920x1080", "control_region_width"),    
+            control_region_height                = get_val("1920x1080", "control_region_height"),   
         
             in_game_exp_bar_x               = get_val("1920x1080", "in_game_exp_bar_x"),  
             in_game_exp_bar_y               = get_val("1920x1080", "in_game_exp_bar_y"),      
