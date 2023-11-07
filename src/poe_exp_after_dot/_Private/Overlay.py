@@ -77,25 +77,31 @@ poe_exp_after_dot.py [<option> ...]
 """.strip("\n")
 
 _SETTINGS_HELP_TEXT = """
-* - Wildcard
-
-font.name
-    Quoted text.
+font.name 
+    <text>
 font.size
-    Natural number.
+    <natural>                       # in pixels
 font.is_bold
-    true
-    false
+    <boolean>
 time_max_unit
     "second"
     "minute"
     "hour"
     "day"
     "week"
-pos_data.*.*
-    Integer number.
-""".strip("\n")
+pos_data.<resolution>.*_x
+pos_data.<resolution>.*_x_offset
+pos_data.<resolution>.*_y
+pos_data.<resolution>.*_bottom
+    <integer>                       # in pixels
+pos_data.<resolution>.*_width
+pos_data.<resolution>.*_height
+    <natural>                       # in pixels
 
+<boolean>
+    true
+    false
+""".strip("\n")
 
 class ExpBar(QWidget):
     _logic          : Logic
@@ -441,10 +447,10 @@ class Overlay:
             info_board_x                    : int | None    = None,
             info_board_bottom               : int | None    = None,
 
-            control_region_x                     : int | None    = None,
-            control_region_y                     : int | None    = None,
-            control_region_width                 : int | None    = None,
-            control_region_height                : int | None    = None,
+            control_region_x                : int | None    = None,
+            control_region_y                : int | None    = None,
+            control_region_width            : int | None    = None,
+            control_region_height           : int | None    = None,
 
             in_game_exp_bar_x               : int | None    = None,
             in_game_exp_bar_y               : int | None    = None,
@@ -472,6 +478,7 @@ class Overlay:
         to_logger().debug(f"data_path={data_path}")
 
         settings = Settings(data_path + "/settings.json", {
+            "_comment_values_guide" : _SETTINGS_HELP_TEXT.split("\n"),
             "font" : {
                 "name" : "Consolas",
                 "size" : 16,
@@ -523,10 +530,10 @@ class Overlay:
         if info_board_x:                    _custom_pos_data["info_board_x"]                    = info_board_x
         if info_board_bottom:               _custom_pos_data["info_board_bottom"]               = info_board_bottom
 
-        if control_region_x:                     _custom_pos_data["control_region_x"]                     = control_region_x
-        if control_region_y:                     _custom_pos_data["control_region_y"]                     = control_region_y
-        if control_region_width:                 _custom_pos_data["control_region_width"]                 = control_region_width
-        if control_region_height:                _custom_pos_data["control_region_height"]                = control_region_height
+        if control_region_x:                _custom_pos_data["control_region_x"]                = control_region_x
+        if control_region_y:                _custom_pos_data["control_region_y"]                = control_region_y
+        if control_region_width:            _custom_pos_data["control_region_width"]            = control_region_width
+        if control_region_height:           _custom_pos_data["control_region_height"]           = control_region_height
 
         if in_game_exp_bar_x:               _custom_pos_data["in_game_exp_bar_x"]               = in_game_exp_bar_x
         if in_game_exp_bar_y:               _custom_pos_data["in_game_exp_bar_y"]               = in_game_exp_bar_y
