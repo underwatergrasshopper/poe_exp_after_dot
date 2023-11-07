@@ -478,7 +478,7 @@ class Overlay:
         to_logger().debug(f"data_path={data_path}")
 
         settings = Settings(data_path + "/settings.json", {
-            "_comment_values_guide" : _SETTINGS_HELP_TEXT.split("\n"),
+            "_comment" : "Type 'py -3-64 poe_exp_after_dot.py --settings-help' in console to see possible values.",
             "font" : {
                 "name" : "Consolas",
                 "size" : 16,
