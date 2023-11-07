@@ -36,7 +36,8 @@ poe_exp_after_dot.py [<option> ...]
         <size>
             Size of font in pixels. Only positive integers are allowed.
         <style>
-            [bold]
+            normal
+            bold
 
         Only not skipped values will override font properties from settings. 
 
@@ -653,7 +654,7 @@ class Overlay:
                 case ["--font", font_data_text]:
                     name_format = r"(|[^,]+)"
                     size_format = r"(|0|[1-9][0-9]*)"
-                    style_format = r"(|bold)"
+                    style_format = r"(|normal|bold)"
                     match_ = re.search(fr"^{name_format},{size_format},{style_format}$", font_data_text)
                     if match_:
                         font_data = FontData(
