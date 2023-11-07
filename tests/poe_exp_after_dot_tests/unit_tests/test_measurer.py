@@ -179,7 +179,7 @@ def test_measurer():
     #print(_update(measurer, 2750, 60 * 60))
     #print(_update(measurer, 3000, 60 * 60))
 
-_time_accumulator = 0
+_time_accumulator = 0.0
 
 def _update(measurer : Measurer, total_exp : int, elapsed_time : float) -> str:
     global _time_accumulator

@@ -32,7 +32,7 @@ def merge_on_all_levels(a : dict, b : dict) -> dict:
     return c
 
 def time_unit_to_short(time_unit : str) -> str:
-    return _short_time_units.get(time_unit)
+    return _short_time_units[time_unit]
 
 _short_time_units = {
     "second"    : "s",

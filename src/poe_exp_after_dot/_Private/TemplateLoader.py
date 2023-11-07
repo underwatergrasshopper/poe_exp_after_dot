@@ -129,11 +129,11 @@ class TemplateLoader:
                 if variable_name == "":
                     raise TemplateLoadFail(f"Variable name is not present. Line: {line_id}.")
 
-                if not variable_value:
+                if len(variable_value) == 0:
                     raise TemplateLoadFail(f"No assignment to variable. Line: {line_id}.")
-                variable_value = variable_value[0].strip()
+                variable_value = variable_value[0].strip()          # type: ignore[assignment]
 
-                self._variables[variable_name] = variable_value
+                self._variables[variable_name] = variable_value     # type: ignore[assignment]
 
 
         self._store_template_if_exists()

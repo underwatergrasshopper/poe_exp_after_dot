@@ -146,7 +146,7 @@ def find_exp_threshold_info(total_exp : int) -> ExpThresholdInfo:
 class Entry:
     total_exp               : int
     info                    : ExpThresholdInfo
-    time_                   : int       # since epoch, in seconds
+    time_                   : float     # since epoch, in seconds
 
     is_other_level          : bool
     is_gained_level         : bool
@@ -274,10 +274,10 @@ class Measurer:
                 time_to_next_level      = float('inf')
                 time_to_10_percent      = float('inf')
             else:
-                elapsed_time            = time_ - previous.time_
+                elapsed_time            = time_ - previous.time_                        # type: ignore[union-attr]
 
-                progress_step_in_exp    = progress_in_exp - previous.progress_in_exp
-                progress_step           = progress - previous.progress
+                progress_step_in_exp    = progress_in_exp - previous.progress_in_exp    # type: ignore[union-attr]
+                progress_step           = progress - previous.progress                  # type: ignore[union-attr]
 
                 exp_per_hour            = int(progress_step_in_exp * SECONDS_IN_HOUR / elapsed_time)
                 progress_step_time      = elapsed_time

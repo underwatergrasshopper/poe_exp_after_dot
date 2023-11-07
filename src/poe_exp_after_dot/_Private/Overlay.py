@@ -507,11 +507,11 @@ class Overlay:
                 }
             }
         })
-        temporal_settings = {
+        temporal_settings : dict[str, Any] = {
             "data_path" : data_path
         }
         if font_data is not None:
-            font_settings = {}
+            font_settings : dict[str, Any] = {}
             if font_data.name is not None:
                 font_settings["name"] = font_data.name
             if font_data.size is not None:
@@ -525,7 +525,7 @@ class Overlay:
             temporal_settings["time_max_unit"] = time_max_unit
 
         temporal_settings.update(merge_on_all_levels(temporal_settings, {"pos_data" : {"_command_line_custom" : {}}}))
-        _custom_pos_data = temporal_settings["pos_data"]["_command_line_custom"]
+        _custom_pos_data : dict[str, Any] = temporal_settings["pos_data"]["_command_line_custom"]
 
         if info_board_x:                    _custom_pos_data["info_board_x"]                    = info_board_x
         if info_board_bottom:               _custom_pos_data["info_board_bottom"]               = info_board_bottom
