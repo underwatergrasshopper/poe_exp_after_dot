@@ -473,9 +473,9 @@ class Logic:
             time_to_10_percent  = FineTime(self._measurer.get_time_to_10_percent(), max_unit = max_unit, unit_color = "#9F9F9F", never_color = "#FF4F1F")
             time_to_next_level  = FineTime(self._measurer.get_time_to_next_level(), max_unit = max_unit, unit_color = "#9F9F9F", never_color = "#FF4F1F")
 
-        hint_font = "<font size=10px color=\"#7f7f7f\">"
-        hint_font_end = "</font>"
-        
+        hint_begin  = "<font size=10px color=\"#7f7f7f\">"
+        hint_end    = "</font>"
+
         return (
             f"LVL {level} {progress}<br>"
             f"{progress_step} in {progress_step_time}<br>"
@@ -483,7 +483,7 @@ class Logic:
             f"10% in {time_to_10_percent}<br>"
             f"next in {time_to_next_level}<br>"
             f"{exp}<br>"
-            f"{hint_font}Hold <b>Shift</b> to show Hotkeys.{hint_font_end}"
+            f"{hint_begin}Hold <b>Shift</b> to show Hotkeys.<br>Click to Update.{hint_end}"
         )
         
     def measure(self, cursor_x_in_screen : int, cursor_y_in_screen : int, widgets_to_hide : list[QWidget]):
