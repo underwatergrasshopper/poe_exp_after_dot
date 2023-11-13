@@ -351,17 +351,76 @@ class InfoBoard(QMainWindow):
         self._control_region.hide()
 
 
+@dataclass
+class GUI:
+    menu            : "Menu | None"             = None
+    tray_menu       : "TrayMenu | None"         = None
+    info_board      : "InfoBoard | None"        = None
+    frac_exp_bar    : "FracExpBar | None"       = None
+    control_region  : "ControlRegion | None"    = None
+
+
+class Menu(QMenu):
+    _logic                      : Logic
+
+    _clear_log_file_action      : QAction
+    _open_data_folder_action    : QAction
+    _hide_action                : QAction
+    _quit_action                : QAction
+    _close_menu_action          : QAction
+
+    _flags_backup               : Qt.WindowType
+
+    def __init__(self, logic : Logic, info_board : InfoBoard):
+        super().__init__()
+
+        self._logic = logic
+
+        self._flags_backup = self.windowFlags()
+        
+        self._clear_log_file_action = QAction("Clear Log File")
+        def clear_log_file():
+            to_log_manager().clear_log_file()
+            to_logger().info("Cleared runtime.log.")
+            self.setWindowFlags(self._flags_backup)
+
+        self._clear_log_file_action.triggered.connect(clear_log_file)
+        self.addAction(self._clear_log_file_action)
+
+        self._open_data_folder_action = QAction("Open Data Folder")
+        def open_data_folder():
+            os.startfile(self._logic.to_settings().get_val("data_path", str))
+            self.setWindowFlags(self._flags_backup)
+
+        self._open_data_folder_action.triggered.connect(open_data_folder)
+        self.addAction(self._open_data_folder_action)
+
+        self._hide_action = QAction("Hide", checkable = True) # type: ignore
+        def hide_overlay(is_hide):
+            if is_hide:
+                info_board.hide()
+            else:
+                info_board.show()
+            self.setWindowFlags(self._flags_backup)
+
+        self._hide_action.triggered.connect(hide_overlay)
+        self.addAction(self._hide_action)
+
+        self.addSeparator()
+
+        self._close_menu_action = QAction("Close Menu")
+        self._close_menu_action.triggered.connect(self.close)
+        self.addAction(self._close_menu_action)
+
+        self._quit_action = QAction("Quit")
+        self._quit_action.triggered.connect(to_app().quit)
+        self.addAction(self._quit_action)
+
 class TrayMenu(QSystemTrayIcon):
     _info_board         : InfoBoard
     _logic              : Logic
 
     _menu               : QMenu
-    _open_data_folder_action : QAction
-    _hide_action        : QAction
-    _quit_action        : QAction
-    _close_menu_action  : QAction
-
-    _flags_backup       : Qt.WindowType
 
     def __init__(self, info_board : InfoBoard, logic : Logic):
         super().__init__()
@@ -372,46 +431,7 @@ class TrayMenu(QSystemTrayIcon):
         icon_file_name =  os.path.abspath(os.path.dirname(__file__) + "/../assets/icon.png")
         self.setIcon(QIcon(icon_file_name))
 
-        self._menu = QMenu()
-        self._flags_backup = self._menu.windowFlags()
-        
-        self._clear_log_file_action = QAction("Clear Log File")
-        def clear_log_file():
-            to_log_manager().clear_log_file()
-            to_logger().info("Cleared runtime.log.")
-            self._menu.setWindowFlags(self._flags_backup)
-
-        self._clear_log_file_action.triggered.connect(clear_log_file)
-        self._menu.addAction(self._clear_log_file_action)
-
-        self._open_data_folder_action = QAction("Open Data Folder")
-        def open_data_folder():
-            os.startfile(self._logic.to_settings().get_val("data_path", str))
-            self._menu.setWindowFlags(self._flags_backup)
-
-        self._open_data_folder_action.triggered.connect(open_data_folder)
-        self._menu.addAction(self._open_data_folder_action)
-
-        self._hide_action = QAction("Hide", checkable = True) # type: ignore
-        def hide_overlay(is_hide):
-            if is_hide:
-                info_board.hide()
-            else:
-                info_board.show()
-            self._menu.setWindowFlags(self._flags_backup)
-
-        self._hide_action.triggered.connect(hide_overlay)
-        self._menu.addAction(self._hide_action)
-
-        self._menu.addSeparator()
-
-        self._close_menu_action = QAction("Close Menu")
-        self._close_menu_action.triggered.connect(self._menu.close)
-        self._menu.addAction(self._close_menu_action)
-
-        self._quit_action = QAction("Quit")
-        self._quit_action.triggered.connect(to_app().quit)
-        self._menu.addAction(self._quit_action)
+        self._menu = Menu(logic, info_board)
 
         self.setContextMenu(self._menu)
 
