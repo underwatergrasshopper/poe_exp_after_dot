@@ -103,11 +103,11 @@ pos_data.<resolution>.*_height
     false
 """.strip("\n")
 
-class ExpBar(QWidget):
+class FracExpBar(QWidget):
     _logic          : Logic
 
     _width          : int
-    _control_region      : "ControlRegion"
+    _control_region : "ControlRegion"
 
     def __init__(self, logic : Logic, control_region : "ControlRegion"):
         super().__init__()
@@ -168,14 +168,14 @@ class ExpBar(QWidget):
 class ControlRegion(QWidget):
     _logic              : Logic
     _info_board         : "InfoBoard"
-    _exp_bar            : ExpBar | None
+    _frac_exp_bar       : FracExpBar | None
 
     def __init__(self, logic : Logic, info_board : "InfoBoard"):
         super().__init__()
 
         self._logic             = logic
         self._info_board        = info_board
-        self._exp_bar           = None
+        self._frac_exp_bar      = None
 
         self._is_first_measure = True
 
@@ -194,8 +194,8 @@ class ControlRegion(QWidget):
             logic.to_pos_data().control_region_height,
         ))
 
-    def attach_exp_bar(self, exp_bar : ExpBar):
-        self._exp_bar = exp_bar
+    def attach_frac_exp_bar(self, frac_exp_bar : FracExpBar):
+        self._frac_exp_bar = frac_exp_bar
 
     def mousePressEvent(self, event : QMouseEvent):
         if event.button() == Qt.MouseButton.LeftButton:
@@ -217,8 +217,8 @@ class ControlRegion(QWidget):
         progress = self._logic.to_measurer().get_progress()
         fractional_of_progress = progress - int(progress)
 
-        if self._exp_bar:
-            self._exp_bar.resize_area(fractional_of_progress)
+        if self._frac_exp_bar:
+            self._frac_exp_bar.resize_area(fractional_of_progress)
 
 def _move_window_to_foreground(window_name : str):
     user32 = ctypes.windll.user32
@@ -229,7 +229,7 @@ def _move_window_to_foreground(window_name : str):
 
 
 class InfoBoard(QMainWindow):
-    _exp_bar            : ExpBar
+    _frac_exp_bar            : FracExpBar
     _control_region          : ControlRegion
     _context_menu       : QMenu | None
 
@@ -278,8 +278,8 @@ class InfoBoard(QMainWindow):
         #self.set_description("Click on in-game exp bar to receive data. Ctrl + Shift + LMB to move this board.")
 
         self._control_region = ControlRegion(logic, self)
-        self._exp_bar   = ExpBar(logic, self._control_region)
-        self._control_region.attach_exp_bar(self._exp_bar)
+        self._frac_exp_bar   = FracExpBar(logic, self._control_region)
+        self._control_region.attach_frac_exp_bar(self._frac_exp_bar)
 
     def place_text(self, description, *, is_lock_left_bottom = False, is_resize = False):
         if is_resize:
@@ -311,7 +311,7 @@ class InfoBoard(QMainWindow):
 
 
     def mousePressEvent(self, event : QMouseEvent):
-        self._exp_bar.activateWindow()
+        self._frac_exp_bar.activateWindow()
         self._control_region.activateWindow()
         self.activateWindow()
 
@@ -343,11 +343,11 @@ class InfoBoard(QMainWindow):
             self._context_menu.exec(event.globalPos())
 
     def showEvent(self, event):
-        self._exp_bar.try_show()
+        self._frac_exp_bar.try_show()
         self._control_region.show()
 
     def hideEvent(self, event):
-        self._exp_bar.hide()
+        self._frac_exp_bar.hide()
         self._control_region.hide()
 
 
