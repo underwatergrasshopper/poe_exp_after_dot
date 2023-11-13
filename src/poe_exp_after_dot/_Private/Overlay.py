@@ -129,7 +129,9 @@ class FracExpBar(QWidget):
         self.setWindowFlags(
             Qt.WindowType.WindowStaysOnTopHint |
             Qt.WindowType.FramelessWindowHint |
-            Qt.WindowType.Tool
+            Qt.WindowType.Tool |
+            Qt.WindowType.WindowDoesNotAcceptFocus |
+            Qt.WindowType.WindowTransparentForInput
         )
 
         self.setWindowOpacity(0.5)
@@ -139,7 +141,7 @@ class FracExpBar(QWidget):
         palette.setColor(self.backgroundRole(), QColor(127, 127, 255))
         self.setPalette(palette)
         
-        self.resize_area(0.0, is_try_show = False)
+        self.resize_area(1.0, is_try_show = False)
 
     def resize_area(self, fractional_of_progress : float, *, is_try_show = True):
         """
@@ -166,17 +168,6 @@ class FracExpBar(QWidget):
     def try_show(self):
         if self._width >= 1:
             self.show()
-
-    def mousePressEvent(self, event : QMouseEvent):
-        if event.button() == Qt.MouseButton.LeftButton:
-            _move_window_to_foreground("Path of Exile")
-      
-            pos_in_screen = self.mapToGlobal(QPoint(event.x(), event.y()))
-
-            if self._gui.control_region is None:
-                raise RuntimeError("ControlRegion is not created.")
-            
-            self._gui.control_region.measure(pos_in_screen.x(), pos_in_screen.y())
 
 class ControlRegion(QMainWindow):
     _logic              : Logic
