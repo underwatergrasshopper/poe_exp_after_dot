@@ -1,0 +1,25 @@
+<mxfile host="Electron" modified="2023-11-13T07:38:02.598Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/22.0.3 Chrome/114.0.5735.289 Electron/25.8.4 Safari/537.36" etag="EVfNJ37j-eKC_A8Kvw3z" version="22.0.3" type="device">
+  <diagram name="Page-1" id="kqDWHpFJoExWgKqT9MI2">
+    <mxGraphModel dx="915" dy="698" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="7l193V6ySXUp-4f2ppnQ-2" value="...&lt;br&gt;Hold Shift to show Hotkeys" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Inconsolata;align=left;verticalAlign=bottom;fillColor=#f5f5f5;fontColor=#333333;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="320" y="320" width="170" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="7l193V6ySXUp-4f2ppnQ-3" value="&lt;i&gt;Hotkeys&lt;/i&gt;" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Inconsolata;align=left;verticalAlign=top;fillColor=#f5f5f5;fontColor=#333333;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="630" y="310" width="170" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="7l193V6ySXUp-4f2ppnQ-4" value="" style="endArrow=classic;html=1;rounded=0;dashed=1;exitX=1;exitY=0.43;exitDx=0;exitDy=0;fontFamily=Inconsolata;exitPerimeter=0;" edge="1" parent="1" source="7l193V6ySXUp-4f2ppnQ-2" target="7l193V6ySXUp-4f2ppnQ-3">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="1090" y="330" as="sourcePoint" />
+            <mxPoint x="560" y="320" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="7l193V6ySXUp-4f2ppnQ-5" value="Hold Shift&lt;br&gt;on ControlRegion&amp;nbsp;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Inconsolata;" vertex="1" parent="1">
+          <mxGeometry x="510" y="280" width="100" height="60" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
