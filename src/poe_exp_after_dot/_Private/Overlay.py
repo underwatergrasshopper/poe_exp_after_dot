@@ -385,6 +385,7 @@ class Menu(QMenu):
     _quit_action                : QAction
     _close_menu_action          : QAction
 
+    _title                      : QAction
     _flags_backup               : Qt.WindowType
 
     def __init__(self, logic : Logic, gui : GUI):
@@ -393,13 +394,17 @@ class Menu(QMenu):
         self._logic = logic
         self._gui = gui
 
+        self._title = self.addAction("poe exp after dot")
+        self._title.setEnabled(False)
+        self.addSeparator()
+
         self._flags_backup = self.windowFlags()
         
         self._clear_log_file_action = QAction("Clear Log File")
         def clear_log_file():
             to_log_manager().clear_log_file()
             to_logger().info("Cleared runtime.log.")
-            self.setWindowFlags(self._flags_backup)
+            self.setWindowFlags(self._flags_backup)         
 
         self._clear_log_file_action.triggered.connect(clear_log_file)
         self.addAction(self._clear_log_file_action)
@@ -605,10 +610,12 @@ class Overlay:
         font_style = "bold" if font_data.is_bold else "normal"
         to_logger().info(f"Font: {font_data.name}, {font_data.size}px, {font_style}.")
 
+        app.setStyle("Fusion")
+
         gui = GUI()
         gui.menu            = Menu(logic, gui)
         gui.tray_menu       = TrayMenu(logic, gui)
-        
+
         gui.info_board      = InfoBoard(logic, gui, font_data)
         gui.frac_exp_bar    = FracExpBar(logic, gui)
         gui.control_region  = ControlRegion(logic, gui)
