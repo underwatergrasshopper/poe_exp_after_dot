@@ -483,7 +483,7 @@ class Logic:
             f"10% in {time_to_10_percent}<br>"
             f"next in {time_to_next_level}<br>"
             f"{exp}<br>"
-            f"{hint_begin}Hold <b>Shift</b> to show Hotkeys.<br>Click to Update.{hint_end}"
+            f"{hint_begin}Hold <b>Shift</b> to show Hotkeys.<br><b>Click</b> to Update.{hint_end}"
         )
         
     def measure(self, cursor_x_in_screen : int, cursor_y_in_screen : int, widgets_to_hide : list[QWidget]):
