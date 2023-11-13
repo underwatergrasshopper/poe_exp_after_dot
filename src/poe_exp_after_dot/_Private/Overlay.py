@@ -103,17 +103,28 @@ pos_data.<resolution>.*_height
     false
 """.strip("\n")
 
+
+@dataclass
+class GUI:
+    menu            : "Menu | None"             = None
+
+    tray_menu       : "TrayMenu | None"         = None
+
+    info_board      : "InfoBoard | None"        = None
+    frac_exp_bar    : "FracExpBar | None"       = None
+    control_region  : "ControlRegion | None"    = None
+
 class FracExpBar(QWidget):
     _logic          : Logic
+    _gui            : GUI
 
     _width          : int
-    _control_region : "ControlRegion"
 
-    def __init__(self, logic : Logic, control_region : "ControlRegion"):
+    def __init__(self, logic : Logic, gui : GUI):
         super().__init__()
 
         self._logic = logic
-        self._control_region = control_region
+        self._gui   = gui
 
         self.setWindowFlags(
             Qt.WindowType.WindowStaysOnTopHint |
@@ -162,20 +173,20 @@ class FracExpBar(QWidget):
       
             pos_in_screen = self.mapToGlobal(QPoint(event.x(), event.y()))
 
-            self._control_region.measure(pos_in_screen.x(), pos_in_screen.y())
+            if self._gui.control_region is None:
+                raise RuntimeError("ControlRegion is not created.")
+            
+            self._gui.control_region.measure(pos_in_screen.x(), pos_in_screen.y())
 
-
-class ControlRegion(QWidget):
+class ControlRegion(QMainWindow):
     _logic              : Logic
-    _info_board         : "InfoBoard"
-    _frac_exp_bar       : FracExpBar | None
+    _gui                : GUI
 
-    def __init__(self, logic : Logic, info_board : "InfoBoard"):
+    def __init__(self, logic : Logic, gui : GUI):
         super().__init__()
 
         self._logic             = logic
-        self._info_board        = info_board
-        self._frac_exp_bar      = None
+        self._gui               = gui
 
         self._is_first_measure = True
 
@@ -193,10 +204,7 @@ class ControlRegion(QWidget):
             logic.to_pos_data().control_region_width,
             logic.to_pos_data().control_region_height,
         ))
-
-    def attach_frac_exp_bar(self, frac_exp_bar : FracExpBar):
-        self._frac_exp_bar = frac_exp_bar
-
+        
     def mousePressEvent(self, event : QMouseEvent):
         if event.button() == Qt.MouseButton.LeftButton:
             _move_window_to_foreground("Path of Exile")
@@ -206,19 +214,24 @@ class ControlRegion(QWidget):
             self.measure(pos_in_screen.x(), pos_in_screen.y())
 
     def measure(self, cursor_x_in_screen : int, cursor_y_in_screen : int):
-        self._logic.measure(cursor_x_in_screen, cursor_y_in_screen, [self._info_board])
+        if self._gui.info_board is None:
+            raise RuntimeError("InfoBoard is not created.")
+        
+        self._logic.measure(cursor_x_in_screen, cursor_y_in_screen, [self._gui.info_board])
 
         if self._is_first_measure:
-            self._info_board.place_text(self._logic.gen_exp_info_text(is_control = True), is_lock_left_bottom = True, is_resize = True)
+            self._gui.info_board.place_text(self._logic.gen_exp_info_text(is_control = True), is_lock_left_bottom = True, is_resize = True)
             self._is_first_measure = False
 
-        self._info_board.place_text(self._logic.gen_exp_info_text(), is_lock_left_bottom = True)
+        self._gui.info_board.place_text(self._logic.gen_exp_info_text(), is_lock_left_bottom = True)
 
         progress = self._logic.to_measurer().get_progress()
         fractional_of_progress = progress - int(progress)
 
-        if self._frac_exp_bar:
-            self._frac_exp_bar.resize_area(fractional_of_progress)
+        if self._gui.frac_exp_bar is None:
+            raise RuntimeError("FracExpBar is not created.")
+
+        self._gui.frac_exp_bar.resize_area(fractional_of_progress)
 
 def _move_window_to_foreground(window_name : str):
     user32 = ctypes.windll.user32
@@ -228,19 +241,15 @@ def _move_window_to_foreground(window_name : str):
         user32.SetForegroundWindow(window_handle)
 
 
-class InfoBoard(QMainWindow):
-    _frac_exp_bar            : FracExpBar
-    _control_region          : ControlRegion
-    _context_menu       : QMenu | None
-
+class InfoBoard(QWidget):
     _logic              : Logic
+    _gui                : GUI
+
     _prev_pos           : QPoint | None
-
     _flags_backup       : Qt.WindowType | None
-
     _is_first_measure   : bool  
 
-    def __init__(self, logic : Logic, font_data : "FontData"):
+    def __init__(self, logic : Logic, gui : GUI, font_data : "FontData"):
         """
         font_size
             In pixels.
@@ -248,9 +257,9 @@ class InfoBoard(QMainWindow):
         super().__init__()
 
         self._logic = logic
-        self._prev_pos = None
-        self._context_menu = None
+        self._gui = gui
 
+        self._prev_pos = None
         self._flags_backup = None
 
         self.setWindowFlags(
@@ -277,9 +286,10 @@ class InfoBoard(QMainWindow):
 
         #self.set_description("Click on in-game exp bar to receive data. Ctrl + Shift + LMB to move this board.")
 
-        self._control_region = ControlRegion(logic, self)
-        self._frac_exp_bar   = FracExpBar(logic, self._control_region)
-        self._control_region.attach_frac_exp_bar(self._frac_exp_bar)
+        if self._gui.menu is None:
+            raise RuntimeError("Menu is not created.")
+
+        self.attach_context_menu(self._gui.menu)
 
     def place_text(self, description, *, is_lock_left_bottom = False, is_resize = False):
         if is_resize:
@@ -311,8 +321,13 @@ class InfoBoard(QMainWindow):
 
 
     def mousePressEvent(self, event : QMouseEvent):
-        self._frac_exp_bar.activateWindow()
-        self._control_region.activateWindow()
+        if self._gui.frac_exp_bar is None:
+            raise RuntimeError("FracExpBar is not created.")
+        if self._gui.control_region is None:
+            raise RuntimeError("ControlRegion is not created.")
+        
+        self._gui.frac_exp_bar.activateWindow()
+        self._gui.control_region.activateWindow()
         self.activateWindow()
 
         # 'Ctrl + Shift + LMB' to move board (order matter)
@@ -343,25 +358,26 @@ class InfoBoard(QMainWindow):
             self._context_menu.exec(event.globalPos())
 
     def showEvent(self, event):
-        self._frac_exp_bar.try_show()
-        self._control_region.show()
+        if self._gui.frac_exp_bar is None:
+            raise RuntimeError("FracExpBar is not created.")
+        if self._gui.control_region is None:
+            raise RuntimeError("ControlRegion is not created.")
+        
+        self._gui.frac_exp_bar.try_show()
+        self._gui.control_region.show()
 
     def hideEvent(self, event):
-        self._frac_exp_bar.hide()
-        self._control_region.hide()
-
-
-@dataclass
-class GUI:
-    menu            : "Menu | None"             = None
-    tray_menu       : "TrayMenu | None"         = None
-    info_board      : "InfoBoard | None"        = None
-    frac_exp_bar    : "FracExpBar | None"       = None
-    control_region  : "ControlRegion | None"    = None
-
+        if self._gui.frac_exp_bar is None:
+            raise RuntimeError("FracExpBar is not created.")
+        if self._gui.control_region is None:
+            raise RuntimeError("ControlRegion is not created.")
+        
+        self._gui.frac_exp_bar.hide()
+        self._gui.control_region.hide()
 
 class Menu(QMenu):
     _logic                      : Logic
+    _gui                        : GUI
 
     _clear_log_file_action      : QAction
     _open_data_folder_action    : QAction
@@ -371,10 +387,11 @@ class Menu(QMenu):
 
     _flags_backup               : Qt.WindowType
 
-    def __init__(self, logic : Logic, info_board : InfoBoard):
+    def __init__(self, logic : Logic, gui : GUI):
         super().__init__()
 
         self._logic = logic
+        self._gui = gui
 
         self._flags_backup = self.windowFlags()
         
@@ -397,10 +414,13 @@ class Menu(QMenu):
 
         self._hide_action = QAction("Hide", checkable = True) # type: ignore
         def hide_overlay(is_hide):
+            if self._gui.info_board is None:
+                raise RuntimeError("InfoBoard is not created.")
+    
             if is_hide:
-                info_board.hide()
+                self._gui.info_board.hide()
             else:
-                info_board.show()
+                self._gui.info_board.show()
             self.setWindowFlags(self._flags_backup)
 
         self._hide_action.triggered.connect(hide_overlay)
@@ -417,25 +437,22 @@ class Menu(QMenu):
         self.addAction(self._quit_action)
 
 class TrayMenu(QSystemTrayIcon):
-    _info_board         : InfoBoard
     _logic              : Logic
+    _gui                : GUI
 
-    _menu               : QMenu
-
-    def __init__(self, info_board : InfoBoard, logic : Logic):
+    def __init__(self, logic : Logic, gui : GUI):
         super().__init__()
 
-        self._info_board = info_board
         self._logic = logic
+        self._gui = gui
 
         icon_file_name =  os.path.abspath(os.path.dirname(__file__) + "/../assets/icon.png")
         self.setIcon(QIcon(icon_file_name))
 
-        self._menu = Menu(logic, info_board)
-
-        self.setContextMenu(self._menu)
-
-        self._info_board.attach_context_menu(self._menu)
+        if self._gui.menu is None:
+            raise RuntimeError("Menu is not created.")
+        
+        self.setContextMenu(self._gui.menu)
 
 
 class _ExceptionStash:
@@ -588,11 +605,16 @@ class Overlay:
         font_style = "bold" if font_data.is_bold else "normal"
         to_logger().info(f"Font: {font_data.name}, {font_data.size}px, {font_style}.")
 
-        info_board = InfoBoard(logic, font_data = font_data)
-        tray_menu = TrayMenu(info_board, logic)
+        gui = GUI()
+        gui.menu            = Menu(logic, gui)
+        gui.tray_menu       = TrayMenu(logic, gui)
+        
+        gui.info_board      = InfoBoard(logic, gui, font_data)
+        gui.frac_exp_bar    = FracExpBar(logic, gui)
+        gui.control_region  = ControlRegion(logic, gui)
 
-        info_board.show()
-        tray_menu.show()
+        gui.info_board.show()
+        gui.tray_menu.show()
 
         def excepthook(exception_type, exception : BaseException, traceback_type):
             _exception_stash.exception = exception
