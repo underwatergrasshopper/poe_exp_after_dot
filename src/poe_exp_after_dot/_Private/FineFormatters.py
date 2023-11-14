@@ -5,6 +5,9 @@ SECONDS_IN_HOUR     = 60 * SECONDS_IN_MINUTE
 SECONDS_IN_DAY      = 24 * SECONDS_IN_HOUR
 SECONDS_IN_WEEK     = 7  * SECONDS_IN_DAY
 
+LT = "&lt;"
+GT = "&gt;"
+
 class FineExp:
     MAX_LENGTH_AFTER_FORMAT : int   = 17
     # format for out of range
@@ -38,10 +41,10 @@ class FineExp:
 
         if self._exp > 4250334444:
             exp = 4250334444
-            prefix = ">"
+            prefix = GT
         elif self._exp < 0:
             exp = 0
-            prefix = "<"
+            prefix = LT
         else:
             exp = self._exp
             prefix = ""
@@ -92,9 +95,9 @@ class FineBareLevel:
             self._level = level
 
         if self._level < 0:
-            self._text_representation = "<0"
+            self._text_representation = f"{LT}0"
         elif self._level > 100:
-            self._text_representation = ">100"
+            self._text_representation = f"{GT}100"
         else:
             self._text_representation = str(self._level)
 
@@ -190,7 +193,7 @@ class FineTime:
             self._text_representation = f"{nb}never{ne}"
 
         elif self._time < 0.0:
-            self._text_representation = f"<{vb}0{ve}{b}s{e}" 
+            self._text_representation = f"{LT}{vb}0{ve}{b}s{e}" 
 
         elif self._time == 0.0:
             self._text_representation = f"{vb}0{ve}{b}s{e}" 
@@ -201,12 +204,12 @@ class FineTime:
                 milliseconds, remain = divmod(milliseconds, 1.0) # rounding prevention
 
                 if milliseconds == 0.0:
-                    self._text_representation = f"<{vb}1{ve}{b}ms{e}" 
+                    self._text_representation = f"{LT}{vb}1{ve}{b}ms{e}" 
                 else:
                     self._text_representation = f"{vb}0{ve}{b}s{e}" 
                     self._text_representation += f"{vb}{milliseconds:02.0f}{ve}{b}ms{e}" 
             else:
-                self._text_representation = f"<{vb}1{ve}{b}s{e}" 
+                self._text_representation = f"{LT}{vb}1{ve}{b}s{e}" 
 
         else:
             weeks,      remain  = divmod(self._time, SECONDS_IN_WEEK)  if max_unit in ["w"]                        else (0, self._time)
@@ -216,30 +219,30 @@ class FineTime:
             seconds,    remain  = divmod(remain, 1.0)                  if max_unit in ["w", "d", "h", "m", "s"]    else (0, remain)
 
             if weeks > 99:
-                prefix = ">"
+                prefix = GT
                 weeks, days, hours, minutes, seconds = (99, 6, 23, 59, 59)
             elif days > 9999:
-                prefix = ">"
+                prefix = GT
                 days, hours, minutes, seconds = (9999, 23, 59, 59)
             elif hours > 9999999:
-                prefix = ">"
+                prefix = GT
                 hours, minutes, seconds = (9999999, 59, 59)
             elif minutes > 9999999999:
-                prefix = ">"
+                prefix = GT
                 minutes, seconds = (9999999999, 59)
             elif seconds > 9999999999999:
-                prefix = ">"
+                prefix = GT
                 seconds = 9999999999999
             else:
                 prefix = ""
 
-            if is_just_weeks_if_cup and prefix == ">":
+            if is_just_weeks_if_cup and prefix == GT:
                 weeks = self._time / SECONDS_IN_WEEK
                 weeks, _ = divmod(weeks, 1.0)  # rounding prevention
 
                 if weeks > 9999999999999:
                     weeks = 9999999999999
-                    prefix = ">"
+                    prefix = GT
                 else:
                     prefix = ""
 
@@ -341,7 +344,7 @@ class FineExpPerHour:
 
         if exp_per_hour >= 1000:
             exp_per_hour, remain = (999, 0)
-            prefix = "<" if is_below_zero else ">"
+            prefix = LT if is_below_zero else GT
         else:
             prefix = ""
 
@@ -413,10 +416,10 @@ class FinePercent:
 
         if self._integer > 100:
             integer, two_dig_after_dot = (100, 00)
-            prefix = ">"
+            prefix = GT
         elif self._integer < -100:
             integer, two_dig_after_dot = (100, 00)
-            prefix = "<"
+            prefix = LT
         else:
             integer, two_dig_after_dot = (abs(self._integer), abs(self._2_dig_after_dot))
             prefix = ""

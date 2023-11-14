@@ -1,7 +1,7 @@
 from math import isclose as _isclose
 from time import time as _get_time
 
-from poe_exp_after_dot._Private.FineFormatters import SECONDS_IN_WEEK, SECONDS_IN_DAY, SECONDS_IN_HOUR, SECONDS_IN_MINUTE
+from poe_exp_after_dot._Private.FineFormatters import SECONDS_IN_WEEK, SECONDS_IN_DAY, SECONDS_IN_HOUR, SECONDS_IN_MINUTE, LT, GT
 from poe_exp_after_dot._Private.FineFormatters import FineTime, FineExpPerHour, FinePercent, FineBareLevel, FineExp
 from poe_exp_after_dot._Private.Logic          import Measurer
 
@@ -67,102 +67,102 @@ def test_measurer():
     measurer = Measurer()
 
     assert _update(measurer, 0, 1) == (
-        "LVL 1 0.00%\n"
-        "+0.00% in 0s\n"
-        "0 exp/h\n"
-        "10% in never\n"
-        "next in never\n"
+        f"LVL 1 0.00%\n"
+        f"+0.00% in 0s\n"
+        f"0 exp/h\n"
+        f"10% in never\n"
+        f"next in never\n"
     )
     assert _update(measurer, 0, 1) == (
-        "LVL 1 0.00%\n"
-        "+0.00% in 1s\n"
-        "0 exp/h\n"
-        "10% in never\n"
-        "next in never\n"
+        f"LVL 1 0.00%\n"
+        f"+0.00% in 1s\n"
+        f"0 exp/h\n"
+        f"10% in never\n"
+        f"next in never\n"
     )
     assert _update(measurer, 100, 5) == (
-        "LVL 1 19.04%\n"
-        "+19.04% in 5s\n"
-        "72.0k exp/h\n"
-        "10% in 2s\n"
-        "next in 21s\n"
+        f"LVL 1 19.04%\n"
+        f"+19.04% in 5s\n"
+        f"72.0k exp/h\n"
+        f"10% in 2s\n"
+        f"next in 21s\n"
     )
     assert _update(measurer, 100, 5) == (
-        "LVL 1 19.04%\n"
-        "+0.00% in 5s\n"
-        "0 exp/h\n"
-        "10% in never\n"
-        "next in never\n"
+        f"LVL 1 19.04%\n"
+        f"+0.00% in 5s\n"
+        f"0 exp/h\n"
+        f"10% in never\n"
+        f"next in never\n"
     )
     assert _update(measurer, 100, 5) == (
-        "LVL 1 19.04%\n"
-        "+0.00% in 5s\n"
-        "0 exp/h\n"
-        "10% in never\n"
-        "next in never\n"
+        f"LVL 1 19.04%\n"
+        f"+0.00% in 5s\n"
+        f"0 exp/h\n"
+        f"10% in never\n"
+        f"next in never\n"
     )
     assert _update(measurer, 200, 1) == (
-        "LVL 1 38.09%\n"
-        "+19.04% in 1s\n"
-        "360k exp/h\n"
-        "10% in <1s\n"
-        "next in 3s\n"
+        f"LVL 1 38.09%\n"
+        f"+19.04% in 1s\n"
+        f"360k exp/h\n"
+        f"10% in {LT}1s\n"
+        f"next in 3s\n"
     )
     assert _update(measurer, 263, 1) == (
-        "LVL 1 50.09%\n"
-        "+12.00% in 1s\n"
-        "226k exp/h\n"
-        "10% in <1s\n"
-        "next in 4s\n"
+        f"LVL 1 50.09%\n"
+        f"+12.00% in 1s\n"
+        f"226k exp/h\n"
+        f"10% in {LT}1s\n"
+        f"next in 4s\n"
     )
     assert _update(measurer, 524, 10) == (
-        "LVL 1 99.80%\n"
-        "+49.71% in 10s\n"
-        "93.9k exp/h\n"
-        "10% in 2s\n"
-        "next in <1s\n"
+        f"LVL 1 99.80%\n"
+        f"+49.71% in 10s\n"
+        f"93.9k exp/h\n"
+        f"10% in 2s\n"
+        f"next in {LT}1s\n"
     )
     assert _update(measurer, 600, 10) == (
-        "LVL 2 6.07%\n"
-        "+6.07% in 0s\n"
-        "0 exp/h\n"
-        "10% in never\n"
-        "next in never\n"
+        f"LVL 2 6.07%\n"
+        f"+6.07% in 0s\n"
+        f"0 exp/h\n"
+        f"10% in never\n"
+        f"next in never\n"
     )
     assert _update(measurer, 1400, 10) == (
-        "LVL 2 70.85%\n"
-        "+64.77% in 10s\n"
-        "288k exp/h\n"
-        "10% in 1s\n"
-        "next in 4s\n"
+        f"LVL 2 70.85%\n"
+        f"+64.77% in 10s\n"
+        f"288k exp/h\n"
+        f"10% in 1s\n"
+        f"next in 4s\n"
     )
     assert _update(measurer, 2000, 10) == (
-        "LVL 3 11.87%\n"
-        "+11.87% in 0s\n"
-        "0 exp/h\n"
-        "10% in never\n"
-        "next in never\n"
+        f"LVL 3 11.87%\n"
+        f"+11.87% in 0s\n"
+        f"0 exp/h\n"
+        f"10% in never\n"
+        f"next in never\n"
     )
     assert _update(measurer, 3000, 60 * 60) == (
-        "LVL 3 61.35%\n"
-        "+49.48% in 1h00m00s\n"
-        "1.00k exp/h\n"
-        "10% in 12m07s\n"
-        "next in 46m51s\n"
+        f"LVL 3 61.35%\n"
+        f"+49.48% in 1h00m00s\n"
+        f"1.00k exp/h\n"
+        f"10% in 12m07s\n"
+        f"next in 46m51s\n"
     )
     assert _update(measurer, 2750, 60 * 60) == (
-        "LVL 3 48.98%\n"
-        "-12.37% in 1h00m00s\n"
-        "-250 exp/h\n"
-        "10% in never\n"
-        "next in never\n"
+        f"LVL 3 48.98%\n"
+        f"-12.37% in 1h00m00s\n"
+        f"-250 exp/h\n"
+        f"10% in never\n"
+        f"next in never\n"
     )
     assert _update(measurer, 3000, 60 * 60) == (
-        "LVL 3 61.35%\n"
-        "+12.37% in 1h00m00s\n"
-        "250 exp/h\n"
-        "10% in 48m30s\n"
-        "next in 3h07m26s\n"
+        f"LVL 3 61.35%\n"
+        f"+12.37% in 1h00m00s\n"
+        f"250 exp/h\n"
+        f"10% in 48m30s\n"
+        f"next in 3h07m26s\n"
     )
 
     # debug

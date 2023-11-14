@@ -1,4 +1,4 @@
-from poe_exp_after_dot._Private.FineFormatters import SECONDS_IN_WEEK, SECONDS_IN_DAY, SECONDS_IN_HOUR, SECONDS_IN_MINUTE
+from poe_exp_after_dot._Private.FineFormatters import SECONDS_IN_WEEK, SECONDS_IN_DAY, SECONDS_IN_HOUR, SECONDS_IN_MINUTE, LT, GT
 from poe_exp_after_dot._Private.FineFormatters import FineTime, FineExpPerHour, FinePercent, FineBareLevel, FineExp
 
 def test_fine_exp():
@@ -13,8 +13,8 @@ def test_fine_exp():
     assert str(FineExp(1000000000)) == "1'000'000'000exp"
     assert str(FineExp(4250334444)) == "4'250'334'444exp"
 
-    assert str(FineExp(4250334444 + 1)) == ">4'250'334'444exp"
-    assert str(FineExp(-2)) == "<0exp"
+    assert str(FineExp(4250334444 + 1)) == f"{GT}4'250'334'444exp"
+    assert str(FineExp(-2)) == f"{LT}0exp"
 
 def test_fine_bare_level():
     assert str(FineBareLevel())     == "0"
@@ -23,8 +23,8 @@ def test_fine_bare_level():
     assert str(FineBareLevel(99))   == "99"
     assert str(FineBareLevel(100))  == "100"
 
-    assert str(FineBareLevel(101))  == ">100"
-    assert str(FineBareLevel(-1))   == "<0"
+    assert str(FineBareLevel(101))  == f"{GT}100"
+    assert str(FineBareLevel(-1))   == f"{LT}0"
 
 def test_fine_time():
     assert str(FineTime()) == "0s"
@@ -69,19 +69,19 @@ def test_fine_time():
     assert str(FineTime(9999999999999, max_unit = "s"))                             == "9999999999999s"
 
     ### out of visible range ###
-    assert str(FineTime(0.1))   == "<1s"
-    assert str(FineTime(0.01))  == "<1s"
-    assert str(FineTime(0.009)) == "<1s"
+    assert str(FineTime(0.1))   == f"{LT}1s"
+    assert str(FineTime(0.01))  == f"{LT}1s"
+    assert str(FineTime(0.009)) == f"{LT}1s"
     assert str(FineTime(0.1, is_show_ms_if_below_1s = True))    == "0s10ms"
     assert str(FineTime(0.01, is_show_ms_if_below_1s = True))   == "0s01ms"
-    assert str(FineTime(0.009, is_show_ms_if_below_1s = True))  == "<1ms"
+    assert str(FineTime(0.009, is_show_ms_if_below_1s = True))  == f"{LT}1ms"
 
     ### cup ###
 
-    assert str(FineTime(-1)) == "<0s"
+    assert str(FineTime(-1)) == f"{LT}0s"
 
-    assert str(FineTime(2**64))                                 == ">9999999999999w"
-    assert str(FineTime(2**64, is_just_weeks_if_cup = False))   == ">99w6d23h59m59s"
+    assert str(FineTime(2**64))                                 == f"{GT}9999999999999w"
+    assert str(FineTime(2**64, is_just_weeks_if_cup = False))   == f"{GT}99w6d23h59m59s"
 
     assert str(FineTime((99 + 1) * SECONDS_IN_WEEK))                           == "100w"
     assert str(FineTime((9999 + 1) * SECONDS_IN_DAY, max_unit = "d"))          == "1428w"
@@ -96,7 +96,7 @@ def test_fine_time():
         2           * 60 + 
         1,
         is_just_weeks_if_cup = False
-    )) == ">99w6d23h59m59s"
+    )) == f"{GT}99w6d23h59m59s"
 
     assert str(FineTime(
         (9999 + 1)  * 24 * 60 * 60 + 
@@ -105,7 +105,7 @@ def test_fine_time():
         1, 
         max_unit = "d",
         is_just_weeks_if_cup = False
-    )) == ">9999d23h59m59s"
+    )) == f"{GT}9999d23h59m59s"
 
     assert str(FineTime(
         (9999999 + 1) * 60 * 60 + 
@@ -113,10 +113,10 @@ def test_fine_time():
         1, 
         max_unit = "h",
         is_just_weeks_if_cup = False
-    )) == ">9999999h59m59s"
+    )) == f"{GT}9999999h59m59s"
 
-    assert str(FineTime((9999999999 + 1) * 60 + 1, max_unit = "m", is_just_weeks_if_cup = False)) == ">9999999999m59s"
-    assert str(FineTime((9999999999999 + 1), max_unit = "s", is_just_weeks_if_cup = False)) == ">9999999999999s"
+    assert str(FineTime((9999999999 + 1) * 60 + 1, max_unit = "m", is_just_weeks_if_cup = False)) == f"{GT}9999999999m59s"
+    assert str(FineTime((9999999999999 + 1), max_unit = "s", is_just_weeks_if_cup = False)) == f"{GT}9999999999999s"
 
     ### color ###
 
@@ -212,8 +212,8 @@ def test_fine_exp_per_hour():
     assert str(FineExpPerHour(99999999999)) == "99.9B exp/h"
     assert str(FineExpPerHour(999999999999)) == "999B exp/h"
     assert str(FineExpPerHour(-999999999999)) == "-999B exp/h"
-    assert str(FineExpPerHour(999999999999 + 1)) == ">999B exp/h"
-    assert str(FineExpPerHour(-999999999999 - 1)) == "<-999B exp/h"
+    assert str(FineExpPerHour(999999999999 + 1)) == f"{GT}999B exp/h"
+    assert str(FineExpPerHour(-999999999999 - 1)) == f"{LT}-999B exp/h"
 
     assert str(FineExpPerHour(9999999, value_color = "blue"))                       == "<font color=\"blue\">9.99</font>M exp/h"
     assert str(FineExpPerHour(9999999, unit_color = "red"))                         == "9.99<font color=\"red\">M exp/h</font>"
