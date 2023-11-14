@@ -213,7 +213,7 @@ class FineTime:
             days,       remain  = divmod(remain, SECONDS_IN_DAY)       if max_unit in ["w", "d"]                   else (0, remain)
             hours,      remain  = divmod(remain, SECONDS_IN_HOUR)      if max_unit in ["w", "d", "h"]              else (0, remain)
             minutes,    remain  = divmod(remain, SECONDS_IN_MINUTE)    if max_unit in ["w", "d", "h", "m"]         else (0, remain)
-            seconds,    remain  = divmod(remain, 1.0)                   if max_unit in ["w", "d", "h", "m", "s"]    else (0, remain)
+            seconds,    remain  = divmod(remain, 1.0)                  if max_unit in ["w", "d", "h", "m", "s"]    else (0, remain)
 
             if weeks > 99:
                 prefix = ">"

@@ -69,9 +69,8 @@ def test_fine_time():
     assert str(FineTime(9999999999999, max_unit = "s"))                             == "9999999999999s"
 
     ### out of visible range ###
-
     assert str(FineTime(0.1))   == "<1s"
-    assert str(FineTime(0.01,)) == "<1s"
+    assert str(FineTime(0.01))  == "<1s"
     assert str(FineTime(0.009)) == "<1s"
     assert str(FineTime(0.1, is_show_ms_if_below_1s = True))    == "0s10ms"
     assert str(FineTime(0.01, is_show_ms_if_below_1s = True))   == "0s01ms"

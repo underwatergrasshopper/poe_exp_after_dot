@@ -212,7 +212,7 @@ class Register:
 _EMPTY_ENTRY = Entry(
     total_exp               = 0,
     info                    = ExpThresholdInfo(0, 0, 0),
-    time_                   = 0,
+    time_                   = 0.0,
 
     is_other_level          = False,
     is_gained_level         = False,
@@ -409,6 +409,8 @@ class Logic:
 
     _reader     : easyocr.Reader
 
+    _is_measure_fail : bool
+
     def __init__(self, settings : Settings):
         self._settings = settings
 
@@ -442,6 +444,8 @@ class Logic:
 
         self._reader = easyocr.Reader(['en'], gpu = True, verbose = False)
 
+        self._is_measure_fail = False
+
     def to_settings(self) -> Settings:
         return self._settings
 
@@ -468,16 +472,24 @@ class Logic:
             progress            = FinePercent(self._measurer.get_progress(), integer_color = "#F8CD82", two_dig_after_dot_color = "#7F7FFF")
             exp                 = FineExp(self._measurer.get_total_exp(), unit_color = "#9F9F9F")
             progress_step       = FinePercent(self._measurer.get_progress_step(), is_sign = True, integer_color = "#7FFFFF", two_dig_after_dot_color = "#7FFFFF")
-            progress_step_time  = FineTime(self._measurer.get_progress_step_time(), max_unit = max_unit, unit_color = "#8F8F8F", never_color = "#FF4F1F")
+            progress_step_time  = FineTime(self._measurer.get_progress_step_time(), max_unit = max_unit, unit_color = "#8F8F8F", never_color = "#FF4F1F", is_show_ms_if_below_1s = True)
             exp_per_hour        = FineExpPerHour(self._measurer.get_exp_per_hour(), value_color = "#6FFF6F", unit_color = "#9F9F9F")
-            time_to_10_percent  = FineTime(self._measurer.get_time_to_10_percent(), max_unit = max_unit, unit_color = "#9F9F9F", never_color = "#FF4F1F")
-            time_to_next_level  = FineTime(self._measurer.get_time_to_next_level(), max_unit = max_unit, unit_color = "#9F9F9F", never_color = "#FF4F1F")
+            time_to_10_percent  = FineTime(self._measurer.get_time_to_10_percent(), max_unit = max_unit, unit_color = "#9F9F9F", never_color = "#FF4F1F", is_show_ms_if_below_1s = True)
+            time_to_next_level  = FineTime(self._measurer.get_time_to_next_level(), max_unit = max_unit, unit_color = "#9F9F9F", never_color = "#FF4F1F", is_show_ms_if_below_1s = True)
+
+        print(self._measurer.get_progress_step_time())
+        print(FineTime(self._measurer.get_progress_step_time(), max_unit = max_unit, unit_color = "#8F8F8F", never_color = "#FF4F1F"))
 
         hint_begin  = "<font size=10px color=\"#7f7f7f\">"
         hint_end    = "</font>"
 
+        if self._is_measure_fail:
+            notice = "<font color=\"#FF0000\">ERR</font>"
+        else:
+            notice = "LVL"
+
         return (
-            f"LVL {level} {progress}<br>"
+            f"{notice} {level} {progress}<br>"
             f"{progress_step} in {progress_step_time}<br>"
             f"{exp_per_hour}<br>"
             f"10% in {time_to_10_percent}<br>"
@@ -491,9 +503,13 @@ class Logic:
 
         current_exp = self._fetch_exp(cursor_x_in_screen, cursor_y_in_screen, widgets_to_hide)
 
-        self._measurer.update(current_exp, time_)
+        if current_exp is None:
+            self._is_measure_fail = True
+        else:
+            self._measurer.update(current_exp, time_)
+            self._is_measure_fail = False
 
-    def _fetch_exp(self, cursor_x_in_screen : int, cursor_y_in_screen: int, widgets_to_hide : list[QWidget]) -> int:
+    def _fetch_exp(self, cursor_x_in_screen : int, cursor_y_in_screen: int, widgets_to_hide : list[QWidget]) -> int | None:
         """
         Returns
             Current experience.
@@ -534,9 +550,8 @@ class Logic:
             # print(text_fragment) # debug
             full_text += text_fragment[1] + " "
 
-        exp = 0
         match_ = re.search(r"^.*?Current[ ]+Exp\:[ ]+([0-9,]+)[ ]+.*$", full_text)
         if match_:
-            exp = int(match_.group(1).replace(",", ""))
+            return int(match_.group(1).replace(",", ""))
 
-        return exp
+        return None
