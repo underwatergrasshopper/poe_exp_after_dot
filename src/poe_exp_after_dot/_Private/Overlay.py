@@ -118,13 +118,19 @@ class FracExpBar(QWidget):
     _logic          : Logic
     _gui            : GUI
 
-    _width          : int
+    _base_width     : int
+    _step_width     : int
+    _progress_width : int
 
     def __init__(self, logic : Logic, gui : GUI):
         super().__init__()
 
         self._logic = logic
         self._gui   = gui
+
+        self._base_width        = 0
+        self._step_width        = 0
+        self._progress_width    = 0
 
         self.setWindowFlags(
             Qt.WindowType.WindowStaysOnTopHint |
@@ -145,30 +151,46 @@ class FracExpBar(QWidget):
 
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         
-        self.resize_area(0.0, is_try_show = False)
+        self.update_bar(0.0, is_try_show = False)
 
     def paintEvent(self, event):
         painter = QPainter(self)
         rect = self.rect()
-        painter.fillRect(QRect(rect.left(), rect.top(), self._width, rect.height()), QColor(127, 127, 255, 127))
 
-    def resize_area(self, fractional_of_progress : float, *, is_try_show = True):
+        painter.fillRect(QRect(rect.left(), rect.top(), self._base_width, rect.height()), QColor(127, 127, 255, 95))
+        painter.fillRect(QRect(self._base_width, rect.top(), self._step_width, rect.height()), QColor(127, 255, 255, 95))
+
+    def update_bar(self, fractional_of_progress : float, *, is_try_show = True):
         """
         ratio
             Value from range 0 to 1.
         """
         pos_data = self._logic.to_pos_data()
 
-        self._width = int(pos_data.in_game_exp_bar_width * fractional_of_progress)
+        previous_progress_width = self._progress_width
+        progress_width = int((pos_data.in_game_exp_bar_width * fractional_of_progress) // 1)
+        # print(previous_progress_width, progress_width) # debug
+
+        if previous_progress_width > progress_width:
+            # next level or other character
+            self._base_width = 0
+            self._step_width = progress_width
+        else:
+            self._base_width = previous_progress_width
+            self._step_width = progress_width - previous_progress_width
+
+        self._progress_width = self._base_width + self._step_width
+
+        self.repaint()
 
         if is_try_show:
-            if self._width >= 1:
+            if self._progress_width >= 1:
                 self.show()
             else:
                 self.hide()
 
     def try_show(self):
-        if self._width >= 1:
+        if self._progress_width >= 1:
             self.show()
 
 class ControlRegion(QMainWindow):
@@ -218,24 +240,22 @@ class ControlRegion(QMainWindow):
             painter.drawRect(0, 0, self.width() - 1, self.height() - 1)
         
     def mousePressEvent(self, event : QMouseEvent):
-        self.activateWindow()
+        _move_window_to_foreground("Path of Exile")
+        pass
 
+    def mouseReleaseEvent(self, event : QMouseEvent):
+        if event.button() == Qt.MouseButton.RightButton:
+            if self._flags_backup and self._context_menu:
+                self._context_menu.setWindowFlags(self._flags_backup | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.FramelessWindowHint | Qt.WindowType.Tool)
         if event.button() == Qt.MouseButton.LeftButton:
             _move_window_to_foreground("Path of Exile")
-      
+
             pos_in_screen = self.mapToGlobal(QPoint(event.x(), event.y()))
 
             self._measure(pos_in_screen.x(), pos_in_screen.y())
 
-        if event.button() == Qt.MouseButton.LeftButton and self._flags_backup and self._context_menu:
-            self._context_menu.setWindowFlags(self._flags_backup)
-
-    def mouseReleaseEvent(self, event : QMouseEvent):
-        if event.button() == Qt.MouseButton.LeftButton:
-            self._prev_pos = None
-
-        if event.button() == Qt.MouseButton.RightButton and self._flags_backup and self._context_menu:
-            self._context_menu.setWindowFlags(self._flags_backup | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.FramelessWindowHint | Qt.WindowType.Tool)
+            if self._flags_backup and self._context_menu:
+                self._context_menu.setWindowFlags(self._flags_backup)
         
         _move_window_to_foreground("Path of Exile")
 
@@ -244,16 +264,16 @@ class ControlRegion(QMainWindow):
             self._context_menu.exec(event.globalPos())
 
     def showEvent(self, event):
-        if self._gui.frac_exp_bar is None:
-            raise RuntimeError("FracExpBar is not created.")
-
-        self._gui.frac_exp_bar.try_show()
-
         if self._is_first_measure:
             if self._gui.info_board is None:
                 raise RuntimeError("InfoBoard is not created.")
 
             self._gui.info_board.show()
+
+        if self._gui.frac_exp_bar is None:
+            raise RuntimeError("FracExpBar is not created.")
+
+        self._gui.frac_exp_bar.try_show()
 
     def hideEvent(self, event):
         if self._gui.frac_exp_bar is None:
@@ -293,11 +313,12 @@ class ControlRegion(QMainWindow):
 
         progress = self._logic.to_measurer().get_progress()
         fractional_of_progress = progress - int(progress)
-
+        # print(progress, fractional_of_progress) # debug
+ 
         if self._gui.frac_exp_bar is None:
             raise RuntimeError("FracExpBar is not created.")
 
-        self._gui.frac_exp_bar.resize_area(fractional_of_progress)
+        self._gui.frac_exp_bar.update_bar(fractional_of_progress)
 
     def attach_context_menu(self, context_menu : QMenu):
         self._context_menu = context_menu
@@ -310,6 +331,7 @@ def _move_window_to_foreground(window_name : str):
     window_handle = user32.FindWindowW(None, window_name)
     if window_handle:
         user32.SetForegroundWindow(window_handle)
+        # user32.SetFocus(window_handle) # testing
 
 
 class InfoBoard(QWidget):
@@ -437,8 +459,10 @@ class Menu(QMenu):
         def enable_debug(is_enable):
             if is_enable:
                 self._logic.to_settings().set_val("is_debug", True, bool)
+                to_log_manager().set_is_debug(True)
             else:
                 self._logic.to_settings().set_val("is_debug", False, bool)
+                to_log_manager().set_is_debug(False)
 
             if self._gui.control_region is None:
                 raise RuntimeError("ControlRegion is not created.")

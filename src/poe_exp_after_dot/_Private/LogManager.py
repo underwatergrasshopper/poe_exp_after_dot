@@ -43,6 +43,9 @@ class LogManager:
             self._file_handler.setFormatter(formatter)
             self._logger.addHandler(self._file_handler)
 
+    def set_is_debug(self, is_debug = True):
+        self._logger.setLevel(logging.DEBUG if is_debug else logging.INFO)
+
     def to_logger(self) -> logging.Logger:
         return self._logger
     
