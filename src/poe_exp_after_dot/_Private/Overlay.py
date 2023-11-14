@@ -231,7 +231,8 @@ class ControlRegion(QMainWindow):
         if self._gui.menu is None:
             raise RuntimeError("Menu is not created.")
 
-        self.attach_context_menu(self._gui.menu)
+        self._flags_backup = self._gui.menu.windowFlags()
+
 
     def paintEvent(self, event):
         painter = QPainter(self)
@@ -243,27 +244,27 @@ class ControlRegion(QMainWindow):
         
     def mousePressEvent(self, event : QMouseEvent):
         _move_window_to_foreground("Path of Exile")
-        pass
+
+        if self._gui.menu.isVisible():
+            self._gui.menu.close()
 
     def mouseReleaseEvent(self, event : QMouseEvent):
         if event.button() == Qt.MouseButton.RightButton:
-            if self._flags_backup and self._context_menu:
-                self._context_menu.setWindowFlags(self._flags_backup | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.FramelessWindowHint | Qt.WindowType.Tool)
-        if event.button() == Qt.MouseButton.LeftButton:
+            self._gui.menu.setWindowFlags(self._flags_backup | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.FramelessWindowHint | Qt.WindowType.Tool)
+
+        elif event.button() == Qt.MouseButton.LeftButton:
             _move_window_to_foreground("Path of Exile")
 
             pos_in_screen = self.mapToGlobal(QPoint(event.x(), event.y()))
 
             self._measure(pos_in_screen.x(), pos_in_screen.y())
 
-            if self._flags_backup and self._context_menu:
-                self._context_menu.setWindowFlags(self._flags_backup)
+            self._gui.menu.setWindowFlags(self._flags_backup)
         
         _move_window_to_foreground("Path of Exile")
 
     def contextMenuEvent(self, event : QContextMenuEvent):
-        if self._context_menu:
-            self._context_menu.exec(event.globalPos())
+        self._gui.menu.exec(event.globalPos())
 
     def showEvent(self, event):
         if self._is_first_measure:
@@ -320,10 +321,6 @@ class ControlRegion(QMainWindow):
             raise RuntimeError("FracExpBar is not created.")
 
         self._gui.frac_exp_bar.update_bar(progress, progress_step)
-
-    def attach_context_menu(self, context_menu : QMenu):
-        self._context_menu = context_menu
-        self._flags_backup = self._context_menu.windowFlags()
 
 
 def _move_window_to_foreground(window_name : str):
