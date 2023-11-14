@@ -151,7 +151,7 @@ class FracExpBar(QWidget):
 
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         
-        self.update_bar(0.0, is_try_show = False)
+        self.update_bar(0.0, 0.0, is_try_show = False)
 
     def paintEvent(self, event):
         painter = QPainter(self)
@@ -160,19 +160,21 @@ class FracExpBar(QWidget):
         painter.fillRect(QRect(rect.left(), rect.top(), self._base_width, rect.height()), QColor(127, 127, 255, 95))
         painter.fillRect(QRect(self._base_width, rect.top(), self._step_width, rect.height()), QColor(127, 255, 255, 95))
 
-    def update_bar(self, fractional_of_progress : float, *, is_try_show = True):
+    def update_bar(self, progress : float, progress_step : float, *, is_try_show = True):
         """
-        ratio
-            Value from range 0 to 1.
+        progress
+            In percent.
+        progress_step
+            In percent.
         """
         pos_data = self._logic.to_pos_data()
 
         previous_progress_width = self._progress_width
-        progress_width = int((pos_data.in_game_exp_bar_width * fractional_of_progress) // 1)
-        # print(previous_progress_width, progress_width) # debug
+        frac_progress = progress % 1
+        progress_width = int((pos_data.in_game_exp_bar_width * frac_progress) // 1)
 
-        if previous_progress_width > progress_width:
-            # next level or other character
+        if previous_progress_width > progress_width or progress_step > 1.0:
+            # next level, next 1% or other character
             self._base_width = 0
             self._step_width = progress_width
         else:
@@ -312,13 +314,12 @@ class ControlRegion(QMainWindow):
         self._gui.info_board.place_text(self._logic.gen_exp_info_text(), is_lock_left_bottom = True)
 
         progress = self._logic.to_measurer().get_progress()
-        fractional_of_progress = progress - int(progress)
-        # print(progress, fractional_of_progress) # debug
- 
+        progress_step = self._logic.to_measurer().get_progress_step()
+
         if self._gui.frac_exp_bar is None:
             raise RuntimeError("FracExpBar is not created.")
 
-        self._gui.frac_exp_bar.update_bar(fractional_of_progress)
+        self._gui.frac_exp_bar.update_bar(progress, progress_step)
 
     def attach_context_menu(self, context_menu : QMenu):
         self._context_menu = context_menu
@@ -330,9 +331,7 @@ def _move_window_to_foreground(window_name : str):
 
     window_handle = user32.FindWindowW(None, window_name)
     if window_handle:
-        # user32.SetActiveWindow(window_handle) # testing
         user32.SetForegroundWindow(window_handle)
-        # user32.SetFocus(window_handle) # testing
 
 
 class InfoBoard(QWidget):

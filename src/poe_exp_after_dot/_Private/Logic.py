@@ -605,5 +605,7 @@ class Logic:
         match_ = re.search(r"^.*?Current[ ]+Exp\:[ ]+([0-9,]+)[ ]+.*$", full_text)
         if match_:
             return int(match_.group(1).replace(",", ""))
+        
+        to_logger().error(f"Can't find current exp amount in In-Game Exp Tooltip. Scanned Text: {full_text}")
 
         return None
