@@ -3,6 +3,7 @@ from dataclasses import dataclass
 
 import re
 import os
+import logging
 import numpy
 import cv2
 import easyocr # type: ignore
@@ -402,6 +403,49 @@ class PosData:
     in_game_exp_tooltip_width       : int 
     in_game_exp_tooltip_height      : int 
 
+
+class Point:
+    x : int
+    y : int
+
+    def __init__(self, x, y):
+        self.x = int(x)
+        self.y = int(y)
+
+    def __str__(self):
+        return f"PointI(x={self.x}, y={self.y})"
+
+class Polygon:
+    lb : Point
+    rb : Point
+    rt : Point
+    lt : Point
+
+    def __init__(self, data):
+        # corners
+        self.lb = Point(data[0][0], data[0][1]) # left bottom
+        self.rb = Point(data[1][0], data[1][1]) # right bottom
+        self.rt = Point(data[2][0], data[2][1]) # right top
+        self.lt = Point(data[3][0], data[3][1]) # left top
+
+    def __str__(self):
+        return f"Polygon(lb={self.lb}, rb={self.rb}, rt={self.rt}, lt={self.lt})" 
+
+class TextFragment:
+    text    : str
+    polygon : Polygon
+
+    def __init__(self, data):
+        self.text       = data[1]
+        self.polygon    = Polygon(data[0])
+
+    def __str__(self):
+        return f"TextFragment(text=\"{self.text}\", polygon={self.polygon})" 
+    
+    def __repr__(self):
+        return self.__str__()
+
+
 class Logic:
     _settings   : Settings
     _pos_data   : PosData
@@ -532,20 +576,31 @@ class Logic:
         ))
         in_game_exp_tooltip_image = cv2.cvtColor(numpy.array(in_game_exp_tooltip_image), cv2.COLOR_RGB2BGR) # converts image from Pillow format to OpenCV format
 
-        text_fragments= self._reader.readtext(in_game_exp_tooltip_image)
+        text_fragments = [TextFragment(text_fragment) for text_fragment in self._reader.readtext(in_game_exp_tooltip_image)]
+
+        min_text_height = in_game_exp_tooltip_image.shape[0] 
+        
+        # used to fix little misalignment on Y axis 
+        for text_fragment in text_fragments:
+            min_text_height = min(text_fragment.polygon.lt.y - text_fragment.polygon.lb.y, min_text_height)
 
         width = in_game_exp_tooltip_image.shape[1] # type: ignore
 
-        def extract_comparison_key(text_fragment):
-            pos = text_fragment[0][0]
-            return pos[0] + width * pos[1]
+        def extract_comparison_key(text_fragment : TextFragment):
+            p = text_fragment.polygon.lb # position of left bottom corner
+            return p.x + width * (p.y // min_text_height)
 
         text_fragments.sort(key = extract_comparison_key)
 
         full_text = ""
         for text_fragment in text_fragments:
-            # print(text_fragment) # debug
-            full_text += text_fragment[1] + " "
+            full_text += text_fragment.text + " "
+
+        if to_logger().isEnabledFor(logging.DEBUG):
+            to_logger().debug(f"Scanned In-Game Exp Tooltip Text: {full_text}")
+            for text_fragment in text_fragments:
+                to_logger().debug(text_fragment)
+            to_logger().debug("---")
 
         match_ = re.search(r"^.*?Current[ ]+Exp\:[ ]+([0-9,]+)[ ]+.*$", full_text)
         if match_:

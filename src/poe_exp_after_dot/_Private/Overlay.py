@@ -330,6 +330,7 @@ def _move_window_to_foreground(window_name : str):
 
     window_handle = user32.FindWindowW(None, window_name)
     if window_handle:
+        # user32.SetActiveWindow(window_handle) # testing
         user32.SetForegroundWindow(window_handle)
         # user32.SetFocus(window_handle) # testing
 
