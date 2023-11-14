@@ -477,9 +477,6 @@ class Logic:
             time_to_10_percent  = FineTime(self._measurer.get_time_to_10_percent(), max_unit = max_unit, unit_color = "#9F9F9F", never_color = "#FF4F1F", is_show_ms_if_below_1s = True)
             time_to_next_level  = FineTime(self._measurer.get_time_to_next_level(), max_unit = max_unit, unit_color = "#9F9F9F", never_color = "#FF4F1F", is_show_ms_if_below_1s = True)
 
-        print(self._measurer.get_progress_step_time())
-        print(FineTime(self._measurer.get_progress_step_time(), max_unit = max_unit, unit_color = "#8F8F8F", never_color = "#FF4F1F"))
-
         hint_begin  = "<font size=10px color=\"#7f7f7f\">"
         hint_end    = "</font>"
 
