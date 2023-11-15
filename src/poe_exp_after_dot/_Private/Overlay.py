@@ -105,29 +105,83 @@ pos_data.<resolution>.*_height
 """.strip("\n")
 
 
-@dataclass
-class GUI:
-    menu            : "Menu | None"             = None
+class InfoBoard(QWidget):
+    _logic : Logic
 
-    tray_menu       : "TrayMenu | None"         = None
+    def __init__(self, logic : Logic):
+        """
+        font_size
+            In pixels.
+        """
+        super().__init__()
 
-    info_board      : "InfoBoard | None"        = None
-    frac_exp_bar    : "FracExpBar | None"       = None
-    control_region  : "ControlRegion | None"    = None
+        self._logic = logic
+
+        self.setWindowFlags(
+            Qt.WindowType.WindowStaysOnTopHint |
+            Qt.WindowType.FramelessWindowHint |
+            Qt.WindowType.Tool |
+            Qt.WindowType.WindowDoesNotAcceptFocus |
+            Qt.WindowType.WindowTransparentForInput
+        )
+
+        # transparency
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+
+        font_name = logic.to_settings().get_val("font.name", str)
+        font_size = logic.to_settings().get_val("font.size", int) # in pixels
+        is_bold = logic.to_settings().get_val("font.is_bold", bool)
+        font_wight = "bold" if is_bold else "normal"
+
+        # text
+        self._label = QLabel("", self)
+        self._label.setStyleSheet(f"font: {font_wight} {font_size}px {font_name}; color: white;")
+
+        # default message
+        self.place_text("Hover over exp bar area to show details.<br>Click to dismiss this message.", is_resize = True)
+
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setOpacity(1.0)
+        painter.fillRect(self.rect(), QColor(0, 0, 0, 127))
+
+    def place_text(self, description, *, is_lock_left_bottom = False, is_resize = False):
+        if is_resize:
+            if is_lock_left_bottom:
+                rect = self.geometry()
+                x = rect.x()
+                bottom = rect.y() + rect.height()
+            else:
+                x = self._logic.to_pos_data().info_board_x
+                bottom = self._logic.to_pos_data().info_board_bottom
+
+            self._label.setWordWrap(False)  
+            self._label.setText(description)
+
+            self._label.adjustSize()
+            self.resize(self._label.size())
+            
+            pos = self.pos()
+            pos.setX(x)
+            pos.setY(bottom - self._label.height())
+            self.move(pos)
+        else:
+            self._label.setWordWrap(True)  
+            self._label.setText(description)
+
 
 class FracExpBar(QWidget):
     _logic          : Logic
-    _gui            : GUI
 
     _base_width     : int
     _step_width     : int
     _progress_width : int
 
-    def __init__(self, logic : Logic, gui : GUI):
+    def __init__(self, logic : Logic):
         super().__init__()
 
         self._logic = logic
-        self._gui   = gui
 
         self._base_width        = 0
         self._step_width        = 0
@@ -196,224 +250,9 @@ class FracExpBar(QWidget):
         if self._progress_width >= 1:
             self.show()
 
-class ControlRegion(QMainWindow):
-    _logic                  : Logic
-    _gui                    : GUI
-
-    _flags_backup           : Qt.WindowType | None
-    _is_first_measure       : bool  
-
-    _foreground_guardian    : "ForegroundGuardian"
-
-    def __init__(self, logic : Logic, gui : GUI):
-        super().__init__()
-
-        self._logic             = logic
-        self._gui               = gui
-
-        self._flags_backup      = None
-        self._is_first_measure  = True
-
-        self._foreground_guardian = ForegroundGuardian(self)
-
-        self.setWindowFlags(
-            Qt.WindowType.WindowStaysOnTopHint | 
-            Qt.WindowType.FramelessWindowHint |
-            Qt.WindowType.Tool
-        )
-
-        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
-
-        self.setGeometry(QRect(
-            logic.to_pos_data().control_region_x,
-            logic.to_pos_data().control_region_y,
-            logic.to_pos_data().control_region_width,
-            logic.to_pos_data().control_region_height,
-        ))
-
-        if self._gui.menu is None:
-            raise RuntimeError("Menu is not created.")
-
-        self._flags_backup = self._gui.menu.windowFlags()
-
-    def start_foreground_guardian(self):
-        self._foreground_guardian.start()
-
-    def pause_foreground_guardian_and_hide(self):
-        self._foreground_guardian.pause()
-        self.hide()
-
-    def resume_foreground_guardian(self):
-        self._foreground_guardian.resume()
-
-    def paintEvent(self, event):
-        painter = QPainter(self)
-        painter.fillRect(self.rect(), QColor(0, 0, 0, 1))
-
-        if self._logic.to_settings().get_val("is_debug", bool):
-            painter.setPen(QColor(0, 255, 0))
-            painter.drawRect(0, 0, self.width() - 1, self.height() - 1)
-        
-    def mousePressEvent(self, event : QMouseEvent):
-        _move_window_to_foreground("Path of Exile")
-
-        if self._gui.menu.isVisible():
-            self._gui.menu.close()
-
-    def mouseReleaseEvent(self, event : QMouseEvent):
-        if event.button() == Qt.MouseButton.RightButton:
-            self._gui.menu.setWindowFlags(self._flags_backup | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.FramelessWindowHint | Qt.WindowType.Tool)
-
-        elif event.button() == Qt.MouseButton.LeftButton:
-            _move_window_to_foreground("Path of Exile")
-
-            pos_in_screen = self.mapToGlobal(QPoint(event.x(), event.y()))
-
-            self._measure(pos_in_screen.x(), pos_in_screen.y())
-
-            self._gui.menu.setWindowFlags(self._flags_backup)
-        
-        _move_window_to_foreground("Path of Exile")
-
-    def contextMenuEvent(self, event : QContextMenuEvent):
-        self._gui.menu.exec(event.globalPos())
-
-    def showEvent(self, event):
-        if self._is_first_measure:
-            if self._gui.info_board is None:
-                raise RuntimeError("InfoBoard is not created.")
-
-            self._gui.info_board.show()
-
-        if self._gui.frac_exp_bar is None:
-            raise RuntimeError("FracExpBar is not created.")
-
-        self._gui.frac_exp_bar.try_show()
-
-    def hideEvent(self, event):
-        if self._gui.frac_exp_bar is None:
-            raise RuntimeError("FracExpBar is not created.")
-
-        self._gui.frac_exp_bar.hide()
-
-        if self._is_first_measure:
-            if self._gui.info_board is None:
-                raise RuntimeError("InfoBoard is not created.")
-
-            self._gui.info_board.hide()
-
-        if self._gui.menu.isVisible():
-            self._gui.menu.close()
-
-    def enterEvent(self, event: QEnterEvent):
-        if not self._is_first_measure:
-            if self._gui.info_board is None:
-                raise RuntimeError("InfoBoard is not created.")
-            self._gui.info_board.show()
-
-    def leaveEvent(self, event: QEvent):
-        if not self._is_first_measure:
-            if self._gui.info_board is None:
-                raise RuntimeError("InfoBoard is not created.")
-            self._gui.info_board.hide()
-
-    def _measure(self, cursor_x_in_screen : int, cursor_y_in_screen : int):
-        if self._gui.info_board is None:
-            raise RuntimeError("InfoBoard is not created.")
-        
-        self._foreground_guardian.pause()
-        self._logic.measure(cursor_x_in_screen, cursor_y_in_screen, [self])
-        self._foreground_guardian.resume()
-
-        if self._is_first_measure:
-            self._gui.info_board.place_text(self._logic.gen_exp_info_text(is_control = True), is_lock_left_bottom = True, is_resize = True)
-            self._is_first_measure = False
-
-        self._gui.info_board.place_text(self._logic.gen_exp_info_text(), is_lock_left_bottom = True)
-
-        progress = self._logic.to_measurer().get_progress()
-        progress_step = self._logic.to_measurer().get_progress_step()
-
-        if self._gui.frac_exp_bar is None:
-            raise RuntimeError("FracExpBar is not created.")
-
-        self._gui.frac_exp_bar.update_bar(progress, progress_step)
-
-
-def _move_window_to_foreground(window_name : str):
-    user32 = ctypes.windll.user32
-
-    window_handle = user32.FindWindowW(None, window_name)
-    if window_handle:
-        user32.SetForegroundWindow(window_handle)
-
-
-class InfoBoard(QWidget):
-    _logic              : Logic
-    _gui                : GUI
-
-    def __init__(self, logic : Logic, gui : GUI, font_data : "FontData"):
-        """
-        font_size
-            In pixels.
-        """
-        super().__init__()
-
-        self._logic = logic
-        self._gui = gui
-
-        self.setWindowFlags(
-            Qt.WindowType.WindowStaysOnTopHint |
-            Qt.WindowType.FramelessWindowHint |
-            Qt.WindowType.Tool |
-            Qt.WindowType.WindowDoesNotAcceptFocus |
-            Qt.WindowType.WindowTransparentForInput
-        )
-
-        # transparency
-        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
-
-        # text
-        self._label = QLabel("", self)
-        self._label.setStyleSheet(f"font: {font_data.size}px {font_data.name}; color: white;")
-
-        # default message
-        self.place_text("Hover over exp bar area to show details.<br>Click to dismiss this message.", is_resize = True)
-
-
-    def paintEvent(self, event):
-        painter = QPainter(self)
-        painter.setOpacity(1.0)
-        painter.fillRect(self.rect(), QColor(0, 0, 0, 127))
-
-    def place_text(self, description, *, is_lock_left_bottom = False, is_resize = False):
-        if is_resize:
-            if is_lock_left_bottom:
-                rect = self.geometry()
-                x = rect.x()
-                bottom = rect.y() + rect.height()
-            else:
-                x = self._logic.to_pos_data().info_board_x
-                bottom = self._logic.to_pos_data().info_board_bottom
-
-            self._label.setWordWrap(False)  
-            self._label.setText(description)
-
-            self._label.adjustSize()
-            self.resize(self._label.size())
-            
-            pos = self.pos()
-            pos.setX(x)
-            pos.setY(bottom - self._label.height())
-            self.move(pos)
-        else:
-            self._label.setWordWrap(True)  
-            self._label.setText(description)
-
-
 class Menu(QMenu):
     _logic                      : Logic
-    _gui                        : GUI
+    _control_region             : "ControlRegion"   # reference
 
     _clear_log_file_action      : QAction
     _open_data_folder_action    : QAction
@@ -425,11 +264,11 @@ class Menu(QMenu):
     _title                      : QAction
     _flags_backup               : Qt.WindowType
 
-    def __init__(self, logic : Logic, gui : GUI):
+    def __init__(self, logic : Logic, control_region : "ControlRegion"):
         super().__init__()
 
         self._logic = logic
-        self._gui = gui
+        self._control_region = control_region
 
         self._title = self.addAction("poe exp after dot")
         self._title.setEnabled(False)
@@ -456,13 +295,10 @@ class Menu(QMenu):
 
         self._hide_action = QAction("Hide Overlay", checkable = True) # type: ignore
         def hide_overlay(is_hide):
-            if self._gui.control_region is None:
-                raise RuntimeError("ControlRegion is not created.")
-    
             if is_hide:
-                self._gui.control_region.pause_foreground_guardian_and_hide()
+                self._control_region.pause_foreground_guardian_and_hide()
             else:
-                self._gui.control_region.resume_foreground_guardian()
+                self._control_region.resume_foreground_guardian()
             self.setWindowFlags(self._flags_backup)
 
         self._hide_action.triggered.connect(hide_overlay)
@@ -478,10 +314,7 @@ class Menu(QMenu):
                 self._logic.to_settings().set_val("is_debug", False, bool)
                 to_log_manager().set_is_debug(False)
 
-            if self._gui.control_region is None:
-                raise RuntimeError("ControlRegion is not created.")
-            
-            self._gui.control_region.repaint()
+            self._control_region.repaint()
 
             self.setWindowFlags(self._flags_backup)
 
@@ -498,46 +331,14 @@ class Menu(QMenu):
         self._quit_action.triggered.connect(to_app().quit)
         self.addAction(self._quit_action)
 
-class TrayMenu(QSystemTrayIcon):
-    _logic              : Logic
-    _gui                : GUI
-
-    def __init__(self, logic : Logic, gui : GUI):
-        super().__init__()
-
-        self._logic = logic
-        self._gui = gui
-
-        icon_file_name =  os.path.abspath(os.path.dirname(__file__) + "/../assets/icon.png")
-        self.setIcon(QIcon(icon_file_name))
-
-        if self._gui.menu is None:
-            raise RuntimeError("Menu is not created.")
-        
-        self.setContextMenu(self._gui.menu)
-
-
-class _ExceptionStash:
-    exception : BaseException | None
-
-    def __init__(self):
-        self.exception = None
-
-_exception_stash = _ExceptionStash()
-
-@dataclass
-class FontData:
-    name        : str | None
-    size        : int | None    # in pixels
-    is_bold     : bool | None
 
 class ForegroundGuardian:
-    _control_region : ControlRegion
+    _control_region : "ControlRegion"
     _user32         : ctypes.WinDLL
     _is_paused      : bool
     _timer          : QTimer
 
-    def __init__(self, control_region : ControlRegion):
+    def __init__(self, control_region : "ControlRegion"):
         self._control_region    = control_region
         self._user32            = ctypes.windll.user32
         self._is_paused         = False
@@ -565,6 +366,167 @@ class ForegroundGuardian:
                 self._control_region.show()
             else:
                 self._control_region.hide()
+
+
+class ControlRegion(QMainWindow):
+    _logic                  : Logic         # reference
+    _info_board             : InfoBoard
+    _frac_exp_bar           : FracExpBar
+    _menu                   : Menu
+
+    _flags_backup           : Qt.WindowType
+    _foreground_guardian    : ForegroundGuardian
+
+    _is_first_measure       : bool  
+
+    def __init__(self, logic : Logic):
+        super().__init__()
+
+        self.setWindowFlags(
+            Qt.WindowType.WindowStaysOnTopHint | 
+            Qt.WindowType.FramelessWindowHint |
+            Qt.WindowType.Tool
+        )
+
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+
+        self.setGeometry(QRect(
+            logic.to_pos_data().control_region_x,
+            logic.to_pos_data().control_region_y,
+            logic.to_pos_data().control_region_width,
+            logic.to_pos_data().control_region_height,
+        ))
+
+        self._logic             = logic
+
+        self._info_board    = InfoBoard(logic)
+        self._frac_exp_bar  = FracExpBar(logic)
+        self._menu          = Menu(logic, self)
+
+        self._flags_backup = self._menu.windowFlags()
+        
+        self._foreground_guardian = ForegroundGuardian(self)
+
+        self._is_first_measure  = True
+
+    def to_menu(self) -> Menu:
+        return self._menu
+
+    def start_foreground_guardian(self):
+        self._foreground_guardian.start()
+
+    def pause_foreground_guardian_and_hide(self):
+        self._foreground_guardian.pause()
+        self.hide()
+
+    def resume_foreground_guardian(self):
+        self._foreground_guardian.resume()
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.fillRect(self.rect(), QColor(0, 0, 0, 1))
+
+        if self._logic.to_settings().get_val("is_debug", bool):
+            painter.setPen(QColor(0, 255, 0))
+            painter.drawRect(0, 0, self.width() - 1, self.height() - 1)
+        
+    def mousePressEvent(self, event : QMouseEvent):
+        _move_window_to_foreground("Path of Exile")
+
+        if self._menu.isVisible():
+            self._menu.close()
+
+    def mouseReleaseEvent(self, event : QMouseEvent):
+        if event.button() == Qt.MouseButton.RightButton:
+            self._menu.setWindowFlags(self._flags_backup | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.FramelessWindowHint | Qt.WindowType.Tool)
+
+        elif event.button() == Qt.MouseButton.LeftButton:
+            _move_window_to_foreground("Path of Exile")
+
+            pos_in_screen = self.mapToGlobal(QPoint(event.x(), event.y()))
+
+            self._measure(pos_in_screen.x(), pos_in_screen.y())
+
+            self._menu.setWindowFlags(self._flags_backup)
+        
+        _move_window_to_foreground("Path of Exile")
+
+    def contextMenuEvent(self, event : QContextMenuEvent):
+        self._menu.exec(event.globalPos())
+
+    def showEvent(self, event):
+        if self._is_first_measure:
+            self._info_board.show()
+
+        self._frac_exp_bar.try_show()
+
+    def hideEvent(self, event):
+        self._frac_exp_bar.hide()
+
+        if self._is_first_measure:
+            self._info_board.hide()
+
+        if self._menu.isVisible():
+            self._menu.close()
+
+    def enterEvent(self, event: QEnterEvent):
+        if not self._is_first_measure:
+            self._info_board.show()
+
+    def leaveEvent(self, event: QEvent):
+        if not self._is_first_measure:
+            self._info_board.hide()
+
+    def _measure(self, cursor_x_in_screen : int, cursor_y_in_screen : int):
+        self._foreground_guardian.pause()
+        self._logic.measure(cursor_x_in_screen, cursor_y_in_screen, [self])
+        self._foreground_guardian.resume()
+
+        if self._is_first_measure:
+            self._info_board.place_text(self._logic.gen_exp_info_text(is_control = True), is_lock_left_bottom = True, is_resize = True)
+            self._is_first_measure = False
+
+        self._info_board.place_text(self._logic.gen_exp_info_text(), is_lock_left_bottom = True)
+
+        progress = self._logic.to_measurer().get_progress()
+        progress_step = self._logic.to_measurer().get_progress_step()
+
+        self._frac_exp_bar.update_bar(progress, progress_step)
+
+
+def _move_window_to_foreground(window_name : str):
+    user32 = ctypes.windll.user32
+
+    window_handle = user32.FindWindowW(None, window_name)
+    if window_handle:
+        user32.SetForegroundWindow(window_handle)
+
+class TrayMenu(QSystemTrayIcon):
+    def __init__(self, menu : Menu):
+        # Do not own 'menu'.
+        super().__init__()
+
+        icon_file_name =  os.path.abspath(os.path.dirname(__file__) + "/../assets/icon.png")
+        self.setIcon(QIcon(icon_file_name))
+
+        self.setContextMenu(menu)
+
+
+class _ExceptionStash:
+    exception : BaseException | None
+
+    def __init__(self):
+        self.exception = None
+
+_exception_stash = _ExceptionStash()
+
+@dataclass
+class FontData:
+    name        : str | None
+    size        : int | None    # in pixels
+    is_bold     : bool | None
+
+
 
 class Overlay:
     def __init__(self):
@@ -705,17 +667,11 @@ class Overlay:
 
         app.setStyle("Fusion")
 
+        control_region  = ControlRegion(logic)
+        tray_menu       = TrayMenu(control_region.to_menu())
 
-        gui = GUI()
-        gui.menu            = Menu(logic, gui)
-        gui.tray_menu       = TrayMenu(logic, gui)
-
-        gui.info_board      = InfoBoard(logic, gui, font_data)
-        gui.frac_exp_bar    = FracExpBar(logic, gui)
-        gui.control_region  = ControlRegion(logic, gui)
-
-        gui.tray_menu.show()
-        gui.control_region.start_foreground_guardian()
+        tray_menu.show()
+        control_region.start_foreground_guardian()
 
         def excepthook(exception_type, exception : BaseException, traceback_type):
             _exception_stash.exception = exception
@@ -726,6 +682,7 @@ class Overlay:
         previous_excepthook = sys.excepthook
         sys.excepthook = excepthook
 
+        to_logger().info(f"Running.")
         exit_code = to_app().exec_()
 
         sys.excepthook = previous_excepthook
