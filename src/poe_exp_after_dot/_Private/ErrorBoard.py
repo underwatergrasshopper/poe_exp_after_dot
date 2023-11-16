@@ -1,6 +1,35 @@
-import sys as _sys
+"""
+Displays error message.
 
-def run_error_board(x : int, bottom : int | None, message : str, short_message : str) -> int:
+Should be called separately from package and only from command line.
+
+Semantic:
+    ErrorBoard.py <message_file_name> <short_message_file_name> [<x> [<bottom>]]
+
+    <message>
+        Path to file with exception message which must be preprocessed to be displayed correctly in PyQt label widget.
+
+    <short_message>
+        Path to file with exception short message which must be preprocessed to be displayed correctly in PyQt label widget.
+
+    <x>
+        Position of board's left edge on X axis in screen. Default is 0.
+
+    <bottom>
+        Position of board's bottom edge on Y axis in screen. Default is screen's height.
+"""
+import sys as _sys
+import os as _os
+
+_EXIT_SUCCESS = 0
+_EXIT_FAILURE = 1
+
+def _run(
+        message         : str, 
+        short_message   : str, 
+        x               : int, 
+        bottom          : int | None
+            ) -> int:
     import typing
 
     from PySide6.QtCore     import Qt, QPoint, QEvent, QTimer
@@ -57,7 +86,7 @@ def run_error_board(x : int, bottom : int | None, message : str, short_message :
             self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
             self._label = QLabel("", self)
-            self._label.setStyleSheet(f"font: 12px Consolas; color: white;")
+            self._label.setStyleSheet(f"font: 12px Consolas; color: #DFDFDF;")
             self._label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents) 
 
             self._notice_text_format = (
@@ -173,10 +202,45 @@ def run_error_board(x : int, bottom : int | None, message : str, short_message :
     exception_board.show()
     return to_app().exec_()
 
-if "is_display_error_board" in locals() and locals()["is_display_error_board"]:
-    exit_code = run_error_board(
-        locals()["x"]               if "x" in locals()              else 0,
-        locals()["bottom"]          if "bottom" in locals()         else None,
-        locals()["message"]         if "message" in locals()        else "<br>",
-        locals()["short_message"]   if "short_message" in locals()  else "<br>"
-    )
+def _main(argv : list[str]) -> int:
+    if len(argv) <= 2:
+        raise ValueError("Not enough arguments were given through command line. At lest 2 argument is expected.")
+    
+    message_file_name = argv[1]
+    message_file_name = message_file_name.rstrip("/").rstrip("\\").rstrip("\\")
+    if not _os.path.isfile(message_file_name):
+        raise RuntimeError("File with error message does not exist.")
+    
+    with open(message_file_name, "r") as file:
+        message = file.read()
+
+    short_message_file_name = argv[2]
+    short_message_file_name = short_message_file_name.rstrip("/").rstrip("\\").rstrip("\\")
+    if not _os.path.isfile(short_message_file_name):
+        raise RuntimeError("File with error short message does not exist.")
+
+    with open(short_message_file_name, "r") as file:
+        short_message = file.read()
+
+    if len(argv) > 3:
+        x_text = argv[3]
+        if x_text.lstrip("-").isdigit():
+            x = int(x_text)
+        else:
+            raise TypeError("Fourth argument is not an integer.")
+    else:
+        x = 0
+
+    if len(argv) > 4:
+        bottom_text = argv[3]
+        if bottom_text.lstrip("-").isdigit():
+            bottom = int(bottom_text)
+        else:
+            raise TypeError("Fifth argument is not an integer.")
+    else:
+        bottom = None
+
+    return _run(message, short_message, x, bottom)
+
+if __name__ == "__main__":
+    _sys.exit(_main(_sys.argv))

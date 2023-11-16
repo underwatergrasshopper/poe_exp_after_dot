@@ -17,13 +17,13 @@ import os as _os
 from ._Private.Overlay import (
     Overlay as _Overlay
 )
-from ._Private.ErrorBoard import (
-    run_error_board as _run_error_board
-)
+
 from ._Private.Commons import (
     EXIT_FAILURE as _EXIT_FAILURE,
     hide_abs_paths as _hide_abs_paths,
-    apply_qt_escape_sequences as _apply_qt_escape_sequences
+    run_error_board as _run_error_board,
+    get_argument_value as _get_argument_value,
+    get_default_data_path as _get_default_data_path
 )
 from ._Private.LogManager import (
     to_logger as _to_logger
@@ -47,14 +47,16 @@ def _main(argv : list[str]) -> int:
     except Exception as exception:
         # Displays exception message in ErrorBoard.
         # Workaround!!!
-        # When inside except, some pyqt widgets from overlay still exists. To prevent displaying them with error board, exec is used for running error board.
-        error_board_locals = {}
-        with open(_os.path.dirname(__file__) + "/_Private/ErrorBoard.py", "r") as file:
-            message = _apply_qt_escape_sequences(_hide_abs_paths(_traceback.format_exc())).replace("\n", "<br>")
-            short_message = _apply_qt_escape_sequences(str(exception)).replace("\n", "<br>")
+        # When inside except, some pyqt widgets from overlay still exists. To prevent displaying them with error board, os.system is used for running error board.
+        data_path = _get_argument_value("--data-path", argv[1:]).lstrip("/").lstrip("\\").lstrip("\\")
+        if data_path is None:
+            data_path = _get_default_data_path()
 
-            error_board_locals = {"is_display_error_board" : True, "x" : 0, "bottom" : None, "message" : message, "short_message" : short_message}
-            exec(file.read(), None, error_board_locals)
+        error_board_exit_code = _run_error_board(
+            data_path,
+            _hide_abs_paths(_traceback.format_exc()),
+            str(exception)
+        )
 
         # All internal exceptions are handled here, if logger managed to setup correctly.
         logger = _to_logger()
@@ -62,8 +64,7 @@ def _main(argv : list[str]) -> int:
         if logger and logger.hasHandlers():
             logger.critical("", exc_info = True)
 
-            if error_board_locals["exit_code"] != 0:
-                error_board_exit_code = error_board_locals["exit_code"]
+            if error_board_exit_code != 0:
                 logger.error(f"ErrorBoard exited with code: {error_board_exit_code}.")
 
             return _EXIT_FAILURE

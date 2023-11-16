@@ -13,7 +13,7 @@ from PySide6.QtWidgets  import QMainWindow, QApplication, QWidget, QLabel, QSyst
 from PySide6.QtCore     import Qt, QPoint, QRect, QEvent, QLine, QTimer
 from PySide6.QtGui      import QColor, QMouseEvent, QIcon, QAction, QCloseEvent, QContextMenuEvent, QFocusEvent, QFont, QEnterEvent, QKeyEvent, QPainter
 
-from .Commons           import EXIT_FAILURE, EXIT_SUCCESS, to_app, merge_on_all_levels
+from .Commons           import EXIT_FAILURE, EXIT_SUCCESS, to_app, merge_on_all_levels, get_default_data_path
 from .Logic             import Logic, PosData
 from .LogManager        import to_log_manager, to_logger
 from .Settings          import Settings
@@ -563,8 +563,7 @@ class Overlay:
             Exit code.
         """
         if data_path is None:
-            data_path = os.environ["APPDATA"] + "/../Local/poe_exp_after_dot"
-        data_path = os.path.abspath(data_path)
+            data_path = get_default_data_path()
 
         os.makedirs(data_path, exist_ok = True)
 
@@ -668,7 +667,7 @@ class Overlay:
         tray_menu.show()
         control_region.start_foreground_guardian()
         
-        # raise RuntimeError("Some error.") # debug
+        raise RuntimeError("Some error.") # debug
 
         def excepthook(exception_type, exception : BaseException, traceback_type):
             _exception_stash.exception = exception
@@ -751,7 +750,7 @@ class Overlay:
                     is_debug = True
 
                 case ["--data-path", data_path]:
-                    pass
+                    data_path = data_path.lstrip("/").lstrip("\\").lstrip("\\")
 
                 case ["--time-max-unit", time_max_unit]:
                     if time_max_unit not in ["second", "minute", "hour", "day", "week"]:
