@@ -2,6 +2,8 @@ from typing import Any
 import typing
 from PySide6.QtWidgets import QApplication
 
+import re as _re
+
 EXIT_SUCCESS = 0
 EXIT_FAILURE = 1
 
@@ -41,3 +43,20 @@ _short_time_units = {
     "day"       : "d",
     "week"      : "w",
 }
+
+def hide_abs_paths(traceback_message : str) -> str:
+    lines = traceback_message.split("\n")
+    formatted_lines = []
+    for line in lines:
+        formatted_lines.append(_re.sub(r"File \".*([\\/]poe_exp_after_dot.*\.py)\"|File \".*([\\/][^\\/]+\.py)\"", "File \"...\\1\"", line))
+    return ("\n".join(formatted_lines)).strip("\n")
+
+def apply_qt_escape_sequences(text : str) -> str:
+    html_escape_map = [
+        ("<", "&lt;"), 
+        (">", "&gt;"),
+        ("&", "&amp;"),
+    ]
+    for escape in html_escape_map:
+        text = text.replace(escape[0], escape[1])
+    return text

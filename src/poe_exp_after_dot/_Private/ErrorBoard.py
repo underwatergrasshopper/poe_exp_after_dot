@@ -1,152 +1,182 @@
+import sys as _sys
 
-from dataclasses import dataclass
+def run_error_board(x : int, bottom : int | None, message : str, short_message : str) -> int:
+    import typing
 
-import re
+    from PySide6.QtCore     import Qt, QPoint, QEvent, QTimer
+    from PySide6.QtWidgets  import QMainWindow, QApplication, QWidget, QLabel
+    from PySide6.QtGui      import QColor, QMouseEvent, QEnterEvent, QPainter, QKeyEvent, QPaintEvent
 
-from PySide6.QtCore     import Qt, QPoint, QEvent
-from PySide6.QtWidgets  import QMainWindow, QApplication, QWidget, QLabel
-from PySide6.QtGui      import QColor, QMouseEvent, QEnterEvent
+    def to_app() -> QApplication:
+        app = QApplication.instance()
+        if app:
+            return typing.cast(QApplication, app)
+        return QApplication([])
 
-from .Commons import to_app
+    class ErrorBoard(QMainWindow):
+        _x                      : int
+        _bottom                 : int
 
-class ErrorBoard(QMainWindow):
-    @dataclass
-    class Share:
-        x       : int
-        bottom  : int | None
+        _screen_width           : int
+        _screen_height          : int
 
-    _share = Share(0, None)
+        _message                : str
+        _short_message          : str
 
-    _screen_width    : int
-    _screen_height   : int
+        _no_enter_leave_check   : bool
 
-    _message        : str
-    _short_message  : str
+        def __init__(
+                self, 
+                message         : str, 
+                short_message   : str,
+                x               : int,
+                bottom          : int | None,
+                screen_width    : int,
+                screen_height   : int
+                    ):
+            super().__init__()
 
-    def __init__(
-            self, 
-            message         : str, 
-            short_message   : str,
-            screen_width    : int,
-            screen_height   : int
-                ):
-        super().__init__()
+            self._message       = message
+            self._short_message = short_message
 
-        self._message = message
-        self._short_message = short_message
+            self._x = x
+            self._bottom = bottom
+            if self._bottom is None:
+                self._bottom = to_app().primaryScreen().size().height() 
 
-        if self._share.bottom is None:
-            self._share.bottom = to_app().primaryScreen().size().height() 
+            self._screen_width  = screen_width
+            self._screen_height = screen_height
 
-        self._screen_width  = screen_width
-        self._screen_height = screen_height
+            self._no_enter_leave_check = False
 
-        self.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.FramelessWindowHint | Qt.WindowType.Tool)
-        palette = self.palette()
-        palette.setColor(self.backgroundRole(), QColor(0, 0, 0))
-        self.setPalette(palette)
-        self.setWindowOpacity(0.7)
+            self.setWindowFlags(
+                Qt.WindowType.WindowStaysOnTopHint | 
+                Qt.WindowType.FramelessWindowHint |
+                Qt.WindowType.Tool
+            )
+            self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
-        self._label = QLabel("", self)
-        self._label.setStyleSheet(f"font: 12px Courier New; font-weight: bold; color: white;")
-        self._label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True) 
+            self._label = QLabel("", self)
+            self._label.setStyleSheet(f"font: 12px Consolas; color: white;")
+            self._label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents) 
 
+            self._notice_text_format = (
+                "{title_begin}ERROR{title_end}<br>"
+                "{hint_begin}"
+                "Hold RMB to show Message.<br>"
+                "Hold Ctrl + RMB to show Details.<br>"
+                "Click to Exit."
+                "{hint_end}"
+            )
 
-        b = ""
-        e = ""
-        self._place_notice(f"{b}ERROR{e} (Click to quit)<br>Hover to see message.<br>Hold RMB to see details.", is_resize = True)
+            self._short_message_text_format = (
+                "{title_begin}ERROR{title_end}<br>"
+                "{short_message}<br>"
+                "{hint_begin}"
+                "Hold RMB to show Message.<br>"
+                "Hold Ctrl + RMB to show Details.<br>"
+                "Click to Exit."
+                "{hint_end}"
+            )
 
-        b = "<font color=\"#FF0000\">"
-        e = "</font>"
-        b2 = "<font color=\"#AFAFAF\">"
-        e2 = "</font>"
-        self._place_notice(f"{b}ERROR{e} (Click to quit)<br>Hover to see message.<br>{b2}Hold RMB to see details.{e2}")
+            self._message_text_format = (
+                "{title_begin}ERROR{title_end}<br>"
+                "{message}<br>"
+                "{hint_begin}"
+                "Hold RMB to show Message.<br>"
+                "Hold Ctrl + RMB to show Details.<br>"
+                "Click to Exit."
+                "{hint_end}"
+            )
 
-        class ToolTip(QWidget):
-            _label  : QLabel
+            self._set_text_from_format(self._notice_text_format, is_overexpand_safe = True)
 
-            _x      : int
-            _bottom : int
-            _max_width : int
+        def _set_text_from_format(self, text_format : str, *, is_overexpand_safe : bool = True):
+            if is_overexpand_safe:
+                # in case of formatting error, will not overexpand text
+                text = self._gen_text(text_format, is_no_formatting = True)
+                self._set_text(text, is_resize = True)
 
-            def __init__(self, parent : QWidget, x : int, bottom : int,  screen_width : int):
-                super().__init__(parent)
+                text = self._gen_text(text_format)
+                self._set_text(text)
+            else:
+                text = self._gen_text(text_format)
+                self._set_text(text, is_resize = True)
 
-                self._x = x
-                self._bottom = bottom
-                self._max_width = screen_width - x
-
-                self.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.FramelessWindowHint | Qt.WindowType.Tool)
-                palette = self.palette()
-                palette.setColor(self.backgroundRole(), QColor(0, 0, 0))
-                self.setPalette(palette)
-                self.setWindowOpacity(0.9)
-
-                self._label = QLabel("", self)
-                self._label.setStyleSheet(f"font: 12px Courier New; color: #AFAFAF;")
-                self._label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
-
-            def place_message(self, message):
+        def _gen_text(self, text_format : str, *, is_no_formatting = False):
+            if is_no_formatting:
+                return text_format.format(
+                    title_begin     = "", 
+                    title_end       = "", 
+                    short_message   = self._short_message,
+                    message         = self._message,
+                    hint_begin      = "",
+                    hint_end        = "",
+                )
+            return text_format.format(
+                title_begin     = "<font color=\"#FF0000\">", 
+                title_end       = "</font>", 
+                short_message   = self._short_message,
+                message         = self._message,
+                hint_begin      = "<font color=\"#AFAFAF\">",
+                hint_end        = "</font>",
+            )
+        
+        def _set_text(self, text, *, is_resize = False):
+            if is_resize:
                 self._label.setWordWrap(False)  
-                self._label.setMaximumWidth(self._max_width)
-                self._label.setText(message)
+                self._label.setText(text)
+
                 self._label.adjustSize()
                 self.resize(self._label.size())
+                self.move(QPoint(self._x, self._bottom - self._label.height()))
+            else:
+                self._label.setWordWrap(True)  
+                self._label.setText(text)
 
-                self.move( self._x,  self._bottom - self.height())
+        def mousePressEvent(self, event: QMouseEvent):
+            if event.button() == Qt.MouseButton.RightButton:
+                if to_app().keyboardModifiers() & Qt.KeyboardModifier.ControlModifier:
+                    self._set_text_from_format(self._message_text_format)
+                else:
+                    self._set_text_from_format(self._short_message_text_format)
 
-        self._tooltip = ToolTip(self, self._share.x, self._share.bottom - self._label.height(), screen_width)
-        self._tooltip.place_message(short_message)
+        def mouseReleaseEvent(self, event : QMouseEvent):
+            if event.button() == Qt.MouseButton.LeftButton:
+                to_app().quit()
+            elif event.button() == Qt.MouseButton.RightButton:
+                self._set_text_from_format(self._notice_text_format)
 
-    def _place_notice(self, notice, *, is_resize = False):
-        if is_resize:
-            self._label.setWordWrap(False)  
-            self._label.setText(notice)
+        def keyPressEvent(self, event: QKeyEvent):
+            if event.key() == Qt.Key.Key_Control:
+                if to_app().mouseButtons() & Qt.MouseButton.RightButton:
+                    self._set_text_from_format(self._message_text_format)
 
-            self._label.adjustSize()
-            self.resize(self._label.size())
-            self.move(QPoint(self._share.x, self._share.bottom - self._label.height()))
-        else:
-            self._label.setWordWrap(True)  
-            self._label.setText(notice)
+        def keyReleaseEvent(self, event: QKeyEvent):
+            if event.key() == Qt.Key.Key_Control:
+                if to_app().mouseButtons() & Qt.MouseButton.RightButton:
+                    self._set_text_from_format(self._short_message_text_format)
 
-    @staticmethod
-    def set_default_pos(x : int, bottom : int):
-        ErrorBoard._share.x = x
-        ErrorBoard._share.bottom = bottom
+        def paintEvent(self, event : QPaintEvent):
+            painter = QPainter(self)
+            painter.fillRect(self.rect(), QColor(0, 0, 0, 191))
 
-    def mousePressEvent(self, event: QMouseEvent) -> None:
-       if event.button() == Qt.MouseButton.RightButton:
-            self._tooltip.place_message(self._message)
+    screen_size = to_app().primaryScreen().size()
+    exception_board = ErrorBoard(
+        message, 
+        short_message,
+        x,
+        bottom,
+        screen_width    = screen_size.width(),
+        screen_height   = screen_size.height()
+    )
+    exception_board.show()
+    return to_app().exec_()
 
-    def mouseReleaseEvent(self, event : QMouseEvent):
-        if event.button() == Qt.MouseButton.LeftButton:
-            to_app().quit()
-        elif event.button() == Qt.MouseButton.RightButton:
-            self._tooltip.place_message(self._short_message)
-
-    def enterEvent(self, event: QEnterEvent):
-        self._tooltip.show()
-
-    def leaveEvent(self, event: QEvent):
-        self._tooltip.hide()
-
-def hide_abs_paths(traceback_message : str) -> str:
-    lines = traceback_message.split("\n")
-    formatted_lines = []
-    for line in lines:
-        formatted_lines.append(re.sub(r"File \".*([\\/]poe_exp_after_dot.*\.py)\"|File \".*([\\/][^\\/]+\.py)\"", "File \"...\\1\"", line))
-    return ("\n".join(formatted_lines)).strip("\n")
-
-def run_error_board(message : str, short_message : str) -> int:
-        to_app().closeAllWindows()
-
-        screen_size = to_app().primaryScreen().size()
-        exception_board = ErrorBoard(
-            message, 
-            short_message,
-            screen_width    = screen_size.width(),
-            screen_height   = screen_size.height()
-        )
-        exception_board.show()
-        return to_app().exec_()
+if "is_display_error_board" in locals() and locals()["is_display_error_board"]:
+    exit_code = run_error_board(
+        locals()["x"]               if "x" in locals()              else 0,
+        locals()["bottom"]          if "bottom" in locals()         else None,
+        locals()["message"]         if "message" in locals()        else "<br>",
+        locals()["short_message"]   if "short_message" in locals()  else "<br>"
+    )

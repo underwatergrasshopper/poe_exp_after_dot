@@ -3,6 +3,7 @@ import sys
 import ctypes
 import re
 import enum
+import gc
 
 from typing import SupportsFloat, SupportsInt, Sequence, Any
 from dataclasses import dataclass
@@ -12,7 +13,6 @@ from PySide6.QtWidgets  import QMainWindow, QApplication, QWidget, QLabel, QSyst
 from PySide6.QtCore     import Qt, QPoint, QRect, QEvent, QLine, QTimer
 from PySide6.QtGui      import QColor, QMouseEvent, QIcon, QAction, QCloseEvent, QContextMenuEvent, QFocusEvent, QFont, QEnterEvent, QKeyEvent, QPainter
 
-from .ErrorBoard        import ErrorBoard
 from .Commons           import EXIT_FAILURE, EXIT_SUCCESS, to_app, merge_on_all_levels
 from .Logic             import Logic, PosData
 from .LogManager        import to_log_manager, to_logger
@@ -650,11 +650,6 @@ class Overlay:
 
         logic = Logic(settings)
 
-        ErrorBoard.set_default_pos(
-            x = logic.to_pos_data().control_region_x,
-            bottom = logic.to_pos_data().control_region_y,
-        )
-
         app = to_app() # initializes global QApplication object
 
         font_data = FontData(
@@ -672,6 +667,8 @@ class Overlay:
 
         tray_menu.show()
         control_region.start_foreground_guardian()
+        
+        # raise RuntimeError("Some error.") # debug
 
         def excepthook(exception_type, exception : BaseException, traceback_type):
             _exception_stash.exception = exception
@@ -690,7 +687,9 @@ class Overlay:
         del app
 
         if _exception_stash.exception:
-            raise _exception_stash.exception
+            exception = _exception_stash.exception
+            _exception_stash.exception = None
+            raise exception
         
         settings.save()
         to_logger().info("Saved settings.")
