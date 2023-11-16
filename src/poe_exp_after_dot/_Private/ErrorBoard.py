@@ -4,7 +4,10 @@ Displays error message.
 Should be called separately from package and only from command line.
 
 Semantic:
-    ErrorBoard.py <message_file_name> <short_message_file_name> [<x> [<bottom>]]
+    ErrorBoard.py <error_board_exception_file_name> <message_file_name> <short_message_file_name> [<x> [<bottom>]]
+
+    <error_board_exception_file_name> 
+        File to which error board's exception message will be logged.
 
     <message>
         Path to file with exception message which must be preprocessed to be displayed correctly in PyQt label widget.
@@ -18,11 +21,19 @@ Semantic:
     <bottom>
         Position of board's bottom edge on Y axis in screen. Default is screen's height.
 """
-import sys as _sys
-import os as _os
+import sys          as _sys
+import os           as _os
+import traceback    as _traceback
 
-_EXIT_SUCCESS = 0
-_EXIT_FAILURE = 1
+
+class _ExceptionStash:
+    exception : BaseException | None
+
+    def __init__(self):
+        self.exception = None
+
+_exception_stash = _ExceptionStash()
+
 
 def _run(
         message         : str, 
@@ -86,35 +97,35 @@ def _run(
             self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
             self._label = QLabel("", self)
-            self._label.setStyleSheet(f"font: 12px Consolas; color: #DFDFDF;")
+            self._label.setStyleSheet(f"font: 12px Consolas; color: #BFBFBF;")
             self._label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents) 
 
             self._notice_text_format = (
-                "{title_begin}ERROR{title_end}<br>"
+                "{title_begin}FATAL ERROR{title_end}<br>"
                 "{hint_begin}"
-                "Hold RMB to show Message.<br>"
-                "Hold Ctrl + RMB to show Details.<br>"
-                "Click to Exit."
+                "Hold RMB on This to show Message.<br>"
+                "Hold Ctrl + RMB on This to show Details.<br>"
+                "Click on This to Exit."
                 "{hint_end}"
             )
 
             self._short_message_text_format = (
-                "{title_begin}ERROR{title_end}<br>"
+                "{title_begin}FATAL ERROR{title_end}<br>"
                 "{short_message}<br>"
                 "{hint_begin}"
-                "Hold RMB to show Message.<br>"
-                "Hold Ctrl + RMB to show Details.<br>"
-                "Click to Exit."
+                "Hold RMB on This to show Message.<br>"
+                "Hold Ctrl + RMB on This to show Details.<br>"
+                "Click on This to Exit."
                 "{hint_end}"
             )
 
             self._message_text_format = (
-                "{title_begin}ERROR{title_end}<br>"
+                "{title_begin}FATAL ERROR{title_end}<br>"
                 "{message}<br>"
                 "{hint_begin}"
-                "Hold RMB to show Message.<br>"
-                "Hold Ctrl + RMB to show Details.<br>"
-                "Click to Exit."
+                "Hold RMB on This to show Message.<br>"
+                "Hold Ctrl + RMB on This to show Details.<br>"
+                "Click on This to Exit."
                 "{hint_end}"
             )
 
@@ -143,11 +154,11 @@ def _run(
                     hint_end        = "",
                 )
             return text_format.format(
-                title_begin     = "<font color=\"#FF0000\">", 
+                title_begin     = "<font color=\"#DF0000\">", 
                 title_end       = "</font>", 
                 short_message   = self._short_message,
                 message         = self._message,
-                hint_begin      = "<font color=\"#AFAFAF\">",
+                hint_begin      = "<font color=\"#7F7F7F\">",
                 hint_end        = "</font>",
             )
         
@@ -164,6 +175,7 @@ def _run(
                 self._label.setText(text)
 
         def mousePressEvent(self, event: QMouseEvent):
+            # raise RuntimeError("Some error inside.") # debug
             if event.button() == Qt.MouseButton.RightButton:
                 if to_app().keyboardModifiers() & Qt.KeyboardModifier.ControlModifier:
                     self._set_text_from_format(self._message_text_format)
@@ -190,6 +202,7 @@ def _run(
             painter = QPainter(self)
             painter.fillRect(self.rect(), QColor(0, 0, 0, 191))
 
+
     screen_size = to_app().primaryScreen().size()
     exception_board = ErrorBoard(
         message, 
@@ -200,13 +213,35 @@ def _run(
         screen_height   = screen_size.height()
     )
     exception_board.show()
-    return to_app().exec_()
+
+    EXIT_FAILURE = 1
+
+    def excepthook(exception_type, exception : BaseException, traceback_type):
+        _exception_stash.exception = exception
+        # NOTE: With some brief testing, closeEvent was not triggered when exited with _EXIT_FAILURE (or value equal 1). 
+        # But for safety, do not implement closeEvent in any widget.
+        QApplication.exit(EXIT_FAILURE)
+
+    previous_excepthook = _sys.excepthook
+    _sys.excepthook = excepthook
+
+    exit_code = to_app().exec()
+
+    _sys.excepthook = previous_excepthook
+
+    if _exception_stash.exception:
+        exception = _exception_stash.exception
+        _exception_stash.exception = None
+        raise exception
+    
+    return exit_code
+
 
 def _main(argv : list[str]) -> int:
-    if len(argv) <= 2:
-        raise ValueError("Not enough arguments were given through command line. At lest 2 argument is expected.")
+    if len(argv) <= 3:
+        raise ValueError("Not enough arguments were given through command line. At lest 3 argument is expected.")
     
-    message_file_name = argv[1]
+    message_file_name = argv[2]
     message_file_name = message_file_name.rstrip("/").rstrip("\\").rstrip("\\")
     if not _os.path.isfile(message_file_name):
         raise RuntimeError("File with error message does not exist.")
@@ -214,7 +249,7 @@ def _main(argv : list[str]) -> int:
     with open(message_file_name, "r") as file:
         message = file.read()
 
-    short_message_file_name = argv[2]
+    short_message_file_name = argv[3]
     short_message_file_name = short_message_file_name.rstrip("/").rstrip("\\").rstrip("\\")
     if not _os.path.isfile(short_message_file_name):
         raise RuntimeError("File with error short message does not exist.")
@@ -222,25 +257,38 @@ def _main(argv : list[str]) -> int:
     with open(short_message_file_name, "r") as file:
         short_message = file.read()
 
-    if len(argv) > 3:
-        x_text = argv[3]
+    if len(argv) > 4:
+        x_text = argv[4]
         if x_text.lstrip("-").isdigit():
             x = int(x_text)
         else:
-            raise TypeError("Fourth argument is not an integer.")
+            raise TypeError("Fifth argument is not an integer.")
     else:
         x = 0
 
-    if len(argv) > 4:
-        bottom_text = argv[3]
+    # raise RuntimeError("Some error inside.") # debug
+
+    if len(argv) > 5:
+        bottom_text = argv[5]
         if bottom_text.lstrip("-").isdigit():
             bottom = int(bottom_text)
         else:
-            raise TypeError("Fifth argument is not an integer.")
+            raise TypeError("Sixth argument is not an integer.")
     else:
         bottom = None
 
     return _run(message, short_message, x, bottom)
 
+
 if __name__ == "__main__":
-    _sys.exit(_main(_sys.argv))
+    try:
+        _sys.exit(_main(_sys.argv))
+    except Exception as _exception:
+        if len(_sys.argv) > 1:
+            _exception_file_name = _sys.argv[1]
+
+            if "error_board_exception_message.txt" in _exception_file_name:
+                with open(_exception_file_name, "w") as _file:
+                    _file.write(_traceback.format_exc())
+
+        raise RuntimeError("Exception ocurred inside ErrorBoard. Exception message should be already logged to error_board_exception_message.txt in data folder.") from _exception

@@ -431,6 +431,7 @@ class ControlRegion(QMainWindow):
             painter.drawRect(0, 0, self.width() - 1, self.height() - 1)
         
     def mousePressEvent(self, event : QMouseEvent):
+        # raise RuntimeError("Some error.") # debug
         _move_window_to_foreground("Path of Exile")
 
         if self._menu.isVisible():
@@ -525,7 +526,6 @@ class FontData:
     name        : str | None
     size        : int | None    # in pixels
     is_bold     : bool | None
-
 
 
 class Overlay:
@@ -671,19 +671,24 @@ class Overlay:
 
         def excepthook(exception_type, exception : BaseException, traceback_type):
             _exception_stash.exception = exception
-            # NOTE: With some brief testing, closeEvent was not triggered when exited with _EXIT_FAILURE (or value equal 1). 
+            # NOTE: With some brief testing, closeEvent was not triggered when exited with EXIT_FAILURE (or value equal 1). 
             # But for safety, do not implement closeEvent in any widget.
+
+            # Workaround. To prevent any widget to be visible while exception is processed.
+            for widget in to_app().allWidgets():
+                widget.setWindowFlag(Qt.WindowType.WindowTransparentForInput, True)
+                widget.setDisabled(True)
+                widget.hide()
+
             QApplication.exit(EXIT_FAILURE)
 
         previous_excepthook = sys.excepthook
         sys.excepthook = excepthook
 
         to_logger().info(f"Running.")
-        exit_code = to_app().exec_()
+        exit_code = to_app().exec()
 
         sys.excepthook = previous_excepthook
-
-        del app
 
         if _exception_stash.exception:
             exception = _exception_stash.exception

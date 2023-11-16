@@ -64,9 +64,9 @@ def apply_qt_escape_sequences(text : str) -> str:
 
 def get_argument_value(name, arguments : list[str]) -> str | None:
     for argument in arguments:
-        argument_name, value = argument.split("=", 1)
+        argument_name, *value = argument.split("=", 1)
         if argument_name == name:
-            return value
+            return value[0] if value else None
     return None
 
 def get_default_data_path() -> str:
@@ -75,14 +75,22 @@ def get_default_data_path() -> str:
 
 def run_error_board(data_path : str, message : str, short_message : str) -> int:
     """
+    Runs ErrorBoard and does not wait.
+
     Returns
-        Exit code.
+        Error code.
     """
     message = apply_qt_escape_sequences(message).replace("\n", "<br>")
     short_message = apply_qt_escape_sequences(short_message).replace("\n", "<br>")
 
     cache_path = data_path + "/cache"
     _os.makedirs(cache_path, exist_ok=True)
+
+    error_board_exception_file_name = data_path + "/error_board_exception_message.txt"
+    if _os.path.exists(error_board_exception_file_name):
+        _os.remove(error_board_exception_file_name)
+
+    error_board_file_name = _os.path.relpath(_os.path.dirname(__file__) + "/ErrorBoard.py")
 
     message_file_name = cache_path + "/last_exception_message_preprocessed.txt"    
     short_message_file_name = cache_path + "/last_exception_short_message_preprocessed.txt"
@@ -93,5 +101,7 @@ def run_error_board(data_path : str, message : str, short_message : str) -> int:
     with open(short_message_file_name, "w") as file:
         file.write(short_message)
 
-    error_board_file_name = _os.path.relpath(_os.path.dirname(__file__) + "/ErrorBoard.py")
-    return _os.system(f"py -3-64 {error_board_file_name} {message_file_name} {short_message_file_name}")
+    is_pyw = _os.system("where /Q pyw") == 0
+    launcher = "pyw -3-64" if is_pyw else "pythonw"
+
+    return _os.system(f"start {launcher} {error_board_file_name} {error_board_exception_file_name} {message_file_name} {short_message_file_name}")

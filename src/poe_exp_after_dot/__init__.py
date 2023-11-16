@@ -39,20 +39,20 @@ def _main(argv : list[str]) -> int:
             When any given option in argument list is incorrect
         ...
     """
-    message = ""
-    short_message = ""
     try:
         overlay = _Overlay()
         exit_code = overlay.main(argv)
     except Exception as exception:
         # Displays exception message in ErrorBoard.
+        
         # Workaround!!!
-        # When inside except, some pyqt widgets from overlay still exists. To prevent displaying them with error board, os.system is used for running error board.
+        # When inside except, some pyqt widgets from overlay still exists. 
+        # To prevent displaying them with error board, os.system is used for running error board in separate window.
         data_path = _get_argument_value("--data-path", argv[1:]).lstrip("/").lstrip("\\").lstrip("\\")
         if data_path is None:
             data_path = _get_default_data_path()
 
-        error_board_exit_code = _run_error_board(
+        error_board_launch_error_code = _run_error_board(
             data_path,
             _hide_abs_paths(_traceback.format_exc()),
             str(exception)
@@ -64,8 +64,8 @@ def _main(argv : list[str]) -> int:
         if logger and logger.hasHandlers():
             logger.critical("", exc_info = True)
 
-            if error_board_exit_code != 0:
-                logger.error(f"ErrorBoard exited with code: {error_board_exit_code}.")
+            if error_board_launch_error_code != 0:
+                logger.error(f"ErrorBoard failed to launch, error code: {error_board_launch_error_code}.")
 
             return _EXIT_FAILURE
         else:
