@@ -10,12 +10,16 @@ from ..Exceptions import TemplateLoadFail
 class Template:
     """
     <template>
-        --- <name> (\\| <name>)* (, (<delay>)? \\-\\> <next_name>)? ---
+        --- <name> (\\| <name>)* (, <condition> \\-\\> <next_name>)? ---
         <format>
+
+    <condition>
+        done
+        <delay>s        # in seconds
     """
     format      : str
 
-    delay       : float
+    delay       : float         # in seconds
     next_name   : str   
 
 class TemplateLoader:
@@ -41,8 +45,12 @@ class TemplateLoader:
         <name> = <value>
         
     <template>
-        --- <name> (\\| <name>)* (, (<delay>)? \\-\\> <next_name>)? ---
+        --- <name> (\\| <name>)* (, <condition> \\-\\> <next_name>)? ---
         <format>
+
+    <condition>
+        done
+        <delay>s        # in seconds
 
     <name>
         [^= \\t]+
@@ -55,7 +63,7 @@ class TemplateLoader:
 
     _names      : list[str]
     _format     : str
-    _delay      : float
+    _delay      : float                 # in seconds
     _next_name  : str
 
     def __init__(self):
@@ -90,6 +98,8 @@ class TemplateLoader:
             if match_:
                 self._store_template_if_exists()
 
+
+
                 # template head
                 template_head = match_.group(1)
 
@@ -101,20 +111,21 @@ class TemplateLoader:
                 self._names = names
 
                 if next_data:
-                    delay, next_name = next_data[0].split("->")
+                    condition, next_name = next_data[0].split("->")
 
-                    if delay == "":
-                        delay = 0.0
+                    condition = condition.strip()
+
+                    if condition == "done":
+                        self._delay  = 0.0
                     else:
-                        match_ = re.search(fr"^(0|[1-9][0-9]*)s$", delay.strip())
+                        match_ = re.search(fr"^(0|[1-9][0-9]*)s$", condition)
                         if match_:
-                            delay = float(match_.group(1))
+                            self._delay  = float(match_.group(1))
                         else:
                             raise TemplateLoadFail(f"Delay is not a valid number. Should be a natural number. Line: {line_id}.")
-                    
-                    self._delay = delay
 
                     next_name = next_name.strip()
+
                     if next_name == "":
                         raise TemplateLoadFail(f"Empty next template name. Line: {line_id}.")
                     
