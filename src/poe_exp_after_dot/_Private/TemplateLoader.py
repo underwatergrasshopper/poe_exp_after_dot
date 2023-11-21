@@ -10,8 +10,8 @@ from ..Exceptions import TemplateLoadFail
 class Template:
     """
     <template>
-        --- <name> (\\| <name>)* (, <condition> \\-\\> <next_name>)? ---
-        <format>
+        --- <name> (\\| <name>)* (, <condition> \\-\\> <next_name>)? ---        # head
+        <format>                                                                # body
 
     <condition>
         done
@@ -45,8 +45,8 @@ class TemplateLoader:
         <name> = <value>
         
     <template>
-        --- <name> (\\| <name>)* (, <condition> \\-\\> <next_name>)? ---
-        <format>
+        --- <name> (\\| <name>)* (, <condition> \\-\\> <next_name>)? ---        # head
+        <format>                                                                # body    
 
     <condition>
         done
@@ -97,8 +97,6 @@ class TemplateLoader:
             match_ = re.search(fr"^[ \t]*---(.*?)---[ \t]*$", line)
             if match_:
                 self._store_template_if_exists()
-
-
 
                 # template head
                 template_head = match_.group(1)
