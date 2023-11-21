@@ -10,10 +10,10 @@ from ..Exceptions import TemplateLoadFail
 class Template:
     """
     <template>
-        --- <name> (\\| <name>)* (, <delay> \\-\\> <next_name>)? ---
-        <content>
+        --- <name> (\\| <name>)* (, (<delay>)? \\-\\> <next_name>)? ---
+        <format>
     """
-    content     : str
+    format      : str
 
     delay       : float
     next_name   : str   
@@ -41,8 +41,8 @@ class TemplateLoader:
         <name> = <value>
         
     <template>
-        --- <name> (\\| <name>)* (, <delay> \\-\\> <next_name>)? ---
-        <content>
+        --- <name> (\\| <name>)* (, (<delay>)? \\-\\> <next_name>)? ---
+        <format>
 
     <name>
         [^= \\t]+
@@ -54,7 +54,7 @@ class TemplateLoader:
     _variables  : dict[str, str]
 
     _names      : list[str]
-    _content    : str
+    _format     : str
     _delay      : float
     _next_name  : str
 
@@ -69,14 +69,14 @@ class TemplateLoader:
                 just_file_name = os.path.basename(file_name)
                 raise TemplateLoadFail(f"Failed to parse templates from file: \"{just_file_name}\". " + str(exception)) from exception
 
-    def parse(self, content : str):
+    def parse(self, format : str):
         self._clear()
             
         COMMENT_PATTERN = r"#[^\n]*"
 
-        content = content.replace("\t", "    ")
+        format = format.replace("\t", "    ")
         
-        lines = content.split("\n")
+        lines = format.split("\n")
         line_id = 0
         for line in lines:
             line_id += 1
@@ -103,11 +103,14 @@ class TemplateLoader:
                 if next_data:
                     delay, next_name = next_data[0].split("->")
 
-                    match_ = re.search(fr"^(0|[1-9][0-9]*)s$", delay.strip())
-                    if match_:
-                        delay = float(match_.group(1))
+                    if delay == "":
+                        delay = 0.0
                     else:
-                        raise TemplateLoadFail(f"Delay is not a valid number. Should be a natural number. Line: {line_id}.")
+                        match_ = re.search(fr"^(0|[1-9][0-9]*)s$", delay.strip())
+                        if match_:
+                            delay = float(match_.group(1))
+                        else:
+                            raise TemplateLoadFail(f"Delay is not a valid number. Should be a natural number. Line: {line_id}.")
                     
                     self._delay = delay
 
@@ -119,7 +122,7 @@ class TemplateLoader:
 
             elif self._names: # template head occurred
                 # template body
-                self._content += line
+                self._format += line
 
             elif line.strip(): # non empty line
                 # variable
@@ -151,13 +154,13 @@ class TemplateLoader:
 
     def _clear_template_data(self):
         self._names = []
-        self._content = ""
+        self._format = ""
         self._delay = 0.0
         self._next_name = ""
 
     def _store_template_if_exists(self):
         if self._names:
             for name in self._names:
-                self._templates[name] = Template(self._content, self._delay, self._next_name)
+                self._templates[name] = Template(self._format, self._delay, self._next_name)
 
             self._clear_template_data()

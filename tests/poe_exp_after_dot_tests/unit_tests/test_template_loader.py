@@ -29,7 +29,6 @@ def test_parse():
 
     assert _parse("# comment\n--- Some Template ---\nAAA\nBBB") == ({}, {"Some Template" : Template("AAABBB", 0.0, "")})
     assert _parse("# comment\n--- Some Template ---# comment\nAAA# comment\nBBB") == ({}, {"Some Template" : Template("AAABBB", 0.0, "")})
-    
 
     assert _parse((
         "--- Some Template, 1s -> Other Template ---\n"
