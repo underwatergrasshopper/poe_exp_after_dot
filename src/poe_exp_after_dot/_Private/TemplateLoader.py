@@ -3,6 +3,7 @@ import os
 
 from typing import SupportsFloat, SupportsInt, Sequence, Any
 from dataclasses import dataclass
+from copy import deepcopy as _deepcopy
 
 from ..Exceptions import TemplateLoadFail
 
@@ -77,14 +78,17 @@ class TemplateLoader:
                 just_file_name = os.path.basename(file_name)
                 raise TemplateLoadFail(f"Failed to parse templates from file: \"{just_file_name}\". " + str(exception)) from exception
 
-    def parse(self, format : str):
+    def parse(self, template : str):
+        """
+        New line characters in format section are ignored. 
+        """
         self._clear()
             
         COMMENT_PATTERN = r"#[^\n]*"
 
-        format = format.replace("\t", "    ")
+        template = template.replace("\t", "    ")
         
-        lines = format.split("\n")
+        lines = template.split("\n")
         line_id = 0
         for line in lines:
             line_id += 1
@@ -152,6 +156,9 @@ class TemplateLoader:
 
     def to_templates(self) -> dict[str, Template]:
         return self._templates
+    
+    def get_templates(self) -> dict[str, Template]:
+        return _deepcopy(self._templates)
     
     def to_variables(self) -> dict[str, str]:
         return self._variables
