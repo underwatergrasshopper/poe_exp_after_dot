@@ -105,6 +105,56 @@ pos_data.<resolution>.*_height
 """.strip("\n")
 
 _DEFAULT_INFO_BOARD_FORMAT_FILE_CONTENT = """
+################################################################################
+# Format of <text_format>:
+#     Python f-string format over QT Text format (html like).
+#
+# Grammar:
+#     <file>
+#         <comment_1>
+#         ...
+#         <comment_N>
+#         <variable_1>
+#         ...
+#         <variable_N>
+#         <template_1>
+#         ...
+#         <template_N>
+#     
+#     <comment>
+#         #[^\\n]*
+#     
+#     <variable>
+#         <name> = <value>
+#         
+#     <template>
+#         --- <name> (\\| <name>)* (, <condition> \\-\\> <next_name>)? ---        # head
+#         <text_format>                                                           # body    
+#     
+#     <condition>
+#         done
+#         <delay>s        # in seconds
+#     
+#     <name>
+#         [^= \\t]+
+#     
+#     <value>
+#         [^ \\t]+
+#
+# List of possible parameters (names which can be placed between '{{' and '}}'):      
+#     notice   
+#     level              
+#     progress           
+#     exp                
+#     progress_step      
+#     progress_step_time 
+#     exp_per_hour       
+#     time_to_10_percent 
+#     time_to_next_level 
+#     hint_begin         
+#     hint_end               
+#     nothing            
+################################################################################
 --- Default | Help ---
 {hint_begin}
 <b>Click</b> on Exp Bar Area to show Details.<br>

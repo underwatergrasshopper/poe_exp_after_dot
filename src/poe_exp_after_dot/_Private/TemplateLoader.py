@@ -30,7 +30,7 @@ class TemplateLoader:
     format file         - File with '.format' extension.
     template            - Contains format of text and condition to switch to that format.
 
-    File format:
+    Grammar:
     <file>
         <comment_1>
         ...
@@ -50,7 +50,7 @@ class TemplateLoader:
         
     <template>
         --- <name> (\\| <name>)* (, <condition> \\-\\> <next_name>)? ---        # head
-        <text_format>                                                                # body    
+        <text_format>                                                           # body    
 
     <condition>
         done
