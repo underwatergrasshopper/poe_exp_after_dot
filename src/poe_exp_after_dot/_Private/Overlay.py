@@ -159,7 +159,7 @@ _DEFAULT_INFO_BOARD_FORMAT_FILE_CONTENT = """
 #     y                         - '-'     
 #     nothing                   - ''
 # 
-# Any template can place content of any preceding template by putting its name between '{' and '}'.
+# Any template can nest content of any preceding template by putting its name between '{' and '}'.
 # Example:
 #     --- Template A ---
 #     Something
