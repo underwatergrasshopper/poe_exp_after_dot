@@ -172,8 +172,19 @@ Hold <b>Shift + RMB</b> to show Hotkeys.<br>
 {notice} {level} {progress}<br>
 {progress_step} in {progress_step_time}<br>
 {exp_per_hour}<br>
-10% in {time_to_10_percent}<br>
-next in {time_to_next_level}<br>
+next 10% in {time_to_10_percent}<br>
+next level in {time_to_next_level}<br>
+{exp}<br>
+{hint_begin}
+Hold <b>Shift</b> to show Hotkeys.<br>
+<b>Click</b> to Update.
+{hint_end}
+--- While Processing ---
+... {level} {progress}<br>
+{progress_step} in {progress_step_time}<br>
+{exp_per_hour}<br>
+next 10% in {time_to_10_percent}<br>
+next level in {time_to_next_level}<br>
 {exp}<br>
 {hint_begin}
 Hold <b>Shift</b> to show Hotkeys.<br>
@@ -222,7 +233,6 @@ class InfoBoard(QWidget):
     def dismiss(self):
         self.setWindowFlag(Qt.WindowType.WindowDoesNotAcceptFocus, True)
         self.setWindowFlag(Qt.WindowType.WindowTransparentForInput, True)
-        self.hide()
         self._is_dismissed = True
 
     def is_dismissed(self) -> bool:
@@ -277,6 +287,7 @@ class InfoBoard(QWidget):
 
     def mouseReleaseEvent(self, event : QMouseEvent):
         if event.button() == Qt.MouseButton.LeftButton:
+            self.hide()
             self.dismiss()
             self.set_text_by_template("Just Hint")
 
@@ -566,7 +577,10 @@ class ControlRegion(QMainWindow):
 
             pos_in_screen = self.mapToGlobal(QPoint(event.x(), event.y()))
 
-            self._measure(pos_in_screen.x(), pos_in_screen.y())
+            self._info_board.dismiss()
+            self._info_board.set_text_by_template("While Processing")
+            self._info_board.show()
+            QTimer.singleShot(1, lambda: self._measure(pos_in_screen.x(), pos_in_screen.y()))
 
             self._menu.setWindowFlags(self._flags_backup)
         
@@ -600,16 +614,17 @@ class ControlRegion(QMainWindow):
 
     def _measure(self, cursor_x_in_screen : int, cursor_y_in_screen : int):
         self._foreground_guardian.pause()
-        self._logic.measure(cursor_x_in_screen, cursor_y_in_screen, [self])
+        self._logic.measure(cursor_x_in_screen, cursor_y_in_screen, [self, self._info_board])
         self._foreground_guardian.resume()
 
         self._info_board.set_text_by_template("Result")
-        self._info_board.dismiss()
 
         progress = self._logic.to_measurer().get_progress()
         progress_step = self._logic.to_measurer().get_progress_step()
 
         self._frac_exp_bar.update_bar(progress, progress_step)
+
+        
 
 
 def _move_window_to_foreground(window_name : str):
@@ -773,7 +788,7 @@ class Overlay:
 
             with open(def_format_file_name, "w") as file:
                 file.write(_DEFAULT_INFO_BOARD_FORMAT_FILE_CONTENT)
-            to_logger().info("Generated file: Default.format.")
+            to_logger().info("Generated Default.format.")
 
         logic = Logic(settings)
 
