@@ -141,6 +141,9 @@ _DEFAULT_INFO_BOARD_FORMAT_FILE_CONTENT = """
 #     <value>
 #         [^ \\t]+
 #
+#     <delay> # in seconds
+#         (0|[1-9][0-9]*)
+#
 # List of possible parameters (names which can be placed between '{{' and '}}'):      
 #     notice   
 #     level              

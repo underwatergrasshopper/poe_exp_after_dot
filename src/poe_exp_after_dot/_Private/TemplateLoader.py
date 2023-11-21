@@ -61,6 +61,9 @@ class TemplateLoader:
     
     <value>
         [^ \\t]+
+
+    <delay> # in seconds
+        (0|[1-9][0-9]*)
     """
     _templates      : dict[str, Template]
     _variables      : dict[str, str]
