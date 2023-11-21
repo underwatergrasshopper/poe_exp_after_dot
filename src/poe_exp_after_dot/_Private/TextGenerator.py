@@ -29,7 +29,7 @@ class TextGenerator:
             Between '{' and '}' in format.
         """
         self._is_done = True
-        return self._template.format.format(**parameters)
+        return self._template.text_format.format(**parameters)
 
     def gen_text_no_done(self, **parameters) -> str:
         """
@@ -37,20 +37,25 @@ class TextGenerator:
             Between '{' and '}' in format.
         """
         self._is_done = False
-        return self._template.format.format(**parameters)
+        return self._template.text_format.format(**parameters)
     
     def done(self):
         self._is_done = True
 
-    def update(self, delay : float):
+    def update(self, delta : float) -> bool:
         """
-        delay
+        delta
             In seconds.
+        Returns
+            True    - If template has been changed
+            False   - Otherwise.
         """
-        self._time_left = max(0.0, self._time_left - delay)
+        self._time_left = max(0.0, self._time_left - delta)
 
         if self._time_left == 0.0 and self._template.next_name and self._is_done:
-                self.select_template(self._template.next_name)
+            self.select_template(self._template.next_name)
+            return True
+        return False
 
 
 

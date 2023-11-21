@@ -104,9 +104,34 @@ pos_data.<resolution>.*_height
     false
 """.strip("\n")
 
+_DEFAULT_INFO_BOARD_FORMAT_FILE_CONTENT = """
+--- Default | Help ---
+{hint_begin}
+<b>Click</b> on Exp Bar Area to show Details.<br>
+<b>Click</b> on This to dismiss this message.
+{hint_end}
+--- Just Hint ---
+{hint_begin}
+Hold <b>Shift + RMB</b> to show Hotkeys.<br>
+<b>Click</b> to Update.
+{hint_end}
+--- Result ---
+{notice} {level} {progress}<br>
+{progress_step} in {progress_step_time}<br>
+{exp_per_hour}<br>
+10% in {time_to_10_percent}<br>
+next in {time_to_next_level}<br>
+{exp}<br>
+{hint_begin}
+Hold <b>Shift</b> to show Hotkeys.<br>
+<b>Click</b> to Update.
+{hint_end}
+""".strip("\n")
 
 class InfoBoard(QWidget):
-    _logic : Logic
+    _logic          : Logic
+    _timer          : QTimer
+    _is_dismissed   : bool
 
     def __init__(self, logic : Logic):
         """
@@ -120,9 +145,7 @@ class InfoBoard(QWidget):
         self.setWindowFlags(
             Qt.WindowType.WindowStaysOnTopHint |
             Qt.WindowType.FramelessWindowHint |
-            Qt.WindowType.Tool |
-            Qt.WindowType.WindowDoesNotAcceptFocus |
-            Qt.WindowType.WindowTransparentForInput
+            Qt.WindowType.Tool
         )
 
         # transparency
@@ -137,16 +160,45 @@ class InfoBoard(QWidget):
         self._label = QLabel("", self)
         self._label.setStyleSheet(f"font: {font_wight} {font_size}px {font_name}; color: white;")
 
-        # default message
-        self.place_text("Hover over exp bar area to show details.<br>Click to dismiss this message.", is_resize = True)
+        self._initialize_text_generator()
 
+        self.set_text_by_template("Help")
 
-    def paintEvent(self, event):
-        painter = QPainter(self)
-        painter.setOpacity(1.0)
-        painter.fillRect(self.rect(), QColor(0, 0, 0, 127))
+        self._is_dismissed = False
 
-    def place_text(self, description, *, is_lock_left_bottom = False, is_resize = False):
+    def dismiss(self):
+        self.setWindowFlag(Qt.WindowType.WindowDoesNotAcceptFocus, True)
+        self.setWindowFlag(Qt.WindowType.WindowTransparentForInput, True)
+        self.hide()
+        self._is_dismissed = True
+
+    def is_dismissed(self) -> bool:
+        return self._is_dismissed
+
+    def set_text(self, text : str):
+        x = self._logic.to_pos_data().info_board_x
+        bottom = self._logic.to_pos_data().info_board_bottom
+
+        self._label.setWordWrap(False)  
+        self._label.setText(text)
+
+        self._label.adjustSize()
+        self.resize(self._label.size())
+        
+        pos = self.pos()
+        pos.setX(x)
+        pos.setY(bottom - self._label.height())
+        self.move(pos)
+    
+    def set_text_by_template(self, template_name : str, *, is_done = True):
+        self.set_text(self._logic.gen_info_board_text(template_name, is_done = is_done))
+        if is_done:
+            self._timer.start()
+        
+    def set_text_done(self):
+        self._timer.start()
+
+    def place_text(self, text, *, is_lock_left_bottom = False, is_resize = False):
         if is_resize:
             if is_lock_left_bottom:
                 rect = self.geometry()
@@ -157,7 +209,7 @@ class InfoBoard(QWidget):
                 bottom = self._logic.to_pos_data().info_board_bottom
 
             self._label.setWordWrap(False)  
-            self._label.setText(description)
+            self._label.setText(text)
 
             self._label.adjustSize()
             self.resize(self._label.size())
@@ -168,7 +220,26 @@ class InfoBoard(QWidget):
             self.move(pos)
         else:
             self._label.setWordWrap(True)  
-            self._label.setText(description)
+            self._label.setText(text)
+
+    def mouseReleaseEvent(self, event : QMouseEvent):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.dismiss()
+            self.set_text_by_template("Just Hint")
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setOpacity(1.0)
+        painter.fillRect(self.rect(), QColor(0, 0, 0, 127))
+
+    def _initialize_text_generator(self):
+        def update_text_generator():
+            if self._logic.update_text_generator(1.0):
+                self.set_text(self._logic.gen_info_board_text())
+                
+        self._timer = QTimer()
+        self._timer.timeout.connect(update_text_generator)
+        self._timer.setInterval(1000)
 
 
 class FracExpBar(QWidget):
@@ -377,8 +448,6 @@ class ControlRegion(QMainWindow):
     _flags_backup           : Qt.WindowType
     _foreground_guardian    : ForegroundGuardian
 
-    _is_first_measure       : bool  
-
     def __init__(self, logic : Logic):
         super().__init__()
 
@@ -406,8 +475,6 @@ class ControlRegion(QMainWindow):
         self._flags_backup = self._menu.windowFlags()
         
         self._foreground_guardian = ForegroundGuardian(self)
-
-        self._is_first_measure  = True
 
     def to_menu(self) -> Menu:
         return self._menu
@@ -456,7 +523,7 @@ class ControlRegion(QMainWindow):
         self._menu.exec(event.globalPos())
 
     def showEvent(self, event):
-        if self._is_first_measure:
+        if not self._info_board.is_dismissed():
             self._info_board.show()
 
         self._frac_exp_bar.try_show()
@@ -464,18 +531,18 @@ class ControlRegion(QMainWindow):
     def hideEvent(self, event):
         self._frac_exp_bar.hide()
 
-        if self._is_first_measure:
+        if not self._info_board.is_dismissed():
             self._info_board.hide()
 
         if self._menu.isVisible():
             self._menu.close()
 
     def enterEvent(self, event: QEnterEvent):
-        if not self._is_first_measure:
+        if self._info_board.is_dismissed():
             self._info_board.show()
 
     def leaveEvent(self, event: QEvent):
-        if not self._is_first_measure:
+        if self._info_board.is_dismissed():
             self._info_board.hide()
 
     def _measure(self, cursor_x_in_screen : int, cursor_y_in_screen : int):
@@ -483,11 +550,8 @@ class ControlRegion(QMainWindow):
         self._logic.measure(cursor_x_in_screen, cursor_y_in_screen, [self])
         self._foreground_guardian.resume()
 
-        if self._is_first_measure:
-            self._info_board.place_text(self._logic.gen_exp_info_text(is_control = True), is_lock_left_bottom = True, is_resize = True)
-            self._is_first_measure = False
-
-        self._info_board.place_text(self._logic.gen_exp_info_text(), is_lock_left_bottom = True)
+        self._info_board.set_text_by_template("Result")
+        self._info_board.dismiss()
 
         progress = self._logic.to_measurer().get_progress()
         progress_step = self._logic.to_measurer().get_progress_step()
@@ -602,9 +666,13 @@ class Overlay:
                 }
             }
         })
+
+        def_format_file_name = data_path + "/formats/Default.format"
+
         temporal_settings : dict[str, Any] = {
             "data_path" : data_path,
-            "is_debug" : is_debug
+            "def_format_file_name" : def_format_file_name,
+            "is_debug" : is_debug,
         }
         if font_data is not None:
             font_settings : dict[str, Any] = {}
@@ -646,6 +714,13 @@ class Overlay:
         settings.load_and_add_temporal(temporal_settings)
 
         to_logger().info("Loaded settings.")
+
+        if not os.path.exists(def_format_file_name):
+            os.makedirs(os.path.dirname(def_format_file_name), exist_ok = True)
+
+            with open(def_format_file_name, "w") as file:
+                file.write(_DEFAULT_INFO_BOARD_FORMAT_FILE_CONTENT)
+            to_logger().info("Generated file: Default.format.")
 
         logic = Logic(settings)
 

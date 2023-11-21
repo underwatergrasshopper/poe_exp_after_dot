@@ -12,6 +12,7 @@ from time import time as _get_time_since_epoch
 from PIL import ImageGrab
 
 from PySide6.QtWidgets  import QWidget
+from PySide6.QtCore     import QTimer
 
 from .Commons           import EXIT_FAILURE, EXIT_SUCCESS, time_unit_to_short
 from .StopWatch         import StopWatch
@@ -19,6 +20,7 @@ from .FineFormatters    import FineBareLevel, FineExp, FineExpPerHour, FinePerce
 from .FineFormatters    import SECONDS_IN_DAY, SECONDS_IN_HOUR, SECONDS_IN_MINUTE, SECONDS_IN_WEEK
 from .Settings          import Settings
 from .LogManager        import to_logger
+from .TextGenerator     import TextGenerator, TemplateLoader
 
 
 @dataclass
@@ -455,6 +457,8 @@ class Logic:
 
     _is_measure_fail : bool
 
+    _text_generator : TextGenerator
+
     def __init__(self, settings : Settings):
         self._settings = settings
 
@@ -490,6 +494,60 @@ class Logic:
 
         self._is_measure_fail = False
 
+        ### info board text templates ###
+        template_loader = TemplateLoader()
+        template_loader.load_and_parse(settings.get_val("def_format_file_name", str))
+
+        for name, value in template_loader.to_variables().items():
+            settings.set_val(name, value, str)
+
+        self._text_generator = TextGenerator()
+        self._text_generator.set_templates(template_loader.to_templates())
+
+        self._text_generator.select_template("Default")
+        ###
+
+    def gen_info_board_text(self, template_name : str | None = None, *, is_done = True) -> str:
+        if template_name is not None:
+            self._text_generator.select_template(template_name)
+
+        gen_text = self._text_generator.gen_text if is_done else self._text_generator.gen_text_no_done
+
+        max_unit = time_unit_to_short(self._settings.get_val("time_max_unit", str))
+
+        if self._is_measure_fail:
+            notice = "<font color=\"#FF0000\">ERR</font>"
+        else:
+            notice = "LVL"
+
+        return gen_text(
+            level               = FineBareLevel(self._measurer.get_level()),
+            progress            = FinePercent(self._measurer.get_progress(), integer_color = "#F8CD82", two_dig_after_dot_color = "#7F7FFF"),
+            exp                 = FineExp(self._measurer.get_total_exp(), unit_color = "#9F9F9F"),
+            progress_step       = FinePercent(self._measurer.get_progress_step(), is_sign = True, integer_color = "#7FFFFF", two_dig_after_dot_color = "#7FFFFF"),
+            progress_step_time  = FineTime(self._measurer.get_progress_step_time(), max_unit = max_unit, unit_color = "#8F8F8F", never_color = "#FF4F1F"),
+            exp_per_hour        = FineExpPerHour(self._measurer.get_exp_per_hour(), value_color = "#6FFF6F", unit_color = "#9F9F9F"),
+            time_to_10_percent  = FineTime(self._measurer.get_time_to_10_percent(), max_unit = max_unit, unit_color = "#9F9F9F", never_color = "#FF4F1F"),
+            time_to_next_level  = FineTime(self._measurer.get_time_to_next_level(), max_unit = max_unit, unit_color = "#9F9F9F", never_color = "#FF4F1F"),
+            hint_begin          = "<font size=10px color=\"#7f7f7f\">",
+            hint_end            = "</font>",
+            notice              = notice,
+            nothing             = "",
+        )
+    
+    def gen_info_board_text_done(self):
+        self._text_generator.done()
+
+    def update_text_generator(self, delta) -> bool:
+        """
+        delta
+            In seconds.
+        Returns
+            True    - If template has been changed
+            False   - Otherwise.
+        """
+        return self._text_generator.update(delta)
+
     def to_settings(self) -> Settings:
         return self._settings
 
@@ -498,46 +556,6 @@ class Logic:
     
     def to_pos_data(self) -> PosData:
         return self._pos_data
-
-    def gen_exp_info_text(self, is_control = False):
-        max_unit = time_unit_to_short(self._settings.get_val("time_max_unit", str))
-
-        if is_control:
-            level               = "?" * FineBareLevel.MAX_LENGTH_AFTER_FORMAT
-            progress            = "?" * FinePercent.MAX_LENGTH_AFTER_FORMAT
-            exp                 = "?" * FineExp.MAX_LENGTH_AFTER_FORMAT
-            progress_step       = "?" * FinePercent.MAX_LENGTH_AFTER_FORMAT
-            progress_step_time  = "?" * FineTime.MAX_LENGTH_AFTER_FORMAT
-            exp_per_hour        = "?" * FineExpPerHour.MAX_LENGTH_AFTER_FORMAT
-            time_to_10_percent  = "?" * FineTime.MAX_LENGTH_AFTER_FORMAT
-            time_to_next_level  = "?" * FineTime.MAX_LENGTH_AFTER_FORMAT
-        else:
-            level               = FineBareLevel(self._measurer.get_level())
-            progress            = FinePercent(self._measurer.get_progress(), integer_color = "#F8CD82", two_dig_after_dot_color = "#7F7FFF")
-            exp                 = FineExp(self._measurer.get_total_exp(), unit_color = "#9F9F9F")
-            progress_step       = FinePercent(self._measurer.get_progress_step(), is_sign = True, integer_color = "#7FFFFF", two_dig_after_dot_color = "#7FFFFF")
-            progress_step_time  = FineTime(self._measurer.get_progress_step_time(), max_unit = max_unit, unit_color = "#8F8F8F", never_color = "#FF4F1F")
-            exp_per_hour        = FineExpPerHour(self._measurer.get_exp_per_hour(), value_color = "#6FFF6F", unit_color = "#9F9F9F")
-            time_to_10_percent  = FineTime(self._measurer.get_time_to_10_percent(), max_unit = max_unit, unit_color = "#9F9F9F", never_color = "#FF4F1F")
-            time_to_next_level  = FineTime(self._measurer.get_time_to_next_level(), max_unit = max_unit, unit_color = "#9F9F9F", never_color = "#FF4F1F")
-
-        hint_begin  = "<font size=10px color=\"#7f7f7f\">"
-        hint_end    = "</font>"
-
-        if self._is_measure_fail:
-            notice = "<font color=\"#FF0000\">ERR</font>"
-        else:
-            notice = "LVL"
-
-        return (
-            f"{notice} {level} {progress}<br>"
-            f"{progress_step} in {progress_step_time}<br>"
-            f"{exp_per_hour}<br>"
-            f"10% in {time_to_10_percent}<br>"
-            f"next in {time_to_next_level}<br>"
-            f"{exp}<br>"
-            f"{hint_begin}Hold <b>Shift</b> to show Hotkeys.<br><b>Click</b> to Update.{hint_end}"
-        )
         
     def measure(self, cursor_x_in_screen : int, cursor_y_in_screen : int, widgets_to_hide : list[QWidget]):
         time_ = _get_time_since_epoch()

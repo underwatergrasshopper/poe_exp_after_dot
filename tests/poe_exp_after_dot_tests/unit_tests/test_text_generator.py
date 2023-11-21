@@ -34,11 +34,11 @@ def test_parse():
 
     generator.select_template("BBB")
     assert generator.gen_text(xxx = 12, yyy = "dummy") == "Parameters of BBB: 12, dummy."
-    generator.update(0.5)
+    assert generator.update(0.5) == False
     assert generator.gen_text(xxx = 12, yyy = "dummy") == "Parameters of BBB: 12, dummy."
-    generator.update(0.5)
+    assert generator.update(0.5) == True
     assert generator.gen_text(xxx = 12, yyy = "dummy") == "Some text: 12. And Another text: dummy."
-    generator.update(0.5)
+    assert generator.update(0.5) == False
     assert generator.gen_text(xxx = 12, yyy = "dummy") == "Some text: 12. And Another text: dummy."
 
     ### done ###
@@ -50,7 +50,7 @@ def test_parse():
 
     generator.select_template("CCC")
     assert generator.gen_text(xxx = 12, yyy = "dummy") == "Parameters of CCC: 12, dummy."
-    generator.update(0.0)
+    assert generator.update(0.5) == True
     assert generator.gen_text(xxx = 12, yyy = "dummy") == "Some text: 12. And Another text: dummy."
 
     ### done (delayed done) ###
@@ -62,10 +62,10 @@ def test_parse():
 
     generator.select_template("CCC")
     assert generator.gen_text_no_done(xxx = 12, yyy = "dummy") == "Parameters of CCC: 12, dummy."
-    generator.update(10.0)
+    assert generator.update(10.0) == False
     assert generator.gen_text_no_done(xxx = 12, yyy = "dummy") == "Parameters of CCC: 12, dummy."
     generator.done()
-    generator.update(0.0)
+    assert generator.update(0.0) == True
     assert generator.gen_text(xxx = 12, yyy = "dummy") == "Some text: 12. And Another text: dummy."
 
     ### unknown template name ###

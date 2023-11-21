@@ -12,20 +12,23 @@ class Template:
     """
     <template>
         --- <name> (\\| <name>)* (, <condition> \\-\\> <next_name>)? ---        # head
-        <format>                                                                # body
+        <text_format>                                                           # body
 
     <condition>
         done
         <delay>s        # in seconds
     """
-    format      : str
+    text_format : str
 
     delay       : float         # in seconds
     next_name   : str   
 
 class TemplateLoader:
     """
-    Loads text templates for info board.
+    Loads templates from format file for info board.
+
+    format file         - File with '.format' extension.
+    template            - Contains format of text and condition to switch to that format.
 
     File format:
     <file>
@@ -47,7 +50,7 @@ class TemplateLoader:
         
     <template>
         --- <name> (\\| <name>)* (, <condition> \\-\\> <next_name>)? ---        # head
-        <format>                                                                # body    
+        <text_format>                                                                # body    
 
     <condition>
         done
@@ -59,13 +62,13 @@ class TemplateLoader:
     <value>
         [^ \\t]+
     """
-    _templates  : dict[str, Template]
-    _variables  : dict[str, str]
+    _templates      : dict[str, Template]
+    _variables      : dict[str, str]
 
-    _names      : list[str]
-    _format     : str
-    _delay      : float                 # in seconds
-    _next_name  : str
+    _names          : list[str]
+    _text_format    : str
+    _delay          : float                 # in seconds
+    _next_name      : str
 
     def __init__(self):
         self._clear()
@@ -80,7 +83,7 @@ class TemplateLoader:
 
     def parse(self, template : str):
         """
-        New line characters in format section are ignored. 
+        New line characters in text format section are ignored. 
         """
         self._clear()
             
@@ -135,7 +138,7 @@ class TemplateLoader:
 
             elif self._names: # template head occurred
                 # template body
-                self._format += line
+                self._text_format += line
 
             elif line.strip(): # non empty line
                 # variable
@@ -170,13 +173,13 @@ class TemplateLoader:
 
     def _clear_template_data(self):
         self._names = []
-        self._format = ""
+        self._text_format = ""
         self._delay = 0.0
         self._next_name = ""
 
     def _store_template_if_exists(self):
         if self._names:
             for name in self._names:
-                self._templates[name] = Template(self._format, self._delay, self._next_name)
+                self._templates[name] = Template(self._text_format, self._delay, self._next_name)
 
             self._clear_template_data()
