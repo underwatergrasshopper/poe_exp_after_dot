@@ -133,7 +133,7 @@ _DEFAULT_INFO_BOARD_FORMAT_FILE_CONTENT = """
 #     
 #     <condition>
 #         done
-#         <delay>s        # in seconds
+#         <delay>
 #     
 #     <name>
 #         [^= \\t]+
@@ -142,7 +142,7 @@ _DEFAULT_INFO_BOARD_FORMAT_FILE_CONTENT = """
 #         [^ \\t]+
 #
 #     <delay> # in seconds
-#         (0|[1-9][0-9]*)
+#         (0|[1-9][0-9]*)s
 #
 # List of possible parameters (names which can be placed between '{{' and '}}'):      
 #     notice   

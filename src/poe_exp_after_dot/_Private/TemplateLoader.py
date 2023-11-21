@@ -54,7 +54,7 @@ class TemplateLoader:
 
     <condition>
         done
-        <delay>s        # in seconds
+        <delay>
 
     <name>
         [^= \\t]+
@@ -63,7 +63,7 @@ class TemplateLoader:
         [^ \\t]+
 
     <delay> # in seconds
-        (0|[1-9][0-9]*)
+        (0|[1-9][0-9]*)s
     """
     _templates      : dict[str, Template]
     _variables      : dict[str, str]
