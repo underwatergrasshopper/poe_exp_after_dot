@@ -104,7 +104,7 @@ class TemplateLoader:
                 names, *next_data = template_head.split(",", 1)
                 names = [name.strip() for name in names.split("|")]
                 if "" in names:
-                    raise TemplateLoadFail(f"Empty template name. Line: {line_id}.")
+                    raise TemplateLoadFail(f"No template name. Line: {line_id}.")
                 
                 self._names = names
 
@@ -125,7 +125,7 @@ class TemplateLoader:
                     next_name = next_name.strip()
 
                     if next_name == "":
-                        raise TemplateLoadFail(f"Empty next template name. Line: {line_id}.")
+                        raise TemplateLoadFail(f"No next template name. Line: {line_id}.")
                     
                     self._next_name = next_name
 

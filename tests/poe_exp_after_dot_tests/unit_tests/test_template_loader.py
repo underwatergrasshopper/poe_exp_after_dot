@@ -22,7 +22,6 @@ def test_parse():
     assert loader.to_templates() == {"Some Template" : Template("AAA", 0.0, "")}
     assert loader.to_variables() == {"AAA" : "BBB"}
 
-
     assert _parse("--- Some Template ---") == ({}, {"Some Template" : Template("", 0.0, "")})
     assert _parse("--- Some Template ---\nAAA") == ({}, {"Some Template" : Template("AAA", 0.0, "")})
     assert _parse("--- Some Template ---\nAAA\nBBB") == ({}, {"Some Template" : Template("AAABBB", 0.0, "")})
@@ -132,7 +131,27 @@ def test_parse():
         }
     )
 
+    assert _parse_with_exception("--- ---") == "No template name. Line: 1."
+    assert _parse_with_exception("--- , done -> BBB ---") == "No template name. Line: 1."
+    assert _parse_with_exception("--- AAA, 1.2s -> BBB ---") == "Delay is not a valid number. Should be a natural number. Line: 1."
+    assert _parse_with_exception("--- AAA, done -> ---") == "No next template name. Line: 1."
+
+    assert _parse_with_exception("=12") == "Variable name is not present. Line: 1."
+    assert _parse_with_exception("CCC") == "No assignment to variable. Line: 1."
+
 def _parse(content : str) -> tuple[dict[str, str], dict[str, Template]]:
     loader = TemplateLoader()
     loader.parse(content)
     return (loader.to_variables(), loader.to_templates())
+
+def _parse_with_exception(content : str) -> str | None:
+    """
+    Returns
+        Exception message if occurs.
+    """
+    loader = TemplateLoader()
+    try:
+        loader.parse(content)
+    except Exception as exception:
+        return str(exception)
+    return None
