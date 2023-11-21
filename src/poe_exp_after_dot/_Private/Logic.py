@@ -455,7 +455,7 @@ class Logic:
 
     _reader     : easyocr.Reader
 
-    _is_measure_fail : bool
+    _is_fetch_failed : bool
 
     _text_generator : TextGenerator
 
@@ -492,11 +492,13 @@ class Logic:
 
         self._reader = easyocr.Reader(['en'], gpu = True, verbose = False)
 
-        self._is_measure_fail = False
+        self._is_fetch_failed = False
 
         ### info board text templates ###
         template_loader = TemplateLoader()
+        to_logger().info("Loading formats...")
         template_loader.load_and_parse(settings.get_val("def_format_file_name", str))
+        to_logger().info("Loaded formats.")
 
         for name, value in template_loader.to_variables().items():
             settings.set_val(name, value, str)
@@ -515,12 +517,7 @@ class Logic:
 
         max_unit = time_unit_to_short(self._settings.get_val("time_max_unit", str))
 
-        if self._is_measure_fail:
-            notice = "<font color=\"#FF0000\">ERR</font>"
-        else:
-            notice = "LVL"
-
-        return gen_text(
+        text = gen_text(
             level               = FineBareLevel(self._measurer.get_level()),
             progress            = FinePercent(self._measurer.get_progress(), integer_color = "#F8CD82", two_dig_after_dot_color = "#7F7FFF"),
             exp                 = FineExp(self._measurer.get_total_exp(), unit_color = "#9F9F9F"),
@@ -531,9 +528,16 @@ class Logic:
             time_to_next_level  = FineTime(self._measurer.get_time_to_next_level(), max_unit = max_unit, unit_color = "#9F9F9F", never_color = "#FF4F1F"),
             hint_begin          = "<font size=10px color=\"#7f7f7f\">",
             hint_end            = "</font>",
-            notice              = notice,
+            h                   = "#",
+            y                   = "-",
             nothing             = "",
         )
+
+        if to_logger().isEnabledFor(logging.DEBUG):
+            to_logger().debug("Used Template: %s" % template_name)
+            to_logger().debug("Used Format: %s" % text)
+
+        return text
     
     def gen_info_board_text_done(self):
         self._text_generator.done()
@@ -563,10 +567,13 @@ class Logic:
         current_exp = self._fetch_exp(cursor_x_in_screen, cursor_y_in_screen, widgets_to_hide)
 
         if current_exp is None:
-            self._is_measure_fail = True
+            self._is_fetch_failed = True
         else:
             self._measurer.update(current_exp, time_)
-            self._is_measure_fail = False
+            self._is_fetch_failed = False
+
+    def is_fetch_failed(self) -> bool:
+        return self._is_fetch_failed
 
     def _fetch_exp(self, cursor_x_in_screen : int, cursor_y_in_screen: int, widgets_to_hide : list[QWidget]) -> int | None:
         """

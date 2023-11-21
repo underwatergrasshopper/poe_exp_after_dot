@@ -106,9 +106,6 @@ pos_data.<resolution>.*_height
 
 _DEFAULT_INFO_BOARD_FORMAT_FILE_CONTENT = """
 ################################################################################
-# Format of <text_format>:
-#     Python f-string format over QT Text format (html like).
-#
 # Grammar:
 #     <file>
 #         <comment_1>
@@ -124,12 +121,12 @@ _DEFAULT_INFO_BOARD_FORMAT_FILE_CONTENT = """
 #     <comment>
 #         #[^\\n]*
 #     
-#     <variable>
+#     <variable> # only before first template
 #         <name> = <value>
 #         
 #     <template>
-#         --- <name> (\\| <name>)* (, <condition> \\-\\> <next_name>)? ---        # head
-#         <text_format>                                                           # body    
+#         --- <name> (\\| <name>)* (, <condition> \\-\\> <next_name>)? ---  # head
+#         <text_format>                                                     # body    
 #     
 #     <condition>
 #         done
@@ -144,8 +141,10 @@ _DEFAULT_INFO_BOARD_FORMAT_FILE_CONTENT = """
 #     <delay> # in seconds
 #         (0|[1-9][0-9]*)s
 #
-# List of possible parameters (names which can be placed between '{{' and '}}'):      
-#     notice   
+# Format of <text_format>:
+#     Python f-string format over Qt Text format (html like).
+#
+# List of possible parameters (names which can be placed between '{' and '}'):      
 #     level              
 #     progress           
 #     exp                
@@ -155,41 +154,57 @@ _DEFAULT_INFO_BOARD_FORMAT_FILE_CONTENT = """
 #     time_to_10_percent 
 #     time_to_next_level 
 #     hint_begin         
-#     hint_end               
-#     nothing            
+#     hint_end          
+#     h                         - '#'
+#     y                         - '-'     
+#     nothing                   - ''
+# 
+# Any template can place content of any preceding template by putting its name between '{' and '}'.
+# Example:
+#     --- Template A ---
+#     Something
+#     --- Template B ---
+#     {Template A} else.          # equivalent of putting 'Something else.'
+#
+# Escape sequences for Qt Text:
+#     '<'   - '&lt;'
+#     '>'   - '&gt;'
+#     '&'   - '&amp;'
+#
+# Escape sequences for f-string:
+#     '{' - '{{'
+#     '}' - '}}'
+#
 ################################################################################
---- Default | Help ---
+--- Default | First Help ---
 {hint_begin}
 <b>Click</b> on Exp Bar Area to show Details.<br>
 <b>Click</b> on This to dismiss this message.
 {hint_end}
+
 --- Just Hint ---
 {hint_begin}
-Hold <b>Shift + RMB</b> to show Hotkeys.<br>
+Hold <b>Shift + RMB</b> to show Help.<br>
 <b>Click</b> to Update.
 {hint_end}
+
+--- Result no Notice ---
+{level} {progress}<br>
+{progress_step} in {progress_step_time}<br>
+{exp_per_hour}<br>
+next 10% in {time_to_10_percent}<br>
+next level in {time_to_next_level}<br>
+{exp}<br>
+{Just Hint}
+
 --- Result ---
-{notice} {level} {progress}<br>
-{progress_step} in {progress_step_time}<br>
-{exp_per_hour}<br>
-next 10% in {time_to_10_percent}<br>
-next level in {time_to_next_level}<br>
-{exp}<br>
-{hint_begin}
-Hold <b>Shift</b> to show Hotkeys.<br>
-<b>Click</b> to Update.
-{hint_end}
+LVL {Result no Notice}
+
+--- Error ---
+<font color="{h}FF0000">ERR</font> {Result no Notice}
+
 --- While Processing ---
-... {level} {progress}<br>
-{progress_step} in {progress_step_time}<br>
-{exp_per_hour}<br>
-next 10% in {time_to_10_percent}<br>
-next level in {time_to_next_level}<br>
-{exp}<br>
-{hint_begin}
-Hold <b>Shift</b> to show Hotkeys.<br>
-<b>Click</b> to Update.
-{hint_end}
+... {Result no Notice}
 """.strip("\n")
 
 class InfoBoard(QWidget):
@@ -226,7 +241,7 @@ class InfoBoard(QWidget):
 
         self._initialize_text_generator()
 
-        self.set_text_by_template("Help")
+        self.set_text_by_template("First Help")
 
         self._is_dismissed = False
 
@@ -614,10 +629,13 @@ class ControlRegion(QMainWindow):
 
     def _measure(self, cursor_x_in_screen : int, cursor_y_in_screen : int):
         self._foreground_guardian.pause()
-        self._logic.measure(cursor_x_in_screen, cursor_y_in_screen, [self, self._info_board])
+        self._logic.measure(cursor_x_in_screen, cursor_y_in_screen, [self])
         self._foreground_guardian.resume()
 
-        self._info_board.set_text_by_template("Result")
+        if self._logic.is_fetch_failed():
+            self._info_board.set_text_by_template("Error")
+        else:
+            self._info_board.set_text_by_template("Result")
 
         progress = self._logic.to_measurer().get_progress()
         progress_step = self._logic.to_measurer().get_progress_step()

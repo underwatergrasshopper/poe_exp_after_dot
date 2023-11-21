@@ -131,6 +131,19 @@ def test_parse():
         }
     )
 
+    assert _parse((
+        "--- Some A ---\n" 
+        "Something\n"     
+        "--- Some B ---\n"
+        "{Some A} New {Some A} New \\1{Some A} {{Ignore}} New {Some A}\n"
+    )) == (
+        {},
+        {
+            "Some A" : Template("Something", 0.0, ""),
+            "Some B" : Template("Something New Something New \\1Something {{Ignore}} New Something", 0.0, ""),
+        }
+    )
+    
     assert _parse_with_exception("--- ---") == "No template name. Line: 1."
     assert _parse_with_exception("--- , done -> BBB ---") == "No template name. Line: 1."
     assert _parse_with_exception("--- AAA, 1.2s -> BBB ---") == "Delay is not a valid number. Should be a natural number. Line: 1."

@@ -181,8 +181,18 @@ class TemplateLoader:
         self._next_name = ""
 
     def _store_template_if_exists(self):
+        self._paste_section()
+
         if self._names:
             for name in self._names:
                 self._templates[name] = Template(self._text_format, self._delay, self._next_name)
 
             self._clear_template_data()
+
+    def _paste_section(self):
+        for name, template in self._templates.items():
+            def combine(match_ : re.Match):
+                return "%s%s%s" % (match_.group(1), template.text_format, match_.group(2))
+            
+            self._text_format = re.sub("(^|[^{]){%s}($|[^}])" % name, combine, self._text_format)
+
