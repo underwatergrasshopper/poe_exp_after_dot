@@ -4,6 +4,7 @@ import ctypes
 import re
 import enum
 import gc
+import shutil
 
 from typing import SupportsFloat, SupportsInt, Sequence, Any
 from dataclasses import dataclass
@@ -102,109 +103,6 @@ pos_data.<resolution>.*_height
 <boolean>
     true
     false
-""".strip("\n")
-
-_DEFAULT_INFO_BOARD_FORMAT_FILE_CONTENT = """
-################################################################################
-# Grammar:
-#     <file>
-#         <comment_1>
-#         ...
-#         <comment_N>
-#         <variable_1>
-#         ...
-#         <variable_N>
-#         <template_1>
-#         ...
-#         <template_N>
-#     
-#     <comment>
-#         #[^\\n]*
-#     
-#     <variable> # only before first template
-#         <name> = <value>
-#         
-#     <template>
-#         --- <name> (\\| <name>)* (, <condition> \\-\\> <next_name>)? ---  # head
-#         <text_format>                                                     # body    
-#     
-#     <condition>
-#         done
-#         <delay>
-#     
-#     <name>
-#         [^= \\t]+
-#     
-#     <value>
-#         [^ \\t]+
-#
-#     <delay> # in seconds
-#         (0|[1-9][0-9]*)s
-#
-# Format of <text_format>:
-#     Python f-string format over Qt Text format (html like).
-#
-# List of possible parameters (names which can be placed between '{' and '}'):      
-#     level              
-#     progress           
-#     exp                
-#     progress_step      
-#     progress_step_time 
-#     exp_per_hour       
-#     time_to_10_percent 
-#     time_to_next_level 
-#     hint_begin         
-#     hint_end          
-#     h                         - '#'
-#     y                         - '-'     
-#     nothing                   - ''
-# 
-# Any template can nest content of any preceding template by putting its name between '{' and '}'.
-# Example:
-#     --- Template A ---
-#     Something
-#     --- Template B ---
-#     {Template A} else.          # equivalent of putting 'Something else.'
-#
-# Escape sequences for Qt Text:
-#     '<'   - '&lt;'
-#     '>'   - '&gt;'
-#     '&'   - '&amp;'
-#
-# Escape sequences for f-string:
-#     '{' - '{{'
-#     '}' - '}}'
-#
-################################################################################
---- Default | First Help ---
-{hint_begin}
-<b>Click</b> on Exp Bar Area to show Details.<br>
-<b>Click</b> on This to dismiss this message.
-{hint_end}
-
---- Just Hint ---
-{hint_begin}
-Hold <b>Shift + RMB</b> to show Help.<br>
-<b>Click</b> to Update.
-{hint_end}
-
---- Result no Notice ---
-{level} {progress}<br>
-{progress_step} in {progress_step_time}<br>
-{exp_per_hour}<br>
-next 10% in {time_to_10_percent}<br>
-next level in {time_to_next_level}<br>
-{exp}<br>
-{Just Hint}
-
---- Result ---
-LVL {Result no Notice}
-
---- Error ---
-<font color="{h}FF0000">ERR</font> {Result no Notice}
-
---- While Processing ---
-... {Result no Notice}
 """.strip("\n")
 
 class InfoBoard(QWidget):
@@ -804,9 +702,11 @@ class Overlay:
         if not os.path.exists(def_format_file_name):
             os.makedirs(os.path.dirname(def_format_file_name), exist_ok = True)
 
-            with open(def_format_file_name, "w") as file:
-                file.write(_DEFAULT_INFO_BOARD_FORMAT_FILE_CONTENT)
-            to_logger().info("Generated Default.format.")
+            source_file_name = os.path.abspath(os.path.dirname(__file__) + "/../assets/Default.format")
+            
+            shutil.copy(source_file_name, def_format_file_name)
+
+            to_logger().info("Created Default.format.")
 
         logic = Logic(settings)
 
