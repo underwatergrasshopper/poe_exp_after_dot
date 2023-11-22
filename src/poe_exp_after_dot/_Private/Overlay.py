@@ -254,7 +254,7 @@ class FracExpBar(QWidget):
 
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         
-        self.update_bar(0.0, 0.0, is_try_show = False)
+        self.update_bar_manually(0.0, 0.0, is_try_show = False)
 
     def paintEvent(self, event):
         painter = QPainter(self)
@@ -263,7 +263,10 @@ class FracExpBar(QWidget):
         painter.fillRect(QRect(rect.left(), rect.top(), self._base_width, rect.height()), QColor(127, 127, 255, 95))
         painter.fillRect(QRect(self._base_width, rect.top(), self._step_width, rect.height()), QColor(127, 255, 255, 95))
 
-    def update_bar(self, progress : float, progress_step : float, *, is_try_show = True):
+    def update_bar(self, *, is_try_show = True):
+        self.update_bar_manually(self._logic.to_measurer().get_progress(), self._logic.to_measurer().get_progress_step(), is_try_show = is_try_show)
+
+    def update_bar_manually(self, progress : float, progress_step : float, *, is_try_show = True):
         """
         progress
             In percent.
@@ -483,9 +486,27 @@ class ControlRegion(QMainWindow):
 
     def mouseReleaseEvent(self, event : QMouseEvent):
         if event.button() == Qt.MouseButton.RightButton:
-            self._menu.setWindowFlags(self._flags_backup | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.FramelessWindowHint | Qt.WindowType.Tool)
+            if to_app().keyboardModifiers() & Qt.KeyboardModifier.ControlModifier and not (to_app().keyboardModifiers() & Qt.KeyboardModifier.ShiftModifier):
+                measurer = self._logic.to_measurer()
+
+                measurer.go_to_previous_entry()
+                index = measurer.get_current_entry_index()
+                if index is None:
+                    self._info_board.set_text_by_template("No Entry")
+                elif index == 0:
+                    self._info_board.set_text_by_template("On First")
+                else:
+                    self._info_board.set_text_by_template("On Previous")
+                self._info_board.show()
+                
+                self._frac_exp_bar.update_bar()
+                
+            else:
+                self._menu.setWindowFlags(self._flags_backup | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.FramelessWindowHint | Qt.WindowType.Tool)
+
 
         elif event.button() == Qt.MouseButton.LeftButton:
+
             _move_window_to_foreground("Path of Exile")
 
             pos_in_screen = self.mapToGlobal(QPoint(event.x(), event.y()))
@@ -500,7 +521,8 @@ class ControlRegion(QMainWindow):
         _move_window_to_foreground("Path of Exile")
 
     def contextMenuEvent(self, event : QContextMenuEvent):
-        self._menu.exec(event.globalPos())
+        if not (to_app().keyboardModifiers() & Qt.KeyboardModifier.ControlModifier) and not (to_app().keyboardModifiers() & Qt.KeyboardModifier.ShiftModifier):
+            self._menu.exec(event.globalPos())
 
     def showEvent(self, event):
         if not self._info_board.is_dismissed():
@@ -535,12 +557,7 @@ class ControlRegion(QMainWindow):
         else:
             self._info_board.set_text_by_template("Result")
 
-        progress = self._logic.to_measurer().get_progress()
-        progress_step = self._logic.to_measurer().get_progress_step()
-
-        self._frac_exp_bar.update_bar(progress, progress_step)
-
-        
+        self._frac_exp_bar.update_bar()
 
 
 def _move_window_to_foreground(window_name : str):
@@ -605,6 +622,8 @@ class Overlay:
             in_game_exp_tooltip_y           : int | None    = None,
             in_game_exp_tooltip_width       : int | None    = None,
             in_game_exp_tooltip_height      : int | None    = None,
+
+            is_overwrite_default_format     : bool          = False,
                 ) -> int:
         """
         Returns
@@ -699,8 +718,11 @@ class Overlay:
 
         to_logger().info("Loaded settings.")
 
-        if not os.path.exists(def_format_file_name):
+        if not os.path.exists(def_format_file_name) or is_overwrite_default_format:
             os.makedirs(os.path.dirname(def_format_file_name), exist_ok = True)
+
+            if is_overwrite_default_format and os.path.exists(def_format_file_name):
+                os.remove(def_format_file_name)
 
             source_file_name = os.path.abspath(os.path.dirname(__file__) + "/../assets/Default.format")
             
@@ -797,6 +819,8 @@ class Overlay:
         in_game_exp_tooltip_width       : int | None    = None
         in_game_exp_tooltip_height      : int | None    = None
 
+        is_overwrite_default_format                     = False
+
 
         for argument in argv[1:]:
             option_name, *value = argument.split("=", 1)
@@ -869,9 +893,12 @@ class Overlay:
                     else:
                         raise ValueError(f"Incorrect command line argument. Option \"{option_name}\" have wrong format.")
                 
+                case ["--overwrite-default-format"]:
+                    is_overwrite_default_format = True
+
                 ### incorrect ###
 
-                case ["--help" | "-h" | "--debug" | "--settings-help", _]:
+                case ["--help" | "-h" | "--debug" | "--settings-help" | "--overwrite-default-format", _]:
                     raise ValueError(f"Incorrect command line argument. Option \"{option_name}\" can't have a value.")
                 
                 case ["--data-path" | "--custom" | "--font" | "--time-max-unit"]:
@@ -903,6 +930,8 @@ class Overlay:
                 in_game_exp_tooltip_x_offset    = in_game_exp_tooltip_x_offset,
                 in_game_exp_tooltip_y           = in_game_exp_tooltip_y,
                 in_game_exp_tooltip_width       = in_game_exp_tooltip_width,
-                in_game_exp_tooltip_height      = in_game_exp_tooltip_height
+                in_game_exp_tooltip_height      = in_game_exp_tooltip_height,
+
+                is_overwrite_default_format     = is_overwrite_default_format
             )
         return EXIT_SUCCESS

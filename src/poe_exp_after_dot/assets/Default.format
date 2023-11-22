@@ -93,6 +93,23 @@ next level in {time_to_next_level}<br>
 --- Result ---
 LVL {Result no Notice}
 
+--- No Entry ---
+{page}/{number}<br>
+No Entry <br>
+<br>
+<br>
+<br>
+<br>
+<br>
+{Just Hint}
+
+--- On Previous, 1s -> Result ---
+{page}/{number}<br>
+&lt;&lt;&lt; {Result no Notice}
+
+--- On First, 1s -> Result ---
+{On Previous}
+
 --- Error ---
 <font color="{h}FF0000">ERR</font> {Result no Notice}
 

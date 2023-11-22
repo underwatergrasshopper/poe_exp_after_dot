@@ -212,6 +212,25 @@ class Register:
     def is_last(self) -> bool:
         return self._index >= 0 and self._index == (len(self._entries) - 1)
     
+    def get_number(self) -> int:
+        return len(self._entries)
+    
+    def get_current_index(self) -> int | None:
+        """
+        Returns
+            0..N    - Index of current entry.
+            None    - There is no entry.
+        """
+        return self._index if self._index >= 0 else None
+    
+    def get_current_page(self) -> int:
+        """
+        Returns
+            0..N    - Page of current entry.
+        """
+        return self._index + 1
+
+    
 _EMPTY_ENTRY = Entry(
     total_exp               = 0,
     info                    = ExpThresholdInfo(0, 0, 0),
@@ -384,6 +403,32 @@ class Measurer:
     
     def is_update_fail(self) -> bool:
         return self._is_update_fail
+    
+    ### entry navigation ###
+    def get_number_of_entries(self) -> int:
+        return self._register.get_number()
+    
+    def get_current_entry_index(self) -> int | None:
+        return self._register.get_current_index()
+    
+    def get_current_entry_page(self) -> int:
+        return self._register.get_current_page()
+    
+    def go_to_next_entry(self):
+        self._register.go_to_next()
+
+    def go_to_previous_entry(self):
+        self._register.go_to_previous()
+
+    def go_to_before_first_entry(self):
+        self._register.go_to_before_first()
+
+    def go_to_first_entry(self):
+        self._register.go_to_first()
+
+    def go_to_last_entry(self):
+        self._register.go_to_last()
+
 
 @dataclass
 class PosData:
@@ -517,21 +562,29 @@ class Logic:
 
         max_unit = time_unit_to_short(self._settings.get_val("time_max_unit", str))
 
-        text = gen_text(
-            level               = FineBareLevel(self._measurer.get_level()),
-            progress            = FinePercent(self._measurer.get_progress(), integer_color = "#F8CD82", two_dig_after_dot_color = "#7F7FFF"),
-            exp                 = FineExp(self._measurer.get_total_exp(), unit_color = "#9F9F9F"),
-            progress_step       = FinePercent(self._measurer.get_progress_step(), is_sign = True, integer_color = "#7FFFFF", two_dig_after_dot_color = "#7FFFFF"),
-            progress_step_time  = FineTime(self._measurer.get_progress_step_time(), max_unit = max_unit, unit_color = "#8F8F8F", never_color = "#FF4F1F"),
-            exp_per_hour        = FineExpPerHour(self._measurer.get_exp_per_hour(), value_color = "#6FFF6F", unit_color = "#9F9F9F"),
-            time_to_10_percent  = FineTime(self._measurer.get_time_to_10_percent(), max_unit = max_unit, unit_color = "#9F9F9F", never_color = "#FF4F1F"),
-            time_to_next_level  = FineTime(self._measurer.get_time_to_next_level(), max_unit = max_unit, unit_color = "#9F9F9F", never_color = "#FF4F1F"),
-            hint_begin          = "<font size=10px color=\"#7f7f7f\">",
-            hint_end            = "</font>",
-            h                   = "#",
-            y                   = "-",
-            nothing             = "",
-        )
+        try:
+            text = gen_text(
+                page                = self._measurer.get_current_entry_page(),
+                number              = self._measurer.get_number_of_entries(),
+
+                level               = FineBareLevel(self._measurer.get_level()),
+                progress            = FinePercent(self._measurer.get_progress(), integer_color = "#F8CD82", two_dig_after_dot_color = "#7F7FFF"),
+                exp                 = FineExp(self._measurer.get_total_exp(), unit_color = "#9F9F9F"),
+                progress_step       = FinePercent(self._measurer.get_progress_step(), is_sign = True, integer_color = "#7FFFFF", two_dig_after_dot_color = "#7FFFFF"),
+                progress_step_time  = FineTime(self._measurer.get_progress_step_time(), max_unit = max_unit, unit_color = "#8F8F8F", never_color = "#FF4F1F"),
+                exp_per_hour        = FineExpPerHour(self._measurer.get_exp_per_hour(), value_color = "#6FFF6F", unit_color = "#9F9F9F"),
+
+                time_to_10_percent  = FineTime(self._measurer.get_time_to_10_percent(), max_unit = max_unit, unit_color = "#9F9F9F", never_color = "#FF4F1F"),
+                time_to_next_level  = FineTime(self._measurer.get_time_to_next_level(), max_unit = max_unit, unit_color = "#9F9F9F", never_color = "#FF4F1F"),
+                hint_begin          = "<font size=10px color=\"#7f7f7f\">",
+                hint_end            = "</font>",
+                h                   = "#",
+                y                   = "-",
+                nothing             = "",
+            )
+        except KeyError as exception:
+            key_name = exception.args[0]
+            raise KeyError(f"Unknown parameter '{key_name}' in 'Default.format' file.") from exception
 
         if to_logger().isEnabledFor(logging.DEBUG):
             to_logger().debug("Used Template: %s" % template_name)
