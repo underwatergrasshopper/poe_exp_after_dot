@@ -88,8 +88,7 @@ Hold <b>Shift + RMB</b> to show Help.<br>
 
 --- Help ---
 <pre>
-<font face="{font_name}">
-<p style="font-size:{font_size}px">
+<p style="font-family: {font_name}; font-size: {font_size}px">
 LMB                 - New Entry (removes following entries)<br>
 Ctrl + LMB          - Next Entry<br>
 Ctrl + Shift + LMB  - Last Entry<br>
@@ -99,7 +98,6 @@ Ctrl + Shift + RMB  - Before First Entry<br>
 Hold MMB            - Show Entry with Page and Date<br>
 Wheel Scroll        - Next/Previous Entry
 </p>
-</font>
 </pre>
 
 --- Result no Notice ---

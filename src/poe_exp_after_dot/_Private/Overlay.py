@@ -135,7 +135,7 @@ class InfoBoard(QWidget):
 
         # text
         self._label = QLabel("", self)
-        self._label.setStyleSheet(f"font: {font_wight} {font_size}px {font_name}; color: white;")
+        self._label.setStyleSheet(f"font-weight: {font_wight}; font-size: {font_size}px; font-family: {font_name}; color: white;")
 
         self._initialize_text_generator()
 
@@ -506,7 +506,7 @@ class ControlRegion(QMainWindow):
     def wheelEvent(self, event : QWheelEvent):
         if not self._info_board.is_dismissed():
             self._info_board.dismiss()
-            
+
         if event.angleDelta().y() > 0:
             self._next_entry()
         else:
