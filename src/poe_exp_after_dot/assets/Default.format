@@ -90,12 +90,14 @@ Hold <b>Shift + RMB</b> to show Help.<br>
 <pre>
 <font face="{font_name}">
 <p style="font-size:{font_size}px">
-LMB                 - New Entry<br>
+LMB                 - New Entry (removes following entries)<br>
 Ctrl + LMB          - Next Entry<br>
 Ctrl + Shift + LMB  - Last Entry<br>
 RMB                 - Menu<br>
 Ctrl + RMB          - Previous Entry<br>
-Ctrl + Shift + RMB  - Before First Entry
+Ctrl + Shift + RMB  - Before First Entry<br>
+Hold MMB            - Show Entry with Page and Date<br>
+Wheel Scroll        - Next/Previous Entry
 </p>
 </font>
 </pre>
@@ -115,6 +117,10 @@ LVL {Result no Notice}
 --- Page Header ---
 {page}/{number} <font color="{h}7F7F7F">{date}</font>
 
+--- Result with Page Header ---
+{Page Header}<br>
+LVL {Result no Notice}
+
 --- No Entry ---
 No Entry <br>
 <br>
@@ -124,7 +130,7 @@ No Entry <br>
 <br>
 {Just Hint}
 
---- On No Entry, 1s -> No Entry ---
+--- No Entry with Page Header ---
 {Page Header}<br>
 No Entry <br>
 <br>
@@ -133,6 +139,9 @@ No Entry <br>
 <br>
 <br>
 {Just Hint}
+
+--- On No Entry, 1s -> No Entry ---
+{No Entry with Page Header}
 
 --- On Previous, 1s -> Result ---
 {Page Header}<br>

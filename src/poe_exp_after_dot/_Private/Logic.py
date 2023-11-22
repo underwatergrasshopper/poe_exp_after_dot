@@ -405,8 +405,11 @@ class Measurer:
     def get_time_since_epoch(self) -> float:
         return self._to_entry_safe().time_
     
-    def get_date_str(self) -> str:
-        return _datetime.fromtimestamp(self._to_entry_safe().time_).strftime("%Y/%m/%d %H:%M:%S")
+    def get_date_str(self, *, is_empty_str_when_epoch = False) -> str:
+        time_ = self._to_entry_safe().time_
+        if time_ == 0.0 and is_empty_str_when_epoch:
+            return "" 
+        return _datetime.fromtimestamp(time_).strftime("%Y/%m/%d %H:%M:%S")
     
     def is_update_fail(self) -> bool:
         return self._is_update_fail
@@ -573,7 +576,7 @@ class Logic:
             text = gen_text(
                 page                = self._measurer.get_current_entry_page(),
                 number              = self._measurer.get_number_of_entries(),
-                date                = self._measurer.get_date_str(),
+                date                = self._measurer.get_date_str(is_empty_str_when_epoch = True),
 
                 font_name           = self._settings.get_val("font.name", str),
                 font_size           = self._settings.get_val("font.size", int),

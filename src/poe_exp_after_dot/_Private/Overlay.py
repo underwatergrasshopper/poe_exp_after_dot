@@ -12,7 +12,7 @@ from copy import deepcopy as _deepcopy
 
 from PySide6.QtWidgets  import QMainWindow, QApplication, QWidget, QLabel, QSystemTrayIcon, QMenu
 from PySide6.QtCore     import Qt, QPoint, QRect, QEvent, QLine, QTimer
-from PySide6.QtGui      import QColor, QMouseEvent, QIcon, QAction, QCloseEvent, QContextMenuEvent, QFocusEvent, QFont, QEnterEvent, QKeyEvent, QPainter
+from PySide6.QtGui      import QColor, QMouseEvent, QIcon, QAction, QCloseEvent, QContextMenuEvent, QFocusEvent, QFont, QEnterEvent, QKeyEvent, QPainter, QWheelEvent
 
 from .Commons           import EXIT_FAILURE, EXIT_SUCCESS, to_app, merge_on_all_levels, get_default_data_path
 from .Logic             import Logic, PosData
@@ -487,10 +487,64 @@ class ControlRegion(QMainWindow):
         if self._menu.isVisible():
             self._menu.close()
 
+        if not self._info_board.is_dismissed():
+            self._info_board.dismiss()
+
         if event.button() == Qt.MouseButton.RightButton:
             if not (to_app().keyboardModifiers() & Qt.KeyboardModifier.ControlModifier) and to_app().keyboardModifiers() & Qt.KeyboardModifier.ShiftModifier:
                 self._info_board.set_text_by_template("Help")
                 self._info_board.show()
+
+        elif event.button() == Qt.MouseButton.MiddleButton:
+            if self._logic.to_measurer().get_current_entry_page() == 0:
+                self._info_board.set_text_by_template("No Entry with Page Header")
+            else:
+                self._info_board.set_text_by_template("Result with Page Header")
+            self._info_board.show()
+
+
+    def wheelEvent(self, event : QWheelEvent):
+        if not self._info_board.is_dismissed():
+            self._info_board.dismiss()
+            
+        if event.angleDelta().y() > 0:
+            self._next_entry()
+        else:
+            self._previous_entry()
+
+    def _next_entry(self):
+        measurer = self._logic.to_measurer()
+
+        measurer.go_to_next_entry()
+        page = measurer.get_current_entry_page()
+        if page == 0:
+            self._info_board.set_text_by_template("On No Entry")
+        elif page == measurer.get_number_of_entries():
+            self._info_board.set_text_by_template("On Last")
+        elif page == 1:
+            self._info_board.set_text_by_template("On First")
+        else:
+            self._info_board.set_text_by_template("On Next")
+        self._info_board.show()
+        
+        self._frac_exp_bar.update_bar()
+
+    def _previous_entry(self):
+        measurer = self._logic.to_measurer()
+
+        measurer.go_to_previous_entry()
+        page = measurer.get_current_entry_page()
+        if page == 0:
+            self._info_board.set_text_by_template("On No Entry")
+        elif page == 1:
+            self._info_board.set_text_by_template("On First")
+        elif page == measurer.get_number_of_entries():
+            self._info_board.set_text_by_template("On Last")
+        else:
+            self._info_board.set_text_by_template("On Previous")
+        self._info_board.show()
+        
+        self._frac_exp_bar.update_bar()
 
     def mouseReleaseEvent(self, event : QMouseEvent):
         if event.button() == Qt.MouseButton.RightButton:
@@ -502,21 +556,7 @@ class ControlRegion(QMainWindow):
                 self._info_board.show()
 
             elif to_app().keyboardModifiers() & Qt.KeyboardModifier.ControlModifier and not (to_app().keyboardModifiers() & Qt.KeyboardModifier.ShiftModifier):
-                measurer = self._logic.to_measurer()
-
-                measurer.go_to_previous_entry()
-                page = measurer.get_current_entry_page()
-                if page == 0:
-                    self._info_board.set_text_by_template("On No Entry")
-                elif page == 1:
-                    self._info_board.set_text_by_template("On First")
-                elif page == measurer.get_number_of_entries():
-                    self._info_board.set_text_by_template("On Last")
-                else:
-                    self._info_board.set_text_by_template("On Previous")
-                self._info_board.show()
-                
-                self._frac_exp_bar.update_bar()
+                self._previous_entry()
             elif to_app().keyboardModifiers() & Qt.KeyboardModifier.ControlModifier and to_app().keyboardModifiers() & Qt.KeyboardModifier.ShiftModifier:
                 measurer = self._logic.to_measurer()
 
@@ -530,21 +570,7 @@ class ControlRegion(QMainWindow):
 
         elif event.button() == Qt.MouseButton.LeftButton:
             if to_app().keyboardModifiers() & Qt.KeyboardModifier.ControlModifier and not (to_app().keyboardModifiers() & Qt.KeyboardModifier.ShiftModifier):
-                measurer = self._logic.to_measurer()
-
-                measurer.go_to_next_entry()
-                page = measurer.get_current_entry_page()
-                if page == 0:
-                    self._info_board.set_text_by_template("On No Entry")
-                elif page == measurer.get_number_of_entries():
-                    self._info_board.set_text_by_template("On Last")
-                elif page == 1:
-                    self._info_board.set_text_by_template("On First")
-                else:
-                    self._info_board.set_text_by_template("On Next")
-                self._info_board.show()
-                
-                self._frac_exp_bar.update_bar()
+                self._next_entry()
             elif to_app().keyboardModifiers() & Qt.KeyboardModifier.ControlModifier and to_app().keyboardModifiers() & Qt.KeyboardModifier.ShiftModifier:
                 measurer = self._logic.to_measurer()
 
@@ -569,6 +595,13 @@ class ControlRegion(QMainWindow):
                 QTimer.singleShot(1, lambda: self._measure(pos_in_screen.x(), pos_in_screen.y()))
 
                 self._menu.setWindowFlags(self._flags_backup)
+
+        elif event.button() == Qt.MouseButton.MiddleButton:
+            if self._logic.to_measurer().get_current_entry_page() == 0:
+                self._info_board.set_text_by_template("No Entry")
+            else:
+                self._info_board.set_text_by_template("Result")
+            self._info_board.show()
         
         _move_window_to_foreground("Path of Exile")
 
