@@ -490,33 +490,70 @@ class ControlRegion(QMainWindow):
                 measurer = self._logic.to_measurer()
 
                 measurer.go_to_previous_entry()
-                index = measurer.get_current_entry_index()
-                if index is None:
-                    self._info_board.set_text_by_template("No Entry")
-                elif index == 0:
+                page = measurer.get_current_entry_page()
+                if page == 0:
+                    self._info_board.set_text_by_template("On No Entry")
+                elif page == 1:
                     self._info_board.set_text_by_template("On First")
+                elif page == measurer.get_number_of_entries():
+                    self._info_board.set_text_by_template("On Last")
                 else:
                     self._info_board.set_text_by_template("On Previous")
                 self._info_board.show()
                 
                 self._frac_exp_bar.update_bar()
+            elif to_app().keyboardModifiers() & Qt.KeyboardModifier.ControlModifier and to_app().keyboardModifiers() & Qt.KeyboardModifier.ShiftModifier:
+                measurer = self._logic.to_measurer()
+
+                measurer.go_to_before_first_entry()
+                self._info_board.set_text_by_template("On No Entry")
+                self._info_board.show()
                 
+                self._frac_exp_bar.update_bar()
             else:
                 self._menu.setWindowFlags(self._flags_backup | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.FramelessWindowHint | Qt.WindowType.Tool)
 
-
         elif event.button() == Qt.MouseButton.LeftButton:
+            if to_app().keyboardModifiers() & Qt.KeyboardModifier.ControlModifier and not (to_app().keyboardModifiers() & Qt.KeyboardModifier.ShiftModifier):
+                measurer = self._logic.to_measurer()
 
-            _move_window_to_foreground("Path of Exile")
+                measurer.go_to_next_entry()
+                page = measurer.get_current_entry_page()
+                if page == 0:
+                    self._info_board.set_text_by_template("On No Entry")
+                elif page == measurer.get_number_of_entries():
+                    self._info_board.set_text_by_template("On Last")
+                elif page == 1:
+                    self._info_board.set_text_by_template("On First")
+                else:
+                    self._info_board.set_text_by_template("On Next")
+                self._info_board.show()
+                
+                self._frac_exp_bar.update_bar()
+            elif to_app().keyboardModifiers() & Qt.KeyboardModifier.ControlModifier and to_app().keyboardModifiers() & Qt.KeyboardModifier.ShiftModifier:
+                measurer = self._logic.to_measurer()
 
-            pos_in_screen = self.mapToGlobal(QPoint(event.x(), event.y()))
+                measurer.go_to_last_entry()
+                page = measurer.get_current_entry_page()
+                if page == 0:
+                    self._info_board.set_text_by_template("On No Entry")
+                else:
+                    self._info_board.set_text_by_template("On Last")
 
-            self._info_board.dismiss()
-            self._info_board.set_text_by_template("While Processing")
-            self._info_board.show()
-            QTimer.singleShot(1, lambda: self._measure(pos_in_screen.x(), pos_in_screen.y()))
+                self._info_board.show()
+                
+                self._frac_exp_bar.update_bar()
+            else:
+                _move_window_to_foreground("Path of Exile")
 
-            self._menu.setWindowFlags(self._flags_backup)
+                pos_in_screen = self.mapToGlobal(QPoint(event.x(), event.y()))
+
+                self._info_board.dismiss()
+                self._info_board.set_text_by_template("While Processing")
+                self._info_board.show()
+                QTimer.singleShot(1, lambda: self._measure(pos_in_screen.x(), pos_in_screen.y()))
+
+                self._menu.setWindowFlags(self._flags_backup)
         
         _move_window_to_foreground("Path of Exile")
 

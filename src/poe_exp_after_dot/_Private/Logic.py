@@ -187,7 +187,7 @@ class Register:
             self._index += 1
 
     def go_to_last(self):
-        if self._index >= 0:
+        if self._index >= -1:
             self._index = len(self._entries) - 1
 
     def go_to_first(self):

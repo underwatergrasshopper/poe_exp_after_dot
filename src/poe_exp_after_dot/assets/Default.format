@@ -94,6 +94,15 @@ next level in {time_to_next_level}<br>
 LVL {Result no Notice}
 
 --- No Entry ---
+No Entry <br>
+<br>
+<br>
+<br>
+<br>
+<br>
+{Just Hint}
+
+--- On No Entry, 1s -> No Entry ---
 {page}/{number}<br>
 No Entry <br>
 <br>
@@ -108,7 +117,16 @@ No Entry <br>
 &lt;&lt;&lt; {Result no Notice}
 
 --- On First, 1s -> Result ---
-{On Previous}
+{page}/{number}<br>
+[0] {Result no Notice}
+
+--- On Next, 1s -> Result ---
+{page}/{number}<br>
+&gt;&gt;&gt; {Result no Notice}
+
+--- On Last, 1s -> Result ---
+{page}/{number}<br>
+END {Result no Notice}
 
 --- Error ---
 <font color="{h}FF0000">ERR</font> {Result no Notice}
