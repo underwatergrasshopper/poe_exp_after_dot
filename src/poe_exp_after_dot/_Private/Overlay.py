@@ -220,20 +220,20 @@ class InfoBoard(QWidget):
 
 
 class FracExpBar(QWidget):
-    _logic          : Logic
+    _logic                  : Logic
 
-    _base_width     : int
-    _step_width     : int
-    _progress_width : int
+    _base_width             : int
+    _step_width             : int
+    _frac_progress_width    : int
 
     def __init__(self, logic : Logic):
         super().__init__()
 
         self._logic = logic
 
-        self._base_width        = 0
-        self._step_width        = 0
-        self._progress_width    = 0
+        self._base_width            = 0
+        self._step_width            = 0
+        self._frac_progress_width   = 0
 
         self.setWindowFlags(
             Qt.WindowType.WindowStaysOnTopHint |
@@ -273,32 +273,35 @@ class FracExpBar(QWidget):
         progress_step
             In percent.
         """
-        pos_data = self._logic.to_pos_data()
+        progress_base = progress - progress_step
 
-        previous_progress_width = self._progress_width
-        frac_progress = progress % 1
-        progress_width = int((pos_data.in_game_exp_bar_width * frac_progress) // 1)
+        frac_progress_base = progress_base % 1
 
-        if previous_progress_width > progress_width or progress_step > 1.0:
-            # next level, next 1% or other character
-            self._base_width = 0
-            self._step_width = progress_width
+        gain = frac_progress_base + progress_step
+
+        if gain < 1.0:
+            self._base_width = frac_progress_base
+            self._step_width = progress_step
         else:
-            self._base_width = previous_progress_width
-            self._step_width = progress_width - previous_progress_width
+            self._base_width = 0.0
+            self._step_width = gain % 1
 
-        self._progress_width = self._base_width + self._step_width
+        width = self._logic.to_pos_data().in_game_exp_bar_width
+        self._base_width = int((self._base_width * width) // 1)
+        self._step_width = int((self._step_width * width) // 1)
+
+        self._frac_progress_width = self._base_width + self._step_width
 
         self.repaint()
 
         if is_try_show:
-            if self._progress_width >= 1:
+            if self._frac_progress_width >= 1:
                 self.show()
             else:
                 self.hide()
 
     def try_show(self):
-        if self._progress_width >= 1:
+        if self._frac_progress_width >= 1:
             self.show()
 
 class Menu(QMenu):
