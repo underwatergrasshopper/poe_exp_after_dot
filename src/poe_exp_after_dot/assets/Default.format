@@ -37,7 +37,12 @@
 # Format of <text_format>:
 #     Python f-string format over Qt Text format (html like).
 #
-# List of possible parameters (names which can be placed between '{' and '}'):      
+# List of possible parameters (names which can be placed between '{' and '}'):   
+#     font_name
+#     font_size
+#     page
+#     number                    - of pages
+#     date
 #     level              
 #     progress           
 #     exp                
@@ -83,12 +88,16 @@ Hold <b>Shift + RMB</b> to show Help.<br>
 
 --- Help ---
 <pre>
+<font face="{font_name}">
+<p style="font-size:{font_size}px">
 LMB                 - New Entry<br>
 Ctrl + LMB          - Next Entry<br>
 Ctrl + Shift + LMB  - Last Entry<br>
 RMB                 - Menu<br>
 Ctrl + RMB          - Previous Entry<br>
 Ctrl + Shift + RMB  - Before First Entry
+</p>
+</font>
 </pre>
 
 --- Result no Notice ---
@@ -103,6 +112,9 @@ next level in {time_to_next_level}<br>
 --- Result ---
 LVL {Result no Notice}
 
+--- Page Header ---
+{page}/{number} <font color="{h}7F7F7F">{date}</font>
+
 --- No Entry ---
 No Entry <br>
 <br>
@@ -113,7 +125,7 @@ No Entry <br>
 {Just Hint}
 
 --- On No Entry, 1s -> No Entry ---
-{page}/{number}<br>
+{Page Header}<br>
 No Entry <br>
 <br>
 <br>
@@ -123,19 +135,19 @@ No Entry <br>
 {Just Hint}
 
 --- On Previous, 1s -> Result ---
-{page}/{number}<br>
+{Page Header}<br>
 &lt;&lt;&lt; {Result no Notice}
 
 --- On First, 1s -> Result ---
-{page}/{number}<br>
+{Page Header}<br>
 [0] {Result no Notice}
 
 --- On Next, 1s -> Result ---
-{page}/{number}<br>
+{Page Header}<br>
 &gt;&gt;&gt; {Result no Notice}
 
 --- On Last, 1s -> Result ---
-{page}/{number}<br>
+{Page Header}<br>
 END {Result no Notice}
 
 --- Error ---

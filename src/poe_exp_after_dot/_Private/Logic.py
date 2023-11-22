@@ -3,6 +3,7 @@ from dataclasses import dataclass
 
 import re
 import os
+from datetime import datetime as _datetime
 import logging
 import numpy
 import cv2
@@ -401,6 +402,12 @@ class Measurer:
     def is_gained_level(self) -> bool:
         return self._to_entry_safe().is_gained_level
     
+    def get_time_since_epoch(self) -> float:
+        return self._to_entry_safe().time_
+    
+    def get_date_str(self) -> str:
+        return _datetime.fromtimestamp(self._to_entry_safe().time_).strftime("%Y/%m/%d %H:%M:%S")
+    
     def is_update_fail(self) -> bool:
         return self._is_update_fail
     
@@ -566,6 +573,10 @@ class Logic:
             text = gen_text(
                 page                = self._measurer.get_current_entry_page(),
                 number              = self._measurer.get_number_of_entries(),
+                date                = self._measurer.get_date_str(),
+
+                font_name           = self._settings.get_val("font.name", str),
+                font_size           = self._settings.get_val("font.size", int),
 
                 level               = FineBareLevel(self._measurer.get_level()),
                 progress            = FinePercent(self._measurer.get_progress(), integer_color = "#F8CD82", two_dig_after_dot_color = "#7F7FFF"),
