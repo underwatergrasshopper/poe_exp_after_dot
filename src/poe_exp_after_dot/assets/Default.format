@@ -81,6 +81,16 @@ Hold <b>Shift + RMB</b> to show Help.<br>
 <b>Click</b> to Update.
 {hint_end}
 
+--- Help ---
+<pre>
+LMB                 - New Entry<br>
+Ctrl + LMB          - Next Entry<br>
+Ctrl + Shift + LMB  - Last Entry<br>
+RMB                 - Menu<br>
+Ctrl + RMB          - Previous Entry<br>
+Ctrl + Shift + RMB  - Before First Entry
+</pre>
+
 --- Result no Notice ---
 {level} {progress}<br>
 {progress_step} in {progress_step_time}<br>

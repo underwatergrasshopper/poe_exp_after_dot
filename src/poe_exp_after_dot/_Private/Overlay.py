@@ -484,9 +484,21 @@ class ControlRegion(QMainWindow):
         if self._menu.isVisible():
             self._menu.close()
 
+        if event.button() == Qt.MouseButton.RightButton:
+            if not (to_app().keyboardModifiers() & Qt.KeyboardModifier.ControlModifier) and to_app().keyboardModifiers() & Qt.KeyboardModifier.ShiftModifier:
+                self._info_board.set_text_by_template("Help")
+                self._info_board.show()
+
     def mouseReleaseEvent(self, event : QMouseEvent):
         if event.button() == Qt.MouseButton.RightButton:
-            if to_app().keyboardModifiers() & Qt.KeyboardModifier.ControlModifier and not (to_app().keyboardModifiers() & Qt.KeyboardModifier.ShiftModifier):
+            if not (to_app().keyboardModifiers() & Qt.KeyboardModifier.ControlModifier) and to_app().keyboardModifiers() & Qt.KeyboardModifier.ShiftModifier:
+                if self._logic.to_measurer().get_current_entry_page() == 0:
+                    self._info_board.set_text_by_template("No Entry")
+                else:
+                    self._info_board.set_text_by_template("Result")
+                self._info_board.show()
+
+            elif to_app().keyboardModifiers() & Qt.KeyboardModifier.ControlModifier and not (to_app().keyboardModifiers() & Qt.KeyboardModifier.ShiftModifier):
                 measurer = self._logic.to_measurer()
 
                 measurer.go_to_previous_entry()
