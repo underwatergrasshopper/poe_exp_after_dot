@@ -140,22 +140,22 @@ No Entry <br>
 <br>
 {Just Hint}
 
---- On No Entry, 1s -> No Entry ---
+--- On No Entry, 2s -> No Entry ---
 {No Entry with Page Header}
 
---- On Previous, 1s -> Result ---
+--- On Previous, 2s -> Result ---
 {Page Header}<br>
 &lt;&lt;&lt; {Result no Notice}
 
---- On First, 1s -> Result ---
+--- On First, 2s -> Result ---
 {Page Header}<br>
 [0] {Result no Notice}
 
---- On Next, 1s -> Result ---
+--- On Next, 2s -> Result ---
 {Page Header}<br>
 &gt;&gt;&gt; {Result no Notice}
 
---- On Last, 1s -> Result ---
+--- On Last, 2s -> Result ---
 {Page Header}<br>
 END {Result no Notice}
 

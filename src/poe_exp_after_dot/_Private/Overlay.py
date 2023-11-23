@@ -166,12 +166,8 @@ class InfoBoard(QWidget):
         pos.setY(bottom - self._label.height())
         self.move(pos)
     
-    def set_text_by_template(self, template_name : str, *, is_done = True):
-        self.set_text(self._logic.gen_info_board_text(template_name, is_done = is_done))
-        if is_done:
-            self._timer.start()
-        
-    def set_text_done(self):
+    def set_text_by_template(self, template_name : str):
+        self.set_text(self._logic.gen_info_board_text(template_name))
         self._timer.start()
 
     def place_text(self, text, *, is_lock_left_bottom = False, is_resize = False):
@@ -210,12 +206,12 @@ class InfoBoard(QWidget):
         painter.fillRect(self.rect(), QColor(0, 0, 0, 127))
 
     def _initialize_text_generator(self):
-        def update_text_generator():
+        def update_and_set():
             if self._logic.update_text_generator(1.0):
                 self.set_text(self._logic.gen_info_board_text())
                 
         self._timer = QTimer()
-        self._timer.timeout.connect(update_text_generator)
+        self._timer.timeout.connect(update_and_set)
         self._timer.setInterval(1000)
 
 
@@ -382,7 +378,10 @@ class Menu(QMenu):
         self.addAction(self._close_menu_action)
 
         self._quit_action = QAction("Quit")
-        self._quit_action.triggered.connect(to_app().quit)
+        def quit():
+            to_logger().info("Quitting...")
+            to_app().quit()
+        self._quit_action.triggered.connect(quit)
         self.addAction(self._quit_action)
 
 
