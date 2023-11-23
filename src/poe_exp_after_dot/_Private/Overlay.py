@@ -106,6 +106,15 @@ pos_data.<resolution>.*_height
     false
 """.strip("\n")
 
+_NOTHING = 0
+_CTRL    = Qt.KeyboardModifier.ControlModifier
+_SHIFT   = Qt.KeyboardModifier.ShiftModifier
+_ALT     = Qt.KeyboardModifier.AltModifier
+
+def _get_key_modifiers():
+    mask = _CTRL | _SHIFT | _ALT
+    return to_app().keyboardModifiers() & mask
+
 class InfoBoard(QWidget):
     _logic          : Logic
     _is_dismissed   : bool
@@ -316,7 +325,7 @@ class Menu(QMenu):
 
         self._open_data_folder_action = QAction("Open Data Folder")
         def open_data_folder():
-            os.startfile(self._logic.to_settings().get_val("data_path", str))
+            os.startfile(os.path.abspath(self._logic.to_settings().get_val("data_path", str)))
             self.setWindowFlags(self._flags_backup)
 
         self._open_data_folder_action.triggered.connect(open_data_folder)
@@ -464,13 +473,7 @@ class ControlRegion(QMainWindow):
 
         _move_window_to_foreground("Path of Exile")
 
-        mask = Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.ShiftModifier | Qt.KeyboardModifier.AltModifier
-        modifiers = to_app().keyboardModifiers() & mask
-
-        nothing = 0
-        ctrl    = Qt.KeyboardModifier.ControlModifier
-        shift   = Qt.KeyboardModifier.ShiftModifier
-        alt     = Qt.KeyboardModifier.AltModifier
+        modifiers = _get_key_modifiers()
 
         if self._menu.isVisible():
             self._menu.close()
@@ -489,27 +492,21 @@ class ControlRegion(QMainWindow):
             self._info_board.show()
 
         elif event.button() == Qt.MouseButton.RightButton:
-            if modifiers == shift:
+            if modifiers == _SHIFT:
                 self._info_board.set_text_by_template("Help")
                 self._info_board.show()
-            elif modifiers == nothing:
+            elif modifiers == _NOTHING:
                 self._is_show_menu = True
 
     def mouseReleaseEvent(self, event : QMouseEvent):
-        mask = Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.ShiftModifier | Qt.KeyboardModifier.AltModifier
-        modifiers = to_app().keyboardModifiers() & mask
-
-        nothing = 0
-        ctrl    = Qt.KeyboardModifier.ControlModifier
-        shift   = Qt.KeyboardModifier.ShiftModifier
-        alt     = Qt.KeyboardModifier.AltModifier
+        modifiers = _get_key_modifiers()
 
         if event.button() == Qt.MouseButton.RightButton:
-            if modifiers == shift:
+            if modifiers == _SHIFT:
                 self._dismiss_help()
-            elif modifiers == ctrl:
+            elif modifiers == _CTRL:
                 self._previous_entry()
-            elif modifiers == (ctrl | shift):
+            elif modifiers == (_CTRL | _SHIFT):
                 measurer = self._logic.to_measurer()
 
                 measurer.go_to_before_first_entry()
@@ -529,9 +526,9 @@ class ControlRegion(QMainWindow):
                 self._menu.exec(event.globalPos())
 
         elif event.button() == Qt.MouseButton.LeftButton:
-            if modifiers == ctrl:
+            if modifiers == _CTRL:
                 self._next_entry()
-            elif modifiers == (ctrl | shift):
+            elif modifiers == (_CTRL | _SHIFT):
                 measurer = self._logic.to_measurer()
 
                 measurer.go_to_last_entry()
