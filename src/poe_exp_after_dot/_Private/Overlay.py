@@ -18,6 +18,7 @@ from .Commons           import EXIT_FAILURE, EXIT_SUCCESS, to_app, merge_on_all_
 from .Logic             import Logic, PosData
 from .LogManager        import to_log_manager, to_logger
 from .Settings          import Settings
+from .TextGenerator     import TextGenerator, TemplateLoader
 
 _HELP_TEXT = """
 poe_exp_after_dot.py [<option> ...]
@@ -107,7 +108,6 @@ pos_data.<resolution>.*_height
 
 class InfoBoard(QWidget):
     _logic          : Logic
-    _timer          : QTimer
     _is_dismissed   : bool
 
     def __init__(self, logic : Logic):
@@ -118,6 +118,7 @@ class InfoBoard(QWidget):
         super().__init__()
 
         self._logic = logic
+        self._is_dismissed = False
 
         self.setWindowFlags(
             Qt.WindowType.WindowStaysOnTopHint |
@@ -137,11 +138,23 @@ class InfoBoard(QWidget):
         self._label = QLabel("", self)
         self._label.setStyleSheet(f"font-weight: {font_wight}; font-size: {font_size}px; font-family: {font_name}; color: white;")
 
-        self._initialize_text_generator()
+        ### info board text templates ###
+        template_loader = TemplateLoader()
+        def_format_file_name = logic.to_settings().get_val("def_format_file_name", str)
+        to_logger().info(f"Loading formats from \"{os.path.basename(def_format_file_name)}\" ...")
+        template_loader.load_and_parse(logic.to_settings().get_val("def_format_file_name", str))
+        to_logger().info("Formats has been loaded.")
 
-        self.set_text_by_template("First Help")
+        for name, value in template_loader.to_variables().items():
+            logic.to_settings().set_val(name, value, str)
 
-        self._is_dismissed = False
+        self._text_generator = TextGenerator(template_loader.to_templates(), self._logic.get_info_board_text_parameters, self.set_text)
+        self._text_generator.start()
+        self._text_generator.gen_text("First Help")
+        ###
+
+    def set_text_by_template(self, template_name : str):
+        self._text_generator.gen_text(template_name)
 
     def dismiss(self):
         self.setWindowFlag(Qt.WindowType.WindowDoesNotAcceptFocus, True)
@@ -165,34 +178,6 @@ class InfoBoard(QWidget):
         pos.setX(x)
         pos.setY(bottom - self._label.height())
         self.move(pos)
-    
-    def set_text_by_template(self, template_name : str):
-        self.set_text(self._logic.gen_info_board_text(template_name))
-        self._timer.start()
-
-    def place_text(self, text, *, is_lock_left_bottom = False, is_resize = False):
-        if is_resize:
-            if is_lock_left_bottom:
-                rect = self.geometry()
-                x = rect.x()
-                bottom = rect.y() + rect.height()
-            else:
-                x = self._logic.to_pos_data().info_board_x
-                bottom = self._logic.to_pos_data().info_board_bottom
-
-            self._label.setWordWrap(False)  
-            self._label.setText(text)
-
-            self._label.adjustSize()
-            self.resize(self._label.size())
-            
-            pos = self.pos()
-            pos.setX(x)
-            pos.setY(bottom - self._label.height())
-            self.move(pos)
-        else:
-            self._label.setWordWrap(True)  
-            self._label.setText(text)
 
     def mouseReleaseEvent(self, event : QMouseEvent):
         if event.button() == Qt.MouseButton.LeftButton:
@@ -204,15 +189,6 @@ class InfoBoard(QWidget):
         painter = QPainter(self)
         painter.setOpacity(1.0)
         painter.fillRect(self.rect(), QColor(0, 0, 0, 127))
-
-    def _initialize_text_generator(self):
-        def update_and_set():
-            if self._logic.update_text_generator(1.0):
-                self.set_text(self._logic.gen_info_board_text())
-                
-        self._timer = QTimer()
-        self._timer.timeout.connect(update_and_set)
-        self._timer.setInterval(1000)
 
 
 class FracExpBar(QWidget):
@@ -812,7 +788,7 @@ class Overlay:
             
             shutil.copy(source_file_name, def_format_file_name)
 
-            to_logger().info("Created Default.format.")
+            to_logger().info("Created \"Default.format\".")
 
         logic = Logic(settings)
 

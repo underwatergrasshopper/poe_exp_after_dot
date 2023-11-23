@@ -1,46 +1,95 @@
-from .TemplateLoader import TemplateLoader, Template
-from ..Exceptions import TextGenFail
+from typing             import Callable, Any
+import os as _os
+
+from PySide6.QtCore     import QTimer
+
+from .TemplateLoader    import TemplateLoader, Template
+from .LogManager        import to_logger, logging
+from ..Exceptions       import TextGenFail
+
+
+GetParametersFunction   =  Callable[[], dict[str, Any]]
+SetTextFunction         =  Callable[[str], None]
+
 
 class TextGenerator:
-    _templates  : dict[str, Template]
-    _template   : Template
+    _templates          : dict[str, Template]
+    _template           : Template
+    _get_parameters     : GetParametersFunction
+    _set_text           : SetTextFunction
+    _is_started         : bool
+    _time_left          : float # in seconds
+    _format_file_name   : str
 
-    def __inti__(self):
-        self._templates     = {}
-        self._template      = Template("", 0.0, "")
-        self._time_left     = 0.0                   # in seconds
+    def __init__(self, templates : dict[str, Template], get_parameters : GetParametersFunction, set_text : SetTextFunction):
+        self._templates         = templates
+        self._template          = Template("", 0.0, "")
+        self._get_parameters    = get_parameters
+        self._set_text          = set_text
+        self._is_started        = False
+        self._time_left         = 0.0    
 
-    def set_templates(self, templates : dict[str, Template]):
-        self._templates = templates 
+    def gen_text(self, template_name : str) -> str:
+        """
+        Generate text from parameters provided by 'get_parameters' function.
+        And puts generated text to provided 'set_text' function.
 
-    def select_template(self, template_name : str):
+        Returns
+            Generated text.
+        """
+        self._select_template(template_name)        
+        if to_logger().isEnabledFor(logging.DEBUG):
+            to_logger().debug("Used Template: %s" % template_name)
+        
+        parameters = self._get_parameters()
+        text = self._gen_text_directly(**parameters)
+
+        if to_logger().isEnabledFor(logging.DEBUG):
+            to_logger().debug("Used Format: %s" % text)
+
+        self._set_text(text)   
+
+        if self._is_started:
+            self._timer.start() # reset timer
+
+        return text
+
+    def start(self):
+        if not self._is_started:
+            self._timer = QTimer()
+            self._timer.timeout.connect(lambda: self._update(1.0))
+            self._timer.setInterval(1000)
+
+            self._is_started = True      
+
+    def _select_template(self, template_name : str):
         if template_name in self._templates:
             self._template  = self._templates[template_name]
             self._time_left = self._template.delay
         else:
             raise TextGenFail(f"There is no template with name \"{template_name}\".")
 
-    def gen_text(self, **parameters) -> str:
+    def _gen_text_directly(self, **parameters) -> str:
         """
         parameters
-            Between '{' and '}' in format.
+            Corresponds to names between '{' and '}' in '.format' file.
         """
-        return self._template.text_format.format(**parameters)
+        try:
+            return self._template.text_format.format(**parameters)
+        except KeyError as exception:
+            key_name = exception.args[0]
+            raise KeyError(f"Unknown parameter '{key_name}' in format file.") from exception
 
-    def update(self, delta : float) -> bool:
+    def _update(self, delta : float):
         """
         delta
             In seconds.
-        Returns
-            True    - If template has been changed
-            False   - Otherwise.
         """
         self._time_left = max(0.0, self._time_left - delta)
 
         if self._template.next_name and self._time_left == 0.0:
-            self.select_template(self._template.next_name)
-            return True
-        return False
+            self.gen_text(self._template.next_name)
+
 
 
 

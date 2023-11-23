@@ -131,6 +131,7 @@ def test_parse():
         }
     )
 
+    ### nesting ###
     assert _parse((
         "--- Some A ---\n" 
         "Something\n"     
@@ -144,6 +145,7 @@ def test_parse():
         }
     )
     
+    ### exceptions ###
     assert _parse_with_exception("--- ---") == "No template name. Line: 1."
     assert _parse_with_exception("--- , done -> BBB ---") == "No template name. Line: 1."
     assert _parse_with_exception("--- AAA, 1.2s -> BBB ---") == "Delay is not a valid number. Should be a natural number. Line: 1."

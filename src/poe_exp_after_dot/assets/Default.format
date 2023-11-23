@@ -114,8 +114,11 @@ next level in {time_to_next_level}<br>
 --- Result ---
 LVL {Result no Notice}
 
+--- Page Header no Date ---
+{page}/{number}
+
 --- Page Header ---
-{page}/{number} <font color="{h}7F7F7F">{date}</font>
+{Page Header no Date} <font color="{h}7F7F7F">{date}</font>
 
 --- Result with Page Header ---
 {Page Header}<br>
@@ -131,7 +134,7 @@ No Entry <br>
 {Just Hint}
 
 --- No Entry with Page Header ---
-{Page Header}<br>
+{Page Header no Date}<br>
 No Entry <br>
 <br>
 <br>
@@ -140,23 +143,23 @@ No Entry <br>
 <br>
 {Just Hint}
 
---- On No Entry, 2s -> No Entry ---
+--- On No Entry, 1s -> No Entry ---
 {No Entry with Page Header}
 
---- On Previous, 2s -> Result ---
-{Page Header}<br>
+--- On Previous, 1s -> Result ---
+{Page Header no Date}<br>
 &lt;&lt;&lt; {Result no Notice}
 
---- On First, 2s -> Result ---
-{Page Header}<br>
+--- On First, 1s -> Result ---
+{Page Header no Date}<br>
 [0] {Result no Notice}
 
---- On Next, 2s -> Result ---
-{Page Header}<br>
+--- On Next, 1s -> Result ---
+{Page Header no Date}<br>
 &gt;&gt;&gt; {Result no Notice}
 
---- On Last, 2s -> Result ---
-{Page Header}<br>
+--- On Last, 1s -> Result ---
+{Page Header no Date}<br>
 END {Result no Notice}
 
 --- Error ---

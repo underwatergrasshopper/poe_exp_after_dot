@@ -13,15 +13,12 @@ from time import time as _get_time_since_epoch
 from PIL import ImageGrab
 
 from PySide6.QtWidgets  import QWidget
-from PySide6.QtCore     import QTimer
 
 from .Commons           import EXIT_FAILURE, EXIT_SUCCESS, time_unit_to_short
-from .StopWatch         import StopWatch
 from .FineFormatters    import FineBareLevel, FineExp, FineExpPerHour, FinePercent, FineTime
 from .FineFormatters    import SECONDS_IN_DAY, SECONDS_IN_HOUR, SECONDS_IN_MINUTE, SECONDS_IN_WEEK
 from .Settings          import Settings
 from .LogManager        import to_logger
-from .TextGenerator     import TextGenerator, TemplateLoader
 
 
 @dataclass
@@ -512,8 +509,6 @@ class Logic:
 
     _is_fetch_failed : bool
 
-    _text_generator : TextGenerator
-
     def __init__(self, settings : Settings):
         self._settings = settings
 
@@ -549,70 +544,32 @@ class Logic:
 
         self._is_fetch_failed = False
 
-        ### info board text templates ###
-        template_loader = TemplateLoader()
-        to_logger().info("Loading formats...")
-        template_loader.load_and_parse(settings.get_val("def_format_file_name", str))
-        to_logger().info("Loaded formats.")
-
-        for name, value in template_loader.to_variables().items():
-            settings.set_val(name, value, str)
-
-        self._text_generator = TextGenerator()
-        self._text_generator.set_templates(template_loader.to_templates())
-
-        self._text_generator.select_template("Default")
-        ###
-
-    def gen_info_board_text(self, template_name : str | None = None, *, is_done = True) -> str:
-        if template_name is not None:
-            self._text_generator.select_template(template_name)
-
+    def get_info_board_text_parameters(self) -> dict[str, Any]:
         max_unit = time_unit_to_short(self._settings.get_val("time_max_unit", str))
 
-        try:
-            text = self._text_generator.gen_text(
-                page                = self._measurer.get_current_entry_page(),
-                number              = self._measurer.get_number_of_entries(),
-                date                = self._measurer.get_date_str(is_empty_str_when_epoch = True),
+        return {
+            "page"                  : self._measurer.get_current_entry_page(),
+            "number"                : self._measurer.get_number_of_entries(),
+            "date"                  : self._measurer.get_date_str(is_empty_str_when_epoch = True),
 
-                font_name           = self._settings.get_val("font.name", str),
-                font_size           = self._settings.get_val("font.size", int),
+            "font_name"             : self._settings.get_val("font.name", str),
+            "font_size"             : self._settings.get_val("font.size", int),
 
-                level               = FineBareLevel(self._measurer.get_level()),
-                progress            = FinePercent(self._measurer.get_progress(), integer_color = "#F8CD82", two_dig_after_dot_color = "#7F7FFF"),
-                exp                 = FineExp(self._measurer.get_total_exp(), unit_color = "#9F9F9F"),
-                progress_step       = FinePercent(self._measurer.get_progress_step(), is_sign = True, integer_color = "#7FFFFF", two_dig_after_dot_color = "#7FFFFF"),
-                progress_step_time  = FineTime(self._measurer.get_progress_step_time(), max_unit = max_unit, unit_color = "#8F8F8F", never_color = "#FF4F1F"),
-                exp_per_hour        = FineExpPerHour(self._measurer.get_exp_per_hour(), value_color = "#6FFF6F", unit_color = "#9F9F9F"),
+            "level"                 : FineBareLevel(self._measurer.get_level()),
+            "progress"              : FinePercent(self._measurer.get_progress(), integer_color = "#F8CD82", two_dig_after_dot_color = "#7F7FFF"),
+            "exp"                   : FineExp(self._measurer.get_total_exp(), unit_color = "#9F9F9F"),
+            "progress_step"         : FinePercent(self._measurer.get_progress_step(), is_sign = True, integer_color = "#7FFFFF", two_dig_after_dot_color = "#7FFFFF"),
+            "progress_step_time"    : FineTime(self._measurer.get_progress_step_time(), max_unit = max_unit, unit_color = "#8F8F8F", never_color = "#FF4F1F"),
+            "exp_per_hour"          : FineExpPerHour(self._measurer.get_exp_per_hour(), value_color = "#6FFF6F", unit_color = "#9F9F9F"),
 
-                time_to_10_percent  = FineTime(self._measurer.get_time_to_10_percent(), max_unit = max_unit, unit_color = "#9F9F9F", never_color = "#FF4F1F"),
-                time_to_next_level  = FineTime(self._measurer.get_time_to_next_level(), max_unit = max_unit, unit_color = "#9F9F9F", never_color = "#FF4F1F"),
-                hint_begin          = "<font size=10px color=\"#7f7f7f\">",
-                hint_end            = "</font>",
-                h                   = "#",
-                y                   = "-",
-                nothing             = "",
-            )
-        except KeyError as exception:
-            key_name = exception.args[0]
-            raise KeyError(f"Unknown parameter '{key_name}' in 'Default.format' file.") from exception
-
-        if to_logger().isEnabledFor(logging.DEBUG):
-            to_logger().debug("Used Template: %s" % template_name)
-            to_logger().debug("Used Format: %s" % text)
-
-        return text
-
-    def update_text_generator(self, delta) -> bool:
-        """
-        delta
-            In seconds.
-        Returns
-            True    - If template has been changed
-            False   - Otherwise.
-        """
-        return self._text_generator.update(delta)
+            "time_to_10_percent"    : FineTime(self._measurer.get_time_to_10_percent(), max_unit = max_unit, unit_color = "#9F9F9F", never_color = "#FF4F1F"),
+            "time_to_next_level"    : FineTime(self._measurer.get_time_to_next_level(), max_unit = max_unit, unit_color = "#9F9F9F", never_color = "#FF4F1F"),
+            "hint_begin"            : "<font size=10px color=\"#7f7f7f\">",
+            "hint_end"              : "</font>",
+            "h"                     : "#",
+            "y"                     : "-",
+            "nothing"               : "",
+        }
 
     def to_settings(self) -> Settings:
         return self._settings
