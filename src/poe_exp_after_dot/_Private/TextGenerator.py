@@ -24,6 +24,7 @@ class TextGenerator:
     def __init__(self, templates : dict[str, Template], get_parameters : GetParametersFunction, set_text : SetTextFunction):
         self._templates         = templates
         self._template          = Template("", 0.0, "")
+        self._template_name     = ""
         self._get_parameters    = get_parameters
         self._set_text          = set_text
         self._is_started        = False
@@ -60,11 +61,15 @@ class TextGenerator:
             self._timer.timeout.connect(lambda: self._update(1.0))
             self._timer.setInterval(1000)
 
-            self._is_started = True      
+            self._is_started = True    
+
+    def get_current_template_name(self) -> str:
+        return self._template_name  
 
     def _select_template(self, template_name : str):
         if template_name in self._templates:
             self._template  = self._templates[template_name]
+            self._template_name = template_name
             self._time_left = self._template.delay
         else:
             raise TextGenFail(f"There is no template with name \"{template_name}\".")

@@ -156,6 +156,9 @@ class InfoBoard(QWidget):
     def set_text_by_template(self, template_name : str):
         self._text_generator.gen_text(template_name)
 
+    def get_current_template_name(self) -> str:
+        return self._text_generator.get_current_template_name()
+
     def dismiss(self):
         self.setWindowFlag(Qt.WindowType.WindowDoesNotAcceptFocus, True)
         self.setWindowFlag(Qt.WindowType.WindowTransparentForInput, True)
@@ -405,6 +408,7 @@ class ControlRegion(QMainWindow):
 
     _flags_backup           : Qt.WindowType
     _foreground_guardian    : ForegroundGuardian
+    _is_show_menu           : False
 
     def __init__(self, logic : Logic):
         super().__init__()
@@ -457,7 +461,16 @@ class ControlRegion(QMainWindow):
         
     def mousePressEvent(self, event : QMouseEvent):
         # raise RuntimeError("Some error.") # debug
+
         _move_window_to_foreground("Path of Exile")
+
+        mask = Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.ShiftModifier | Qt.KeyboardModifier.AltModifier
+        modifiers = to_app().keyboardModifiers() & mask
+
+        nothing = 0
+        ctrl    = Qt.KeyboardModifier.ControlModifier
+        shift   = Qt.KeyboardModifier.ShiftModifier
+        alt     = Qt.KeyboardModifier.AltModifier
 
         if self._menu.isVisible():
             self._menu.close()
@@ -465,10 +478,8 @@ class ControlRegion(QMainWindow):
         if not self._info_board.is_dismissed():
             self._info_board.dismiss()
 
-        if event.button() == Qt.MouseButton.RightButton:
-            if not (to_app().keyboardModifiers() & Qt.KeyboardModifier.ControlModifier) and to_app().keyboardModifiers() & Qt.KeyboardModifier.ShiftModifier:
-                self._info_board.set_text_by_template("Help")
-                self._info_board.show()
+        if event.button() == Qt.MouseButton.LeftButton:
+            pass
 
         elif event.button() == Qt.MouseButton.MiddleButton:
             if self._logic.to_measurer().get_current_entry_page() == 0:
@@ -477,62 +488,28 @@ class ControlRegion(QMainWindow):
                 self._info_board.set_text_by_template("Result with Page Header")
             self._info_board.show()
 
-
-    def wheelEvent(self, event : QWheelEvent):
-        if not self._info_board.is_dismissed():
-            self._info_board.dismiss()
-
-        if event.angleDelta().y() > 0:
-            self._next_entry()
-        else:
-            self._previous_entry()
-
-    def _next_entry(self):
-        measurer = self._logic.to_measurer()
-
-        measurer.go_to_next_entry()
-        page = measurer.get_current_entry_page()
-        if page == 0:
-            self._info_board.set_text_by_template("On No Entry")
-        elif page == measurer.get_number_of_entries():
-            self._info_board.set_text_by_template("On Last")
-        elif page == 1:
-            self._info_board.set_text_by_template("On First")
-        else:
-            self._info_board.set_text_by_template("On Next")
-        self._info_board.show()
-        
-        self._frac_exp_bar.update_bar()
-
-    def _previous_entry(self):
-        measurer = self._logic.to_measurer()
-
-        measurer.go_to_previous_entry()
-        page = measurer.get_current_entry_page()
-        if page == 0:
-            self._info_board.set_text_by_template("On No Entry")
-        elif page == 1:
-            self._info_board.set_text_by_template("On First")
-        elif page == measurer.get_number_of_entries():
-            self._info_board.set_text_by_template("On Last")
-        else:
-            self._info_board.set_text_by_template("On Previous")
-        self._info_board.show()
-        
-        self._frac_exp_bar.update_bar()
+        elif event.button() == Qt.MouseButton.RightButton:
+            if modifiers == shift:
+                self._info_board.set_text_by_template("Help")
+                self._info_board.show()
+            elif modifiers == nothing:
+                self._is_show_menu = True
 
     def mouseReleaseEvent(self, event : QMouseEvent):
-        if event.button() == Qt.MouseButton.RightButton:
-            if not (to_app().keyboardModifiers() & Qt.KeyboardModifier.ControlModifier) and to_app().keyboardModifiers() & Qt.KeyboardModifier.ShiftModifier:
-                if self._logic.to_measurer().get_current_entry_page() == 0:
-                    self._info_board.set_text_by_template("No Entry")
-                else:
-                    self._info_board.set_text_by_template("Result")
-                self._info_board.show()
+        mask = Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.ShiftModifier | Qt.KeyboardModifier.AltModifier
+        modifiers = to_app().keyboardModifiers() & mask
 
-            elif to_app().keyboardModifiers() & Qt.KeyboardModifier.ControlModifier and not (to_app().keyboardModifiers() & Qt.KeyboardModifier.ShiftModifier):
+        nothing = 0
+        ctrl    = Qt.KeyboardModifier.ControlModifier
+        shift   = Qt.KeyboardModifier.ShiftModifier
+        alt     = Qt.KeyboardModifier.AltModifier
+
+        if event.button() == Qt.MouseButton.RightButton:
+            if modifiers == shift:
+                self._dismiss_help()
+            elif modifiers == ctrl:
                 self._previous_entry()
-            elif to_app().keyboardModifiers() & Qt.KeyboardModifier.ControlModifier and to_app().keyboardModifiers() & Qt.KeyboardModifier.ShiftModifier:
+            elif modifiers == (ctrl | shift):
                 measurer = self._logic.to_measurer()
 
                 measurer.go_to_before_first_entry()
@@ -540,13 +517,21 @@ class ControlRegion(QMainWindow):
                 self._info_board.show()
                 
                 self._frac_exp_bar.update_bar()
+
+            elif self._info_board.get_current_template_name() == "Help":
+                # Workaround!!! 
+                # Dismiss help in case when Shift was released before RMB.
+                # '_move_window_to_foreground' removes keyboard focus, so 'keyReleaseEvent' is not received.
+                self._dismiss_help()
+
             else:
                 self._menu.setWindowFlags(self._flags_backup | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.FramelessWindowHint | Qt.WindowType.Tool)
+                self._menu.exec(event.globalPos())
 
         elif event.button() == Qt.MouseButton.LeftButton:
-            if to_app().keyboardModifiers() & Qt.KeyboardModifier.ControlModifier and not (to_app().keyboardModifiers() & Qt.KeyboardModifier.ShiftModifier):
+            if modifiers == ctrl:
                 self._next_entry()
-            elif to_app().keyboardModifiers() & Qt.KeyboardModifier.ControlModifier and to_app().keyboardModifiers() & Qt.KeyboardModifier.ShiftModifier:
+            elif modifiers == (ctrl | shift):
                 measurer = self._logic.to_measurer()
 
                 measurer.go_to_last_entry()
@@ -580,9 +565,14 @@ class ControlRegion(QMainWindow):
         
         _move_window_to_foreground("Path of Exile")
 
-    def contextMenuEvent(self, event : QContextMenuEvent):
-        if not (to_app().keyboardModifiers() & Qt.KeyboardModifier.ControlModifier) and not (to_app().keyboardModifiers() & Qt.KeyboardModifier.ShiftModifier):
-            self._menu.exec(event.globalPos())
+    def wheelEvent(self, event : QWheelEvent):
+        if not self._info_board.is_dismissed():
+            self._info_board.dismiss()
+
+        if event.angleDelta().y() > 0:
+            self._next_entry()
+        else:
+            self._previous_entry()
 
     def showEvent(self, event):
         if not self._info_board.is_dismissed():
@@ -619,6 +609,46 @@ class ControlRegion(QMainWindow):
 
         self._frac_exp_bar.update_bar()
 
+    def _next_entry(self):
+        measurer = self._logic.to_measurer()
+
+        measurer.go_to_next_entry()
+        page = measurer.get_current_entry_page()
+        if page == 0:
+            self._info_board.set_text_by_template("On No Entry")
+        elif page == measurer.get_number_of_entries():
+            self._info_board.set_text_by_template("On Last")
+        elif page == 1:
+            self._info_board.set_text_by_template("On First")
+        else:
+            self._info_board.set_text_by_template("On Next")
+        self._info_board.show()
+        
+        self._frac_exp_bar.update_bar()
+
+    def _previous_entry(self):
+        measurer = self._logic.to_measurer()
+
+        measurer.go_to_previous_entry()
+        page = measurer.get_current_entry_page()
+        if page == 0:
+            self._info_board.set_text_by_template("On No Entry")
+        elif page == 1:
+            self._info_board.set_text_by_template("On First")
+        elif page == measurer.get_number_of_entries():
+            self._info_board.set_text_by_template("On Last")
+        else:
+            self._info_board.set_text_by_template("On Previous")
+        self._info_board.show()
+        
+        self._frac_exp_bar.update_bar()
+
+    def _dismiss_help(self):
+        if self._logic.to_measurer().get_current_entry_page() == 0:
+            self._info_board.set_text_by_template("No Entry")
+        else:
+            self._info_board.set_text_by_template("Result")
+        self._info_board.show()
 
 def _move_window_to_foreground(window_name : str):
     user32 = ctypes.windll.user32
@@ -626,6 +656,7 @@ def _move_window_to_foreground(window_name : str):
     window_handle = user32.FindWindowW(None, window_name)
     if window_handle:
         user32.SetForegroundWindow(window_handle)
+
 
 class TrayMenu(QSystemTrayIcon):
     def __init__(self, menu : Menu):
