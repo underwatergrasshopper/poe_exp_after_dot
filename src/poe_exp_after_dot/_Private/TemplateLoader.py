@@ -27,8 +27,8 @@ class TemplateLoader:
     """
     Loads templates from format file for info board.
 
-    format file         - File with '.format' extension.
-    template            - Contains format of text and condition to switch to that format.
+    format file         - File with '.format' extension. Contains multiple templates.
+    template            - Contains format of text and optionally conditions to switch to other format.
 
     Grammar:
     <file>
@@ -53,7 +53,6 @@ class TemplateLoader:
         <text_format>                                                           # body    
 
     <condition>
-        done
         <delay>
 
     <name>

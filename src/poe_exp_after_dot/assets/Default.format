@@ -1,4 +1,7 @@
 ################################################################################
+# format file         - File with '.format' extension. Contains multiple templates.
+# template            - Contains format of text and optionally conditions to switch to other format.
+#
 # Grammar:
 #     <file>
 #         <comment_1>
@@ -22,7 +25,6 @@
 #         <text_format>                                                     # body    
 #     
 #     <condition>
-#         done
 #         <delay>
 #     
 #     <name>

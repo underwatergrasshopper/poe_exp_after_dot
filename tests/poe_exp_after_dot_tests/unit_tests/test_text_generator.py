@@ -53,21 +53,6 @@ def test_parse():
     assert generator.update(0.5) == True
     assert generator.gen_text(xxx = 12, yyy = "dummy") == "Some text: 12. And Another text: dummy."
 
-    ### done (delayed done) ###
-    loader = TemplateLoader()
-    loader.parse(_TEMPLATES)
-
-    generator = TextGenerator()
-    generator.set_templates(loader.to_templates())
-
-    generator.select_template("CCC")
-    assert generator.gen_text_no_done(xxx = 12, yyy = "dummy") == "Parameters of CCC: 12, dummy."
-    assert generator.update(10.0) == False
-    assert generator.gen_text_no_done(xxx = 12, yyy = "dummy") == "Parameters of CCC: 12, dummy."
-    generator.done()
-    assert generator.update(0.0) == True
-    assert generator.gen_text(xxx = 12, yyy = "dummy") == "Some text: 12. And Another text: dummy."
-
     ### unknown template name ###
     loader = TemplateLoader()
     loader.parse(_TEMPLATES)

@@ -568,12 +568,10 @@ class Logic:
         if template_name is not None:
             self._text_generator.select_template(template_name)
 
-        gen_text = self._text_generator.gen_text if is_done else self._text_generator.gen_text_no_done
-
         max_unit = time_unit_to_short(self._settings.get_val("time_max_unit", str))
 
         try:
-            text = gen_text(
+            text = self._text_generator.gen_text(
                 page                = self._measurer.get_current_entry_page(),
                 number              = self._measurer.get_number_of_entries(),
                 date                = self._measurer.get_date_str(is_empty_str_when_epoch = True),
@@ -605,9 +603,6 @@ class Logic:
             to_logger().debug("Used Format: %s" % text)
 
         return text
-    
-    def gen_info_board_text_done(self):
-        self._text_generator.done()
 
     def update_text_generator(self, delta) -> bool:
         """
