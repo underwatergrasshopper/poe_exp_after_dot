@@ -24,7 +24,7 @@ setuptools.setup(
     package_dir                     = {"" : "src"},
     packages                        = setuptools.find_packages(where = "src"),
     include_package_data            = True,
-    package_data                    = {"poe_exp_after_dot" : ["assets/icon.png"]},
+    package_data                    = {"poe_exp_after_dot" : ["assets/icon.png", "assets/Default.format"]},
     install_requires                = [
         "numpy>=1.26.0",
         "opencv-python-headless>=4.8.0",
