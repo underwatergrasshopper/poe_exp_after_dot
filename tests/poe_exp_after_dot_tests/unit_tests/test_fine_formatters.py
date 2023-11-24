@@ -81,7 +81,7 @@ def test_fine_time():
     assert str(FineTime(-1)) == f"{LT}0s"
 
     assert str(FineTime(2**64))                                 == f"{GT}9999999999999w"
-    assert str(FineTime(2**64, is_just_weeks_if_cup = False))   == f"{GT}99w6d23h59m59s"
+    assert str(FineTime(2**64, is_just_weeks_if_cap = False))   == f"{GT}99w6d23h59m59s"
 
     assert str(FineTime((99 + 1) * SECONDS_IN_WEEK))                           == "100w"
     assert str(FineTime((9999 + 1) * SECONDS_IN_DAY, max_unit = "d"))          == "1428w"
@@ -95,7 +95,7 @@ def test_fine_time():
         3           * 60 * 60 + 
         2           * 60 + 
         1,
-        is_just_weeks_if_cup = False
+        is_just_weeks_if_cap = False
     )) == f"{GT}99w6d23h59m59s"
 
     assert str(FineTime(
@@ -104,7 +104,7 @@ def test_fine_time():
         2           * 60 + 
         1, 
         max_unit = "d",
-        is_just_weeks_if_cup = False
+        is_just_weeks_if_cap = False
     )) == f"{GT}9999d23h59m59s"
 
     assert str(FineTime(
@@ -112,11 +112,11 @@ def test_fine_time():
         2 * 60 + 
         1, 
         max_unit = "h",
-        is_just_weeks_if_cup = False
+        is_just_weeks_if_cap = False
     )) == f"{GT}9999999h59m59s"
 
-    assert str(FineTime((9999999999 + 1) * 60 + 1, max_unit = "m", is_just_weeks_if_cup = False)) == f"{GT}9999999999m59s"
-    assert str(FineTime((9999999999999 + 1), max_unit = "s", is_just_weeks_if_cup = False)) == f"{GT}9999999999999s"
+    assert str(FineTime((9999999999 + 1) * 60 + 1, max_unit = "m", is_just_weeks_if_cap = False)) == f"{GT}9999999999m59s"
+    assert str(FineTime((9999999999999 + 1), max_unit = "s", is_just_weeks_if_cap = False)) == f"{GT}9999999999999s"
 
     ### color ###
 

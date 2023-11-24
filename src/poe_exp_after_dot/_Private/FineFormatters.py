@@ -142,7 +142,7 @@ class FineTime:
             value_color             : str | None    = None, 
             unit_color              : str | None    = None, 
             never_color             : str | None    = None,
-            is_just_weeks_if_cup    : bool          = True,
+            is_just_weeks_if_cap    : bool          = True,
             is_show_ms_if_below_1s  : bool          = False
                 ):
         """
@@ -236,7 +236,7 @@ class FineTime:
             else:
                 prefix = ""
 
-            if is_just_weeks_if_cup and prefix == GT:
+            if is_just_weeks_if_cap and prefix == GT:
                 weeks = self._time / SECONDS_IN_WEEK
                 weeks, _ = divmod(weeks, 1.0)  # rounding prevention
 
