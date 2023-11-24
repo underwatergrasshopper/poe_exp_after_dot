@@ -1,0 +1,11 @@
+<data_folder>
+    settings.json
+    exp_data.json
+    runtime.log
+    cache/
+    formats/
+        Default.format
+        *.format
+    characters/
+        <character_name>
+            exp_data.json
