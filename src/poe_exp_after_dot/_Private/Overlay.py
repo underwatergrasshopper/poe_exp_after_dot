@@ -124,9 +124,10 @@ def _move_window_to_foreground(window_name : str):
 
 class InfoBoard(QWidget):
     _logic          : Logic
+    _control_region : "ControlRegion"
     _is_dismissed   : bool
 
-    def __init__(self, logic : Logic):
+    def __init__(self, logic : Logic, control_region : "ControlRegion"):
         """
         font_size
             In pixels.
@@ -134,6 +135,7 @@ class InfoBoard(QWidget):
         super().__init__()
 
         self._logic = logic
+        self._control_region = control_region
         self._is_dismissed = False
 
         self.setWindowFlags(
@@ -198,11 +200,16 @@ class InfoBoard(QWidget):
         pos.setY(bottom - self._label.height())
         self.move(pos)
 
+    def mousePressEvent(self, event: QMouseEvent):
+        self._control_region.pause_foreground_guardian()
+
     def mouseReleaseEvent(self, event : QMouseEvent):
         if event.button() == Qt.MouseButton.LeftButton:
             self.hide()
             self.dismiss()
             self.set_text_by_template("Just Hint")
+        
+        self._control_region.resume_foreground_guardian()
 
     def paintEvent(self, event):
         painter = QPainter(self)
@@ -444,9 +451,9 @@ class ControlRegion(QMainWindow):
             logic.to_pos_data().control_region_height,
         ))
 
-        self._logic             = logic
+        self._logic         = logic
 
-        self._info_board    = InfoBoard(logic)
+        self._info_board    = InfoBoard(logic, self)
         self._frac_exp_bar  = FracExpBar(logic)
         self._menu          = Menu(logic, self)
 
@@ -463,6 +470,9 @@ class ControlRegion(QMainWindow):
     def pause_foreground_guardian_and_hide(self):
         self._foreground_guardian.pause()
         self.hide()
+
+    def pause_foreground_guardian(self):
+        self._foreground_guardian.pause()
 
     def resume_foreground_guardian(self):
         self._foreground_guardian.resume()
