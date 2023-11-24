@@ -115,6 +115,13 @@ def _get_key_modifiers():
     mask = _CTRL | _SHIFT | _ALT
     return to_app().keyboardModifiers() & mask
 
+def _move_window_to_foreground(window_name : str):
+    user32 = ctypes.windll.user32
+
+    window_handle = user32.FindWindowW(None, window_name)
+    if window_handle:
+        user32.SetForegroundWindow(window_handle)
+
 class InfoBoard(QWidget):
     _logic          : Logic
     _is_dismissed   : bool
@@ -370,6 +377,7 @@ class Menu(QMenu):
             to_logger().info("Quitting...")
             to_app().quit()
         self._quit_action.triggered.connect(quit)
+
         self.addAction(self._quit_action)
 
 
@@ -417,7 +425,6 @@ class ControlRegion(QMainWindow):
 
     _flags_backup           : Qt.WindowType
     _foreground_guardian    : ForegroundGuardian
-    _is_show_menu           : False
 
     def __init__(self, logic : Logic):
         super().__init__()
@@ -471,15 +478,15 @@ class ControlRegion(QMainWindow):
     def mousePressEvent(self, event : QMouseEvent):
         # raise RuntimeError("Some error.") # debug
 
-        _move_window_to_foreground("Path of Exile")
-
-        modifiers = _get_key_modifiers()
-
         if self._menu.isVisible():
             self._menu.close()
 
         if not self._info_board.is_dismissed():
             self._info_board.dismiss()
+
+        _move_window_to_foreground("Path of Exile")
+
+        modifiers = _get_key_modifiers()
 
         if event.button() == Qt.MouseButton.LeftButton:
             pass
@@ -495,8 +502,6 @@ class ControlRegion(QMainWindow):
             if modifiers == _SHIFT:
                 self._info_board.set_text_by_template("Help")
                 self._info_board.show()
-            elif modifiers == _NOTHING:
-                self._is_show_menu = True
 
     def mouseReleaseEvent(self, event : QMouseEvent):
         modifiers = _get_key_modifiers()
@@ -524,6 +529,9 @@ class ControlRegion(QMainWindow):
             else:
                 self._menu.setWindowFlags(self._flags_backup | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.FramelessWindowHint | Qt.WindowType.Tool)
                 self._menu.exec(event.globalPos())
+                # NOTE: Can't hide menu on PoE losing foreground, 
+                # because clicking on menu element is also counted as PoE losing foreground, 
+                # and action won't be executed.
 
         elif event.button() == Qt.MouseButton.LeftButton:
             if modifiers == _CTRL:
@@ -582,9 +590,6 @@ class ControlRegion(QMainWindow):
 
         if not self._info_board.is_dismissed():
             self._info_board.hide()
-
-        if self._menu.isVisible():
-            self._menu.close()
 
     def enterEvent(self, event: QEnterEvent):
         if self._info_board.is_dismissed():
@@ -646,13 +651,6 @@ class ControlRegion(QMainWindow):
         else:
             self._info_board.set_text_by_template("Result")
         self._info_board.show()
-
-def _move_window_to_foreground(window_name : str):
-    user32 = ctypes.windll.user32
-
-    window_handle = user32.FindWindowW(None, window_name)
-    if window_handle:
-        user32.SetForegroundWindow(window_handle)
 
 
 class TrayMenu(QSystemTrayIcon):
