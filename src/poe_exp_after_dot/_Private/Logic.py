@@ -235,17 +235,39 @@ class Entry:
 class Register:
     _entries    : list[Entry]
     _index      : int           # -1 - before first, no entry
+    _file_name  : str | None
 
     def __init__(self):
         self._entries = []
         self._index = -1
+        self._file_name = None
 
-    def load(self, file_name : str):
-        with open(file_name, "r") as file:
+    def load(self, file_name : str | None = None):
+        """
+        file_name : None
+            Uses last used name either by 'load' or 'save'.
+        """
+        if file_name is not None:
+            self._file_name = file_name
+
+        if self._file_name is None:
+            raise ValueError("Can't save exp data. No file name is provided.")
+
+        with open(self._file_name, "r") as file:
             self.load_from_str(file.read())
 
-    def save(self, file_name : str):
-        with open(file_name, "w") as file:
+    def save(self, file_name : str | None = None):
+        """
+        file_name : None
+            Uses last used name either by 'load' or 'save'.
+        """
+        if file_name is not None:
+            self._file_name = file_name
+
+        if self._file_name is None:
+            raise ValueError("Can't save exp data. No file name is provided.")
+
+        with open(self._file_name, "w") as file:
             file.write(self.export_to_str())
 
     def load_from_str(self, exp_data_text : str):
@@ -351,10 +373,10 @@ class Measurer:
         self._register = Register()
         self._is_update_fail = False
 
-    def load(self, file_name : str):
+    def load(self, file_name : str | None = None):
         self._register.load(file_name)
 
-    def save(self, file_name : str):
+    def save(self, file_name : str | None = None):
         self._register.save(file_name)
 
     def update(self, total_exp : int, time_ : float):

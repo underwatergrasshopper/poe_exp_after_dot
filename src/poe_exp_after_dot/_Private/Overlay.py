@@ -884,7 +884,7 @@ class Overlay:
             _exception_stash.exception = None
             raise exception
         
-        logic.to_measurer().save(exp_data_file_name)
+        logic.to_measurer().save()
         to_logger().info("Saved exp data.")
 
         settings.save()
