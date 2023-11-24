@@ -168,7 +168,6 @@ class InfoBoard(QWidget):
 
         self._text_generator = TextGenerator(template_loader.to_templates(), self._logic.get_info_board_text_parameters, self.set_text)
         self._text_generator.start()
-        self._text_generator.gen_text("First Help")
         ###
 
     def set_text_by_template(self, template_name : str):
@@ -460,7 +459,14 @@ class ControlRegion(QMainWindow):
         self._flags_backup = self._menu.windowFlags()
         
         self._foreground_guardian = ForegroundGuardian(self)
-
+                
+        if logic.to_measurer().get_number_of_entries() > 0:
+            self._info_board.dismiss()
+            self._info_board.set_text_by_template("Result")
+            self._frac_exp_bar.update_bar(is_try_show = False)
+        else:
+            self._info_board.set_text_by_template("First Help")
+        
     def to_menu(self) -> Menu:
         return self._menu
 
@@ -828,6 +834,10 @@ class Overlay:
 
         logic = Logic(settings)
 
+        exp_data_file_name = data_path + "/exp_data.json"
+        logic.to_measurer().load(exp_data_file_name)
+        to_logger().info("Loaded exp data.")
+
         app = to_app() # initializes global QApplication object
 
         font_data = FontData(
@@ -874,6 +884,9 @@ class Overlay:
             _exception_stash.exception = None
             raise exception
         
+        logic.to_measurer().save(exp_data_file_name)
+        to_logger().info("Saved exp data.")
+
         settings.save()
         to_logger().info("Saved settings.")
 

@@ -3,12 +3,13 @@ from dataclasses import dataclass
 
 import re
 import os
-from datetime import datetime as _datetime
+import json
 import logging
 import numpy
 import cv2
 import easyocr # type: ignore
 
+from datetime import datetime as _datetime
 from time import time as _get_time_since_epoch
 from PIL import ImageGrab
 
@@ -20,12 +21,33 @@ from .FineFormatters    import SECONDS_IN_DAY, SECONDS_IN_HOUR, SECONDS_IN_MINUT
 from .Settings          import Settings
 from .LogManager        import to_logger
 
+def _float_to_proper_value(value : float) -> float | str:
+    if value == float("inf"):
+        return "inf"
+    if value == float("-inf"):
+        return "-inf"
+    return value
 
 @dataclass
 class ExpThresholdInfo:
     level       : int
     base_exp    : int
     exp_to_next : int
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "level"         : self.level,
+            "base_exp"      : self.base_exp,
+            "exp_to_next"   : self.exp_to_next,
+        }
+    
+    @staticmethod
+    def from_dict(dict_ : dict[str, Any]) -> "ExpThresholdInfo":
+        return ExpThresholdInfo(
+            int(dict_["level"]),
+            int(dict_["base_exp"]),
+            int(dict_["exp_to_next"]),
+        )
 
 EXP_THRESHOLD_INFO_TABLE = (
     ExpThresholdInfo(1, 0, 525),
@@ -164,6 +186,52 @@ class Entry:
     time_to_10_percent      : float     # in seconds
     time_to_next_level      : float     # in seconds
 
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "total_exp"             : self.total_exp,
+            "info"                  : self.info.to_dict(),
+            "time_"                 : _float_to_proper_value(self.time_),
+
+            "is_other_level"        : self.is_other_level,
+            "is_gained_level"       : self.is_gained_level,
+
+            "progress"              : _float_to_proper_value(self.progress),
+            "progress_in_exp"       : self.progress_in_exp,
+
+            "progress_step"         : _float_to_proper_value(self.progress_step),
+            "progress_step_in_exp"  : self.progress_step_in_exp,
+
+            "progress_step_time"    : _float_to_proper_value(self.progress_step_time),
+            "exp_per_hour"          : self.exp_per_hour,
+
+            "time_to_10_percent"    : _float_to_proper_value(self.time_to_10_percent),
+            "time_to_next_level"    : _float_to_proper_value(self.time_to_next_level),
+        }
+    
+    @staticmethod
+    def from_dict(dict_ : dict[str, Any]) -> "Entry":
+        return Entry(
+            total_exp               = int(dict_["total_exp"]),
+            info                    = ExpThresholdInfo.from_dict(dict_["info"]),
+            time_                   = float(dict_["time_"]),
+
+            is_other_level          = bool(dict_["is_other_level"]),
+            is_gained_level         = bool(dict_["is_gained_level"]),
+
+            progress                = float(dict_["progress"]),
+            progress_in_exp         = int(dict_["progress_in_exp"]),
+
+            progress_step           = float(dict_["progress_step"]),
+            progress_step_in_exp    = int(dict_["progress_step_in_exp"]),
+
+            progress_step_time      = float(dict_["progress_step_time"]),
+            exp_per_hour            = int(dict_["exp_per_hour"]),
+
+            time_to_10_percent      = float(dict_["time_to_10_percent"]),
+            time_to_next_level      = float(dict_["time_to_next_level"]),
+        )
+
+
 class Register:
     _entries    : list[Entry]
     _index      : int           # -1 - before first, no entry
@@ -171,6 +239,31 @@ class Register:
     def __init__(self):
         self._entries = []
         self._index = -1
+
+    def load(self, file_name : str):
+        with open(file_name, "r") as file:
+            self.load_from_str(file.read())
+
+    def save(self, file_name : str):
+        with open(file_name, "w") as file:
+            file.write(self.export_to_str())
+
+    def load_from_str(self, exp_data_text : str):
+        self._entries = []
+
+        exp_data = json.loads(exp_data_text)
+        for entry in exp_data:
+            self._entries.append(Entry.from_dict(entry))
+
+        self._index = len(self._entries) - 1
+
+    def export_to_str(self) -> str:
+        exp_data = []
+        for entry in self._entries:
+            exp_data.append(entry.to_dict())
+
+        return json.dumps(exp_data, indent = 4)
+
 
     def add_new(self, entry : Entry):
         self._index += 1
@@ -256,7 +349,13 @@ class Measurer:
 
     def __init__(self):
         self._register = Register()
-        self._is_update_fail                = False
+        self._is_update_fail = False
+
+    def load(self, file_name : str):
+        self._register.load(file_name)
+
+    def save(self, file_name : str):
+        self._register.save(file_name)
 
     def update(self, total_exp : int, time_ : float):
         """

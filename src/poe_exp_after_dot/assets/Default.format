@@ -106,8 +106,8 @@ Wheel Scroll        - Next/Previous Entry
 {level} {progress}<br>
 {progress_step} in {progress_step_time}<br>
 {exp_per_hour}<br>
-next 10% in {time_to_10_percent}<br>
-next level in {time_to_next_level}<br>
+10% in {time_to_10_percent}<br>
+next in {time_to_next_level}<br>
 {exp}<br>
 {Just Hint}
 
