@@ -743,7 +743,6 @@ class ControlRegion(QMainWindow):
                 self._info_board.show()
                 
                 self._frac_exp_bar.update_bar()
-
             elif self._info_board.get_current_template_name() == "Help":
                 # Workaround!!! 
                 # Dismiss help in case when Shift was released before RMB.
@@ -773,6 +772,10 @@ class ControlRegion(QMainWindow):
                 self._info_board.show()
                 
                 self._frac_exp_bar.update_bar()
+            elif modifiers == (_CTRL | _SHIFT | _ALT):
+                self._previous_entry()
+                self._logic.to_measurer().remove_all_after_current_entry()
+                self.refresh()
             else:
                 _move_window_to_foreground("Path of Exile")
 

@@ -91,14 +91,15 @@ Hold <b>Shift + RMB</b> to show Help.<br>
 --- Help ---
 <pre>
 <p style="font-family: {font_name}; font-size: {font_size}px">
-LMB                 - New Entry (removes following entries)<br>
-Ctrl + LMB          - Next Entry<br>
-Ctrl + Shift + LMB  - Last Entry<br>
-RMB                 - Menu<br>
-Ctrl + RMB          - Previous Entry<br>
-Ctrl + Shift + RMB  - Before First Entry<br>
-Hold MMB            - Show Entry with Page and Date<br>
-Wheel Scroll        - Next/Previous Entry
+LMB                         - New Entry (removes following entries)<br>
+Ctrl + LMB                  - Next Entry<br>
+Ctrl + Shift + LMB          - Last Entry<br>
+RMB                         - Menu<br>
+Ctrl + RMB                  - Previous Entry<br>
+Ctrl + Shift + RMB          - Before First Entry<br>
+Hold MMB                    - Show Entry with Page and Date<br>
+Wheel Scroll                - Next/Previous Entry<br>
+Ctrl + Shift + Alt + LMB    - Remove current Entry with all following Entries
 </p>
 </pre>
 
