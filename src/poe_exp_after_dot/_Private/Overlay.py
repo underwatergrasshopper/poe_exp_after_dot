@@ -19,7 +19,7 @@ from .Logic             import Logic, PosData
 from .LogManager        import to_log_manager, to_logger
 from .Settings          import Settings
 from .TextGenerator     import TextGenerator, TemplateLoader
-from .CharacterRegister import CharacterRegister, Character, NONE_NAME
+from .CharacterRegister import CharacterRegister, Character
 
 from .GUI.ControlRegionInterface    import ControlRegionInterface
 from .GUI.Menu                      import Menu
@@ -764,12 +764,12 @@ class Overlay:
 
         logic = Logic(settings)
     
-        logic.to_character_register().create_character(NONE_NAME)
+        logic.to_character_register().create_character("")
         logic.to_character_register().scan_for_characters()
 
         selected = settings.get_val("character_name", str)
         character = logic.to_character_register().to_character(selected)
-
+        
         logic.to_measurer().load_exp_data(character.get_exp_data_file_name())
         to_logger().info("Loaded exp data.")
 

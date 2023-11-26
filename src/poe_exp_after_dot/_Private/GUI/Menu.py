@@ -13,7 +13,27 @@ from ..Commons           import EXIT_FAILURE, EXIT_SUCCESS, to_app
 from ..Logic             import Logic, PosData
 from ..LogManager        import to_log_manager, to_logger
 from ..Settings          import Settings
-from ..CharacterRegister import CharacterRegister, Character, NONE_NAME
+from ..CharacterRegister import CharacterRegister, Character
+
+
+NONE_NAME = "[None]"
+
+
+def _to_description_name(character_name : str) -> str:
+    """
+    Returns
+        Name which should be used in QWidget text, title, description.
+    """
+    if character_name == "":
+        return NONE_NAME
+    return character_name
+
+
+def _to_character_name(description_name : str) -> str:
+    if description_name == NONE_NAME:
+        return ""
+    return description_name
+
 
 def _align_to_bottom(menu : QMenu, bottom : int | None = None):
     rect = menu.geometry()
@@ -25,11 +45,13 @@ def _align_to_bottom(menu : QMenu, bottom : int | None = None):
         menu.setGeometry(rect)
         menu.adjustSize()
 
+
 def _find_action(menu : QMenu, text : str) -> QAction | None:
     for action in menu.actions():
         if action.text() == text:
             return action
     return None
+
 
 class PersistentMenu(QMenu):
     _no_close_actions : list[QAction]
@@ -54,6 +76,7 @@ class PersistentMenu(QMenu):
         else:
             super().mouseReleaseEvent(event)
 
+
 class ExpDataSubMenu(PersistentMenu):
     _logic              : Logic
     _control_region     : ControlRegionInterface
@@ -70,14 +93,12 @@ class ExpDataSubMenu(PersistentMenu):
         self._control_region = control_region
 
         selected = logic.to_settings().get_val("character_name", str)
-        if selected == "":
-            selected = NONE_NAME
 
-        for character_name in self._logic.to_character_register().get_character_names(is_include_none_name = True):
+        for character_name in self._logic.to_character_register().get_character_names(is_include_empty_name = True):
             if selected == character_name:
-                self.setTitle("Character: " + character_name)
+                self.setTitle("Character: " + _to_description_name(character_name))
 
-            action = QAction(character_name, self)
+            action = QAction(_to_description_name(character_name), self)
             action.triggered.connect(self._switch_character)
             self.addAction(action)
 
@@ -99,11 +120,10 @@ class ExpDataSubMenu(PersistentMenu):
 
         self._remove_menu = PersistentMenu("Remove", self)
         self.addMenu(self._remove_menu)
-        for name in self._logic.to_character_register().get_character_names(is_include_none_name = False):
-            if name != NONE_NAME:
-                action = self._remove_menu.addAction(name)
-                action.triggered.connect(self._remove_character)
-                self._remove_menu.register_no_close_action(action)
+        for character_name in self._logic.to_character_register().get_character_names(is_include_empty_name = False):
+            action = self._remove_menu.addAction(_to_description_name(character_name))
+            action.triggered.connect(self._remove_character)
+            self._remove_menu.register_no_close_action(action)
 
         self._remove_menu_separator = self._remove_menu.addSeparator()  
 
@@ -113,40 +133,42 @@ class ExpDataSubMenu(PersistentMenu):
         self._remove_menu.register_no_close_action(action)
     
     def _add_character(self):
-        name = self._line_edit.text()
+        description_name = self._line_edit.text()
         self._line_edit.setText("")
 
-        if name not in ["", "Add", "Remove", "All", NONE_NAME]:
-            action = QAction(name, self)
+        if description_name not in ["", "Add", "Remove", "All", NONE_NAME]:
+            action = QAction(description_name, self)
             action.triggered.connect(self._switch_character)
             self.insertAction(self._separator, action)
             _align_to_bottom(self)
 
-            action = QAction(name, self._remove_menu)
+            action = QAction(description_name, self._remove_menu)
             action.triggered.connect(self._remove_character)
             self._remove_menu.insertAction(self._remove_menu_separator, action)
             self._remove_menu.register_no_close_action(action)
             _align_to_bottom(self._remove_menu)
    
-            self._logic.to_character_register().create_character(name)
+            self._logic.to_character_register().create_character(_to_character_name(description_name))
 
         self._line_edit.setFocus()
 
     def _remove_all_characters(self):
-        for name in self._logic.to_character_register().get_character_names(is_include_none_name = False):
-            self._remove_character_by_name(name)
+        for character_name in self._logic.to_character_register().get_character_names(is_include_empty_name = False):
+            self._remove_character_by_character_name(character_name)
 
     def _remove_character(self):
         sender : QAction = self.sender()
-        name = sender.text()
-        self._remove_character_by_name(name, sender)
+        description_name = sender.text()
+        self._remove_character_by_character_name(_to_character_name(description_name), sender)
 
-    def _remove_character_by_name(self, name : str, remove_menu_action : QAction | None = None):
+    def _remove_character_by_character_name(self, character_name : str, remove_menu_action : QAction | None = None):
+        description_name = _to_description_name(character_name)
+
         if remove_menu_action is None:
-            remove_menu_action = _find_action(self._remove_menu, name)
+            remove_menu_action = _find_action(self._remove_menu, description_name)
 
-        if name in self._logic.to_character_register().get_character_names(is_include_none_name = False):
-            action = _find_action(self, name)
+        if character_name in self._logic.to_character_register().get_character_names(is_include_empty_name = False):
+            action = _find_action(self, description_name)
 
             if action is not None:
                 self.removeAction(action)
@@ -156,37 +178,25 @@ class ExpDataSubMenu(PersistentMenu):
                     self._remove_menu.removeAction(remove_menu_action)
                     _align_to_bottom(self._remove_menu)
 
-                if name == self._logic.to_settings().get_val("character_name", str):
-                    self._switch_character(character_name = NONE_NAME)
+                if character_name == self._logic.to_settings().get_val("character_name", str):
+                    self._switch_character_by_character_name("")
 
-                self._logic.to_character_register().destroy_character(name)
+                self._logic.to_character_register().destroy_character(character_name)
 
-    def _switch_character(self, *, character_name : str | None = None):
-        if character_name is None:
-            action : QAction = self.sender()
-            character_name = action.text()
+    def _switch_character(self):
+        action : QAction = self.sender()
+        character_name = _to_character_name(action.text())
+        self._switch_character_by_character_name(character_name)
 
-        self.setTitle("Character: " + character_name)
+    def _switch_character_by_character_name(self, character_name : str):
+        self.setTitle("Character: " + _to_description_name(character_name))
 
         file_name = self._logic.to_character_register().to_character(character_name).get_exp_data_file_name()
         self._logic.to_measurer().switch_exp_data(file_name)
         self._control_region.refresh()
 
-        self._logic.to_settings().set_val("character_name", character_name if character_name != NONE_NAME else "", str)
+        self._logic.to_settings().set_val("character_name", character_name, str)
 
-    def _fetch_characters(self) -> dict[str, Character]:
-        characters = {}
-
-        characters_path = self._get_data_path() + "/characters"
-
-        if os.path.exists(characters_path):
-            for name in os.listdir(characters_path):
-                characters[name] = Character(name, self._get_data_path())
-
-        return characters
-    
-    def _get_data_path(self) -> str:
-        return os.path.abspath(self._logic.to_settings().get_val("data_path", str))
 
 class Menu(QMenu):
     _logic                      : Logic

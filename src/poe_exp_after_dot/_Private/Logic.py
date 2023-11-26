@@ -20,7 +20,7 @@ from .FineFormatters    import FineBareLevel, FineExp, FineExpPerHour, FinePerce
 from .FineFormatters    import SECONDS_IN_DAY, SECONDS_IN_HOUR, SECONDS_IN_MINUTE, SECONDS_IN_WEEK
 from .Settings          import Settings
 from .LogManager        import to_logger
-from .CharacterRegister import CharacterRegister, Character, NONE_NAME
+from .CharacterRegister import CharacterRegister, Character
 
 def _float_to_proper_value(value : float) -> float | str:
     if value == float("inf"):
