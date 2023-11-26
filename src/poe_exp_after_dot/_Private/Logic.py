@@ -245,7 +245,7 @@ class Register:
     def load(self, file_name : str | None = None):
         """
         file_name : None
-            Uses last used name either by 'load' or 'save'.
+            Uses last used name either by 'load', 'save' or 'switch'.
         """
         if file_name is not None:
             self._file_name = file_name
@@ -259,7 +259,7 @@ class Register:
     def save(self, file_name : str | None = None):
         """
         file_name : None
-            Uses last used name either by 'load' or 'save'.
+            Uses last used name either by 'load', 'save' or 'switch'.
         """
         if file_name is not None:
             self._file_name = file_name
@@ -269,6 +269,14 @@ class Register:
 
         with open(self._file_name, "w") as file:
             file.write(self.export_to_str())
+
+    def switch(self, file_name : str):
+        if self.get_file_name() != file_name:
+            self.save()
+            self.load(file_name)
+
+    def get_file_name(self) -> str:
+        return self._file_name
 
     def load_from_str(self, exp_data_text : str):
         self._entries = []
@@ -373,12 +381,15 @@ class Measurer:
         self._register = Register()
         self._is_update_fail = False
 
-    def load(self, file_name : str | None = None):
+    def load_exp_data(self, file_name : str | None = None):
         self._register.load(file_name)
 
-    def save(self, file_name : str | None = None):
+    def save_exp_data(self, file_name : str | None = None):
         self._register.save(file_name)
 
+    def switch_exp_data(self, file_name : str):
+        self._register.switch(file_name)
+        
     def update(self, total_exp : int, time_ : float):
         """
         time_

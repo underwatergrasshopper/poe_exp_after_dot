@@ -30,14 +30,20 @@ class TextGenerator:
         self._is_started        = False
         self._time_left         = 0.0    
 
-    def gen_text(self, template_name : str) -> str:
+    def gen_text(self, template_name : str | None = None) -> str:
         """
         Generate text from parameters provided by 'get_parameters' function.
         And puts generated text to provided 'set_text' function.
 
+        template_name : None
+            Uses last used template name.
+
         Returns
             Generated text.
         """
+        if template_name is None:
+            template_name = self._template_name
+            
         self._select_template(template_name)        
         if to_logger().isEnabledFor(logging.DEBUG):
             to_logger().debug("Used Template: %s" % template_name)
