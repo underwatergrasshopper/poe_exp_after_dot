@@ -15,7 +15,7 @@ from PIL import ImageGrab
 
 from PySide6.QtWidgets  import QWidget
 
-from .Commons           import EXIT_FAILURE, EXIT_SUCCESS, time_unit_to_short
+from .Commons           import EXIT_FAILURE, EXIT_SUCCESS, time_unit_to_short, character_name_to_log_name
 from .FineFormatters    import FineBareLevel, FineExp, FineExpPerHour, FinePercent, FineTime
 from .FineFormatters    import SECONDS_IN_DAY, SECONDS_IN_HOUR, SECONDS_IN_MINUTE, SECONDS_IN_WEEK
 from .Settings          import Settings
@@ -273,7 +273,8 @@ class Register:
 
     def switch(self, file_name : str):
         if self.get_file_name() != file_name:
-            self.save()
+            if self._file_name is not None:
+                self.save(self._file_name)
             self.load(file_name)
 
     def get_file_name(self) -> str:
@@ -638,7 +639,6 @@ class TextFragment:
     def __repr__(self):
         return self.__str__()
 
-
 class Logic:
     _settings   : Settings
     _pos_data   : PosData
@@ -688,10 +688,42 @@ class Logic:
 
     def to_character_register(self):
         return self._character_register
+
+    def scan_and_load_character(self):
+        self._character_register.create_character("")
+        self._character_register.scan_for_characters()
+
+        to_logger().info(f"Scanned for character data.")
+
+        self.load_character()
+
+    def load_character(self):
+        self._load_character()
+
+        to_logger().info(f"Loaded character data of {character_name_to_log_name(self.get_character_name())}.")
+
+    def switch_character(self, character_name : str):
+        current_character_name = self.get_character_name()
+        self._save_character()
+        self._settings.set_val("character_name", character_name, str)
+        self._load_character()
+
+        to_logger().info(f"Switched character data from {character_name_to_log_name(current_character_name)} to {character_name_to_log_name(self.get_character_name())}. (Switch = Save Current & Load Existing/New)")
+
+    def save_character(self):
+        self._save_character()
+
+        to_logger().info(f"Saved character data of {character_name_to_log_name(self.get_character_name())}.")
+
+    def get_character_name(self) -> str:
+        """
+        Returns
+            Name of currently selected character.
+        """
+        return self._settings.get_val("character_name", str)
     
-    def switch_to_character(self, character_name : str):
-        character = self._character_register.to_character(character_name)
-        self._measurer.switch_exp_data(character.get_exp_data_file_name())
+    def to_character(self) -> Character:
+        return self._character_register.to_character(self.get_character_name())
 
     def get_info_board_text_parameters(self) -> dict[str, Any]:
         max_unit = time_unit_to_short(self._settings.get_val("time_max_unit", str))
@@ -742,6 +774,13 @@ class Logic:
 
     def is_fetch_failed(self) -> bool:
         return self._is_fetch_failed
+    
+    def _load_character(self):
+        character = self._character_register.to_character(self.get_character_name())
+        self._measurer.load_exp_data(character.get_exp_data_file_name())
+
+    def _save_character(self):
+        self._measurer.save_exp_data(self.to_character().get_exp_data_file_name())
 
     def _fetch_exp(self, cursor_x_in_screen : int, cursor_y_in_screen: int, widgets_to_hide : list[QWidget]) -> int | None:
         """

@@ -105,3 +105,10 @@ def run_error_board(data_path : str, message : str, short_message : str) -> int:
     launcher = "pyw -3-64" if is_pyw else "pythonw"
 
     return _os.system(f"start {launcher} {error_board_file_name} {error_board_exception_file_name} {message_file_name} {short_message_file_name}")
+
+
+def character_name_to_log_name(character_name : str):
+    if character_name:
+        return f"\"{character_name}\""
+    else:
+        return "Generic Character"

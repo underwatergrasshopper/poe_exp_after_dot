@@ -16,7 +16,7 @@ from ..Settings          import Settings
 from ..CharacterRegister import CharacterRegister, Character
 
 
-NONE_NAME = "[None]"
+GENERIC_CHARACTER_NAME = "[None]"
 
 
 def _to_description_name(character_name : str) -> str:
@@ -25,12 +25,12 @@ def _to_description_name(character_name : str) -> str:
         Name which should be used in QWidget text, title, description.
     """
     if character_name == "":
-        return NONE_NAME
+        return GENERIC_CHARACTER_NAME
     return character_name
 
 
 def _to_character_name(description_name : str) -> str:
-    if description_name == NONE_NAME:
+    if description_name == GENERIC_CHARACTER_NAME:
         return ""
     return description_name
 
@@ -92,10 +92,8 @@ class ExpDataSubMenu(PersistentMenu):
         self._logic = logic
         self._control_region = control_region
 
-        selected = logic.to_settings().get_val("character_name", str)
-
         for character_name in self._logic.to_character_register().get_character_names(is_include_empty_name = True):
-            if selected == character_name:
+            if character_name == logic.get_character_name():
                 self.setTitle("Character: " + _to_description_name(character_name))
 
             action = QAction(_to_description_name(character_name), self)
@@ -136,7 +134,7 @@ class ExpDataSubMenu(PersistentMenu):
         description_name = self._line_edit.text()
         self._line_edit.setText("")
 
-        if description_name not in ["", "Add", "Remove", "All", NONE_NAME]:
+        if description_name not in ["", "Add", "Remove", "All", GENERIC_CHARACTER_NAME]:
             action = QAction(description_name, self)
             action.triggered.connect(self._switch_character)
             self.insertAction(self._separator, action)
@@ -178,7 +176,7 @@ class ExpDataSubMenu(PersistentMenu):
                     self._remove_menu.removeAction(remove_menu_action)
                     _align_to_bottom(self._remove_menu)
 
-                if character_name == self._logic.to_settings().get_val("character_name", str):
+                if character_name == self._logic.get_character_name():
                     self._switch_character_by_character_name("")
 
                 self._logic.to_character_register().destroy_character(character_name)
@@ -191,11 +189,8 @@ class ExpDataSubMenu(PersistentMenu):
     def _switch_character_by_character_name(self, character_name : str):
         self.setTitle("Character: " + _to_description_name(character_name))
 
-        file_name = self._logic.to_character_register().to_character(character_name).get_exp_data_file_name()
-        self._logic.to_measurer().switch_exp_data(file_name)
+        self._logic.switch_character(character_name)
         self._control_region.refresh()
-
-        self._logic.to_settings().set_val("character_name", character_name, str)
 
 
 class Menu(QMenu):

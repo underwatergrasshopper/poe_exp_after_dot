@@ -3,6 +3,9 @@ import os
 from typing import SupportsFloat, SupportsInt, Sequence, Any
 from dataclasses import dataclass
 
+from .LogManager    import to_logger
+from .Commons       import character_name_to_log_name
+
 class Character:
     _name                   : str
     _data_path              : str
@@ -66,13 +69,27 @@ class CharacterRegister:
                     self.create_character(name)
 
     def create_character(self, name : str):
+        """
+        Does not overwrites character data files in 'characters' folder.
+        Creates new files if they do not exist.
+
+        name
+            Name of character. Can be an empty string. 
+            If empty string, then is identified as generic character.
+            Generic character is without name.
+        """
         character = Character(name, self._data_path)
         self._characters[name] = character
+
+        to_logger().info(f"Added character data for {character_name_to_log_name(name)}.")
+
         return character
 
     def destroy_character(self, name : str):
         self._characters[name].destroy()
         del self._characters[name]
+
+        to_logger().info(f"Destroyed character data for {character_name_to_log_name(name)}.")
 
     def to_character(self, name) -> Character:
         if name not in self._characters:

@@ -163,7 +163,7 @@ class InfoBoard(QWidget):
         ### info board text templates ###
         template_loader = TemplateLoader()
         def_format_file_name = logic.to_settings().get_val("def_format_file_name", str)
-        to_logger().info(f"Loading formats from \"{os.path.basename(def_format_file_name)}\" ...")
+        to_logger().info(f"Loading formats for info board from \"{os.path.basename(def_format_file_name)}\" ...")
         template_loader.load_and_parse(logic.to_settings().get_val("def_format_file_name", str))
         to_logger().info("Formats has been loaded.")
 
@@ -763,15 +763,8 @@ class Overlay:
             to_logger().info("Created \"Default.format\".")
 
         logic = Logic(settings)
-    
-        logic.to_character_register().create_character("")
-        logic.to_character_register().scan_for_characters()
 
-        selected = settings.get_val("character_name", str)
-        character = logic.to_character_register().to_character(selected)
-        
-        logic.to_measurer().load_exp_data(character.get_exp_data_file_name())
-        to_logger().info("Loaded exp data.")
+        logic.scan_and_load_character()
 
         app = to_app() # initializes global QApplication object
 
@@ -819,9 +812,8 @@ class Overlay:
             _exception_stash.exception = None
             raise exception
         
-        logic.to_measurer().save_exp_data()
-        to_logger().info("Saved exp data.")
-
+        logic.save_character()
+    
         settings.save()
         to_logger().info("Saved settings.")
 
