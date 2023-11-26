@@ -13,6 +13,7 @@ from ..Commons           import EXIT_FAILURE, EXIT_SUCCESS, to_app
 from ..Logic             import Logic, PosData
 from ..LogManager        import to_log_manager, to_logger
 from ..Settings          import Settings
+from ..CharacterRegister import CharacterRegister, Character, NONE_NAME
 
 def _align_to_bottom(menu : QMenu, bottom : int | None = None):
     rect = menu.geometry()
@@ -24,54 +25,11 @@ def _align_to_bottom(menu : QMenu, bottom : int | None = None):
         menu.setGeometry(rect)
         menu.adjustSize()
 
-
-NONE_NAME = "[None]"
-
-class CharacterData:
-    _name                   : str
-    _data_path              : str
-
-    _character_folder_path  : str | None
-    _exp_data_file_name     : str
-
-    def __init__(self, name : str, data_path : str):
-        """
-        name 
-            Name of character or NONE_NAME.
-        """
-        self._name                  = name
-        self._data_path             = data_path
-
-        if name != NONE_NAME:
-            self._character_folder_path     = os.path.abspath(data_path) + "/characters/" + name
-            self._exp_data_file_name        = self._character_folder_path + "/exp_data.json"
-        else:
-            self._character_folder_path     = None
-            self._exp_data_file_name        = os.path.abspath(data_path) + "/exp_data.json"
-
-        self._create()
-
-    def get_name(self) -> str:
-        return self._name
-    
-    def get_exp_data_file_name(self) -> str:
-        return self._exp_data_file_name
-
-    def _create(self):
-        if self._character_folder_path is not None:
-            os.makedirs(self._character_folder_path, exist_ok = True)
-
-        if not os.path.exists(self._exp_data_file_name):
-            with open(self._exp_data_file_name, "w") as file:
-                file.write("[]")
-
-    def destroy(self):
-        if os.path.isfile(self._exp_data_file_name):
-            os.remove(self._exp_data_file_name)
-
-        # to make sure it's a correct folder
-        if self._character_folder_path is not None and "characters" in self._character_folder_path and len(os.listdir(self._character_folder_path)) == 0:
-            os.rmdir(self._character_folder_path)
+def _find_action(menu : QMenu, text : str) -> QAction | None:
+    for action in menu.actions():
+        if action.text() == text:
+            return action
+    return None
 
 class PersistentMenu(QMenu):
     _no_close_actions : list[QAction]
@@ -100,8 +58,6 @@ class ExpDataSubMenu(PersistentMenu):
     _logic              : Logic
     _control_region     : ControlRegionInterface
 
-    _characters         : dict[str, CharacterData]
-
     _separator          : QAction
     _line_edit          : QLineEdit
     _remove_menu        : PersistentMenu
@@ -113,15 +69,11 @@ class ExpDataSubMenu(PersistentMenu):
         self._logic = logic
         self._control_region = control_region
 
-        data_path = self._get_data_path()
-
         selected = logic.to_settings().get_val("character_name", str)
         if selected == "":
             selected = NONE_NAME
 
-        self._characters = {NONE_NAME : CharacterData(NONE_NAME, data_path)} | self._fetch_characters()
-
-        for character_name in self._characters.keys():
+        for character_name in self._logic.to_character_register().get_character_names(is_include_none_name = True):
             if selected == character_name:
                 self.setTitle("Character: " + character_name)
 
@@ -147,7 +99,7 @@ class ExpDataSubMenu(PersistentMenu):
 
         self._remove_menu = PersistentMenu("Remove", self)
         self.addMenu(self._remove_menu)
-        for name in self._characters.keys():
+        for name in self._logic.to_character_register().get_character_names(is_include_none_name = False):
             if name != NONE_NAME:
                 action = self._remove_menu.addAction(name)
                 action.triggered.connect(self._remove_character)
@@ -176,15 +128,13 @@ class ExpDataSubMenu(PersistentMenu):
             self._remove_menu.register_no_close_action(action)
             _align_to_bottom(self._remove_menu)
    
-            self._characters[name] = CharacterData(name, self._get_data_path())
+            self._logic.to_character_register().create_character(name)
 
         self._line_edit.setFocus()
 
     def _remove_all_characters(self):
-        names = [name for name in self._characters.keys()]
-        for name in names:
-            if name != NONE_NAME:
-                self._remove_character_by_name(name)
+        for name in self._logic.to_character_register().get_character_names(is_include_none_name = False):
+            self._remove_character_by_name(name)
 
     def _remove_character(self):
         sender : QAction = self.sender()
@@ -193,17 +143,10 @@ class ExpDataSubMenu(PersistentMenu):
 
     def _remove_character_by_name(self, name : str, remove_menu_action : QAction | None = None):
         if remove_menu_action is None:
-            for action in self._remove_menu.actions():
-                if action.text() == name:
-                    remove_menu_action = action
+            remove_menu_action = _find_action(self._remove_menu, name)
 
-        if name in self._characters.keys():
-            def find_action() -> QAction | None:
-                for action in self.actions():
-                    if action.text() == name:
-                        return action
-                return None
-            action = find_action()
+        if name in self._logic.to_character_register().get_character_names(is_include_none_name = False):
+            action = _find_action(self, name)
 
             if action is not None:
                 self.removeAction(action)
@@ -213,11 +156,10 @@ class ExpDataSubMenu(PersistentMenu):
                     self._remove_menu.removeAction(remove_menu_action)
                     _align_to_bottom(self._remove_menu)
 
-                if self._logic.to_settings().get_val("character_name", str) == name:
+                if name == self._logic.to_settings().get_val("character_name", str):
                     self._switch_character(character_name = NONE_NAME)
 
-                self._characters[name].destroy()
-                del self._characters[name]
+                self._logic.to_character_register().destroy_character(name)
 
     def _switch_character(self, *, character_name : str | None = None):
         if character_name is None:
@@ -226,20 +168,20 @@ class ExpDataSubMenu(PersistentMenu):
 
         self.setTitle("Character: " + character_name)
 
-        file_name = self._characters[character_name].get_exp_data_file_name()
+        file_name = self._logic.to_character_register().to_character(character_name).get_exp_data_file_name()
         self._logic.to_measurer().switch_exp_data(file_name)
         self._control_region.refresh()
 
         self._logic.to_settings().set_val("character_name", character_name if character_name != NONE_NAME else "", str)
 
-    def _fetch_characters(self) -> dict[str, CharacterData]:
+    def _fetch_characters(self) -> dict[str, Character]:
         characters = {}
 
         characters_path = self._get_data_path() + "/characters"
 
         if os.path.exists(characters_path):
             for name in os.listdir(characters_path):
-                characters[name] = CharacterData(name, self._get_data_path())
+                characters[name] = Character(name, self._get_data_path())
 
         return characters
     

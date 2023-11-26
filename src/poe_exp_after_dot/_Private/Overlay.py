@@ -19,6 +19,7 @@ from .Logic             import Logic, PosData
 from .LogManager        import to_log_manager, to_logger
 from .Settings          import Settings
 from .TextGenerator     import TextGenerator, TemplateLoader
+from .CharacterRegister import CharacterRegister, Character, NONE_NAME
 
 from .GUI.ControlRegionInterface    import ControlRegionInterface
 from .GUI.Menu                      import Menu
@@ -762,18 +763,14 @@ class Overlay:
             to_logger().info("Created \"Default.format\".")
 
         logic = Logic(settings)
+    
+        logic.to_character_register().create_character(NONE_NAME)
+        logic.to_character_register().scan_for_characters()
 
-        character_name = settings.get_val("character_name", str)
-        if character_name == "":
-            exp_data_file_name = data_path + "/exp_data.json"
-        else:
-            exp_data_file_name = data_path + "/characters/" + character_name + "/exp_data.json"
+        selected = settings.get_val("character_name", str)
+        character = logic.to_character_register().to_character(selected)
 
-        if not os.path.isfile(exp_data_file_name):
-            with open(exp_data_file_name, "w") as file:
-                file.write("[]")
-
-        logic.to_measurer().load_exp_data(exp_data_file_name)
+        logic.to_measurer().load_exp_data(character.get_exp_data_file_name())
         to_logger().info("Loaded exp data.")
 
         app = to_app() # initializes global QApplication object

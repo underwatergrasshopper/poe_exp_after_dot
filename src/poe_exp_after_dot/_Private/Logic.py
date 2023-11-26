@@ -20,6 +20,7 @@ from .FineFormatters    import FineBareLevel, FineExp, FineExpPerHour, FinePerce
 from .FineFormatters    import SECONDS_IN_DAY, SECONDS_IN_HOUR, SECONDS_IN_MINUTE, SECONDS_IN_WEEK
 from .Settings          import Settings
 from .LogManager        import to_logger
+from .CharacterRegister import CharacterRegister, Character, NONE_NAME
 
 def _float_to_proper_value(value : float) -> float | str:
     if value == float("inf"):
@@ -642,6 +643,7 @@ class Logic:
     _settings   : Settings
     _pos_data   : PosData
     _measurer   : Measurer
+    _character_register : CharacterRegister
 
     _reader     : easyocr.Reader
 
@@ -680,7 +682,12 @@ class Logic:
 
         self._reader = easyocr.Reader(['en'], gpu = True, verbose = False)
 
+        self._character_register = CharacterRegister(settings.get_val("data_path", str))
+
         self._is_fetch_failed = False
+
+    def to_character_register(self):
+        return self._character_register
 
     def get_info_board_text_parameters(self) -> dict[str, Any]:
         max_unit = time_unit_to_short(self._settings.get_val("time_max_unit", str))
