@@ -688,6 +688,10 @@ class Logic:
 
     def to_character_register(self):
         return self._character_register
+    
+    def switch_to_character(self, character_name : str):
+        character = self._character_register.to_character(character_name)
+        self._measurer.switch_exp_data(character.get_exp_data_file_name())
 
     def get_info_board_text_parameters(self) -> dict[str, Any]:
         max_unit = time_unit_to_short(self._settings.get_val("time_max_unit", str))
