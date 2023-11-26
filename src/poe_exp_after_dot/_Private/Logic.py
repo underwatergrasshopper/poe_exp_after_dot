@@ -236,49 +236,22 @@ class Entry:
 class Register:
     _entries    : list[Entry]
     _index      : int           # -1 - before first, no entry
-    _file_name  : str | None
 
     def __init__(self):
         self._entries = []
         self._index = -1
-        self._file_name = None
 
-    def load(self, file_name : str | None = None):
-        """
-        file_name : None
-            Uses last used name either by 'load', 'save' or 'switch'.
-        """
-        if file_name is not None:
-            self._file_name = file_name
-
-        if self._file_name is None:
-            raise ValueError("Can't save exp data. No file name is provided.")
-
-        with open(self._file_name, "r") as file:
+    def load(self, file_name : str):
+        with open(file_name, "r") as file:
             self.load_from_str(file.read())
 
-    def save(self, file_name : str | None = None):
+    def save(self, file_name : str):
         """
         file_name : None
             Uses last used name either by 'load', 'save' or 'switch'.
         """
-        if file_name is not None:
-            self._file_name = file_name
-
-        if self._file_name is None:
-            raise ValueError("Can't save exp data. No file name is provided.")
-
-        with open(self._file_name, "w") as file:
+        with open(file_name, "w") as file:
             file.write(self.export_to_str())
-
-    def switch(self, file_name : str):
-        if self.get_file_name() != file_name:
-            if self._file_name is not None:
-                self.save(self._file_name)
-            self.load(file_name)
-
-    def get_file_name(self) -> str:
-        return self._file_name
 
     def load_from_str(self, exp_data_text : str):
         self._entries = []
@@ -386,14 +359,11 @@ class Measurer:
         self._register = Register()
         self._is_update_fail = False
 
-    def load_exp_data(self, file_name : str | None = None):
+    def load_exp_data(self, file_name : str):
         self._register.load(file_name)
 
-    def save_exp_data(self, file_name : str | None = None):
+    def save_exp_data(self, file_name : str):
         self._register.save(file_name)
-
-    def switch_exp_data(self, file_name : str):
-        self._register.switch(file_name)
         
     def update(self, total_exp : int, time_ : float):
         """
@@ -690,7 +660,7 @@ class Logic:
         return self._character_register
 
     def scan_and_load_character(self):
-        self._character_register.create_character("")
+        self._character_register.add_character("")
         self._character_register.scan_for_characters()
 
         to_logger().info(f"Scanned for character data.")

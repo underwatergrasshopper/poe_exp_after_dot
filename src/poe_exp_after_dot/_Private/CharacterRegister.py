@@ -66,9 +66,9 @@ class CharacterRegister:
         if os.path.exists(characters_path):
             for name in os.listdir(characters_path):
                 if os.path.isdir(characters_path + "/" + name):
-                    self.create_character(name)
+                    self.add_character(name)
 
-    def create_character(self, name : str):
+    def add_character(self, name : str):
         """
         Does not overwrites character data files in 'characters' folder.
         Creates new files if they do not exist.
@@ -81,7 +81,7 @@ class CharacterRegister:
         character = Character(name, self._data_path)
         self._characters[name] = character
 
-        to_logger().info(f"Added character data for {character_name_to_log_name(name)}.")
+        to_logger().info(f"Registered character data for {character_name_to_log_name(name)}. (Creates file structure if doesn't exist.)")
 
         return character
 
@@ -93,7 +93,7 @@ class CharacterRegister:
 
     def to_character(self, name) -> Character:
         if name not in self._characters:
-            self.create_character(name)
+            self.add_character(name)
 
         return self._characters[name]
     

@@ -146,7 +146,7 @@ class ExpDataSubMenu(PersistentMenu):
             self._remove_menu.register_no_close_action(action)
             _align_to_bottom(self._remove_menu)
    
-            self._logic.to_character_register().create_character(_to_character_name(description_name))
+            self._logic.to_character_register().add_character(_to_character_name(description_name))
 
         self._line_edit.setFocus()
 
