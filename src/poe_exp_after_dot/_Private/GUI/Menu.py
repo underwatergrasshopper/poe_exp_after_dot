@@ -24,10 +24,54 @@ def _align_to_bottom(menu : QMenu, bottom : int | None = None):
         menu.setGeometry(rect)
         menu.adjustSize()
 
-@dataclass
-class _CharacterData:
-    path                    : str
-    exp_data_file_name      : str
+
+NONE_NAME = "[None]"
+
+class CharacterData:
+    _name                   : str
+    _data_path              : str
+
+    _character_folder_path  : str | None
+    _exp_data_file_name     : str
+
+    def __init__(self, name : str, data_path : str):
+        """
+        name 
+            Name of character or NONE_NAME.
+        """
+        self._name                  = name
+        self._data_path             = data_path
+
+        if name != NONE_NAME:
+            self._character_folder_path     = os.path.abspath(data_path) + "/characters/" + name
+            self._exp_data_file_name        = self._character_folder_path + "/exp_data.json"
+        else:
+            self._character_folder_path     = None
+            self._exp_data_file_name        = os.path.abspath(data_path) + "/exp_data.json"
+
+        self._create()
+
+    def get_name(self) -> str:
+        return self._name
+    
+    def get_exp_data_file_name(self) -> str:
+        return self._exp_data_file_name
+
+    def _create(self):
+        if self._character_folder_path is not None:
+            os.makedirs(self._character_folder_path, exist_ok = True)
+
+        if not os.path.exists(self._exp_data_file_name):
+            with open(self._exp_data_file_name, "w") as file:
+                file.write("[]")
+
+    def destroy(self):
+        if os.path.isfile(self._exp_data_file_name):
+            os.remove(self._exp_data_file_name)
+
+        # to make sure it's a correct folder
+        if self._character_folder_path is not None and "characters" in self._character_folder_path and len(os.listdir(self._character_folder_path)) == 0:
+            os.rmdir(self._character_folder_path)
 
 class PersistentMenu(QMenu):
     _no_close_actions : list[QAction]
@@ -56,7 +100,7 @@ class ExpDataSubMenu(PersistentMenu):
     _logic              : Logic
     _control_region     : ControlRegionInterface
 
-    _characters         : dict[str, _CharacterData]
+    _characters         : dict[str, CharacterData]
 
     _separator          : QAction
     _line_edit          : QLineEdit
@@ -64,22 +108,22 @@ class ExpDataSubMenu(PersistentMenu):
     _remove_menu_separator : QAction
 
     def __init__(self, parent : "Menu", logic : Logic, control_region : ControlRegionInterface):
-        super().__init__("Exp Data", parent)
+        super().__init__("Character", parent)
 
         self._logic = logic
         self._control_region = control_region
 
         data_path = self._get_data_path()
 
-        selected_character_name = logic.to_settings().get_val("character_name", str)
-        if selected_character_name == "":
-            selected_character_name = "[Global]"
+        selected = logic.to_settings().get_val("character_name", str)
+        if selected == "":
+            selected = NONE_NAME
 
-        self._characters = {"[Global]" : _CharacterData(data_path, data_path + "/exp_data.json")} | self._fetch_characters()
+        self._characters = {NONE_NAME : CharacterData(NONE_NAME, data_path)} | self._fetch_characters()
 
         for character_name in self._characters.keys():
-            if selected_character_name == character_name:
-                self.setTitle("Exp Data: " + character_name)
+            if selected == character_name:
+                self.setTitle("Character: " + character_name)
 
             action = QAction(character_name, self)
             action.triggered.connect(self._switch_character)
@@ -89,6 +133,7 @@ class ExpDataSubMenu(PersistentMenu):
 
         action = QWidgetAction(self)
         self._line_edit = QLineEdit(self)
+        self._line_edit.returnPressed.connect(self._add_character)
         action.setDefaultWidget(self._line_edit)
         self.addAction(action)
         self.register_no_close_action(action)
@@ -103,7 +148,7 @@ class ExpDataSubMenu(PersistentMenu):
         self._remove_menu = PersistentMenu("Remove", self)
         self.addMenu(self._remove_menu)
         for name in self._characters.keys():
-            if name != "[Global]":
+            if name != NONE_NAME:
                 action = self._remove_menu.addAction(name)
                 action.triggered.connect(self._remove_character)
                 self._remove_menu.register_no_close_action(action)
@@ -119,43 +164,38 @@ class ExpDataSubMenu(PersistentMenu):
         name = self._line_edit.text()
         self._line_edit.setText("")
 
-        if name not in ["", "Add", "Remove", "All"]:
+        if name not in ["", "Add", "Remove", "All", NONE_NAME]:
             action = QAction(name, self)
             action.triggered.connect(self._switch_character)
             self.insertAction(self._separator, action)
             _align_to_bottom(self)
-
-            path = self._get_data_path() + "/characters/" + name
-            os.makedirs(path, exist_ok = True)
-
-            file_name = path + "/exp_data.json"
-            if not os.path.exists(file_name):
-                with open(file_name, "w") as file:
-                    file.write("[]")
 
             action = QAction(name, self._remove_menu)
             action.triggered.connect(self._remove_character)
             self._remove_menu.insertAction(self._remove_menu_separator, action)
             self._remove_menu.register_no_close_action(action)
             _align_to_bottom(self._remove_menu)
+   
+            self._characters[name] = CharacterData(name, self._get_data_path())
 
-            self._characters[name] = _CharacterData(path, file_name)
+        self._line_edit.setFocus()
 
     def _remove_all_characters(self):
         names = [name for name in self._characters.keys()]
         for name in names:
-            if name != "[Global]":
-                self._remove_character(name)
+            if name != NONE_NAME:
+                self._remove_character_by_name(name)
 
-    def _remove_character(self, name : str | None = None):
-        if name is None:
-            sender : QAction = self.sender()
-            name = sender.text()
-        else:
-            sender = None
+    def _remove_character(self):
+        sender : QAction = self.sender()
+        name = sender.text()
+        self._remove_character_by_name(name, sender)
+
+    def _remove_character_by_name(self, name : str, remove_menu_action : QAction | None = None):
+        if remove_menu_action is None:
             for action in self._remove_menu.actions():
                 if action.text() == name:
-                    sender = action
+                    remove_menu_action = action
 
         if name in self._characters.keys():
             def find_action() -> QAction | None:
@@ -169,15 +209,14 @@ class ExpDataSubMenu(PersistentMenu):
                 self.removeAction(action)
                 _align_to_bottom(self)
             
-                self._remove_menu.removeAction(sender)
-                _align_to_bottom(self._remove_menu)
+                if remove_menu_action is not None:
+                    self._remove_menu.removeAction(remove_menu_action)
+                    _align_to_bottom(self._remove_menu)
 
                 if self._logic.to_settings().get_val("character_name", str) == name:
-                    self._switch_character(character_name = "[Global]")
+                    self._switch_character(character_name = NONE_NAME)
 
-                file_name = self._characters[name].exp_data_file_name
-                if os.path.isfile(file_name):
-                    os.remove(file_name)
+                self._characters[name].destroy()
                 del self._characters[name]
 
     def _switch_character(self, *, character_name : str | None = None):
@@ -185,25 +224,22 @@ class ExpDataSubMenu(PersistentMenu):
             action : QAction = self.sender()
             character_name = action.text()
 
-        self.setTitle("Exp Data: " + character_name)
+        self.setTitle("Character: " + character_name)
 
-        file_name = self._characters[character_name].exp_data_file_name
+        file_name = self._characters[character_name].get_exp_data_file_name()
         self._logic.to_measurer().switch_exp_data(file_name)
         self._control_region.refresh()
 
-        self._logic.to_settings().set_val("character_name", character_name if character_name != "[Global]" else "", str)
+        self._logic.to_settings().set_val("character_name", character_name if character_name != NONE_NAME else "", str)
 
-    def _fetch_characters(self) -> dict[str, _CharacterData]:
+    def _fetch_characters(self) -> dict[str, CharacterData]:
         characters = {}
 
         characters_path = self._get_data_path() + "/characters"
 
         if os.path.exists(characters_path):
             for name in os.listdir(characters_path):
-                path = characters_path + "/" + name
-                exp_data_file_name = path + "/exp_data.json"
-                if os.path.isfile(exp_data_file_name):
-                    characters[name] = _CharacterData(path = path, exp_data_file_name = exp_data_file_name)
+                characters[name] = CharacterData(name, self._get_data_path())
 
         return characters
     
