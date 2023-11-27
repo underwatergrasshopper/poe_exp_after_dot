@@ -21,8 +21,8 @@ from .Settings              import Settings
 from .TextGenerator         import TextGenerator, TemplateLoader
 from .CharacterRegister     import CharacterRegister, Character
 
-from .GUI.Menu                      import Menu
-from .GUI.ControlRegion             import ControlRegion
+from .GUI.ControlRegion     import ControlRegion
+from .GUI.TrayMenu          import TrayMenu
 
 _HELP_TEXT = """
 poe_exp_after_dot.py [<option> ...]
@@ -111,21 +111,6 @@ pos_data.<resolution>.*_height
 """.strip("\n")
 
 
-
-
-
-
-class TrayMenu(QSystemTrayIcon):
-    def __init__(self, menu : Menu):
-        # Do not own 'menu'.
-        super().__init__()
-
-        icon_file_name =  os.path.abspath(os.path.dirname(__file__) + "/../assets/icon.png")
-        self.setIcon(QIcon(icon_file_name))
-
-        self.setContextMenu(menu)
-
-
 class _ExceptionStash:
     exception : BaseException | None
 
@@ -133,6 +118,7 @@ class _ExceptionStash:
         self.exception = None
 
 _exception_stash = _ExceptionStash()
+
 
 @dataclass
 class FontData:
