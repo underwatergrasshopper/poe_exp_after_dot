@@ -53,6 +53,17 @@ class Settings:
             except Exception as exception:
                 full_name = ".".join(names)
                 raise RuntimeError(f"Can not assigns value to settings with name path \"{full_name}\".") from exception
+            
+    def set_tmp_val(self, full_name : str, value, value_type : Type = str):
+        """
+        Sets temporal value only.
+
+        name
+            Name containing names of levels and variable separated by '.'. 
+            For Example: "ui.box.size".
+            If value with levels do not exist, then will be created.
+        """
+        self.set_val(full_name, value, value_type, is_into_temporal_only = True)
 
     def get_val(self, full_name : str, value_type : Type = str, *, is_from_temporal : bool = True) -> Any:
         """
@@ -72,7 +83,7 @@ class Settings:
             try:
                 return _get_val(self._persistent, names, value_type)
             except Exception as exception:
-                raise RuntimeError(f"Can not get value from settings with full name \"{full_name}\".") from exception
+                raise RuntimeError(f"Can not get value from settings with full name \"{full_name}\".") from exception  
             
     def try_get_val(self, full_name : str, value_type : Type = str, *, is_temporal : bool = True) -> Any | None:
         """

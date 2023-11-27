@@ -223,7 +223,7 @@ def test_settings_all(tmpdir):
 
     settings.load(file_name)
 
-    settings.set_val("nnn", -15, int, is_into_temporal_only = True)
+    settings.set_tmp_val("nnn", -15, int)
     settings.set_val("zzz.qqq", 67, int, is_into_temporal_only = True)
 
     assert settings.to_temporal()   == {"aaa" : 2, "nnn" : -15, "bbb" : {"ccc" : -1}, "zzz" : {"qqq" : 67}}

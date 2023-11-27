@@ -168,9 +168,9 @@ class Overlay:
         to_logger().info("====== NEW RUN ======")
         to_logger().debug(f"data_path={data_path}")
 
-        settings_path = data_path + "/settings.json"
-
         settings = Settings()
+
+        ### default settings ###
 
         settings.merge_with({
             "_comment" : "Type 'py -3-64 poe_exp_after_dot.py --settings-help' in console to see possible values.",
@@ -204,67 +204,50 @@ class Overlay:
             }
         })
 
+        ### load settings ###
+
+        settings_path = data_path + "/settings.json"
         settings.load(settings_path)
-
-        temporal_settings : dict[str, Any] = {
-            "data_path" : data_path,
-            "is_debug" : is_debug,
-        }
-        if font_data is not None:
-            font_settings : dict[str, Any] = {}
-            if font_data.name is not None:
-                font_settings["name"] = font_data.name
-            if font_data.size is not None:
-                font_settings["size"] = font_data.size
-            if font_data.is_bold is not None:
-                font_settings["is_bold"] = font_data.is_bold
-
-            temporal_settings["font"] = font_settings
-
-        if time_max_unit is not None:
-            temporal_settings["time_max_unit"] = time_max_unit
-
-        temporal_settings.update(merge_on_all_levels(temporal_settings, {"pos_data" : {"_command_line_custom" : {}}}))
-        _custom_pos_data : dict[str, Any] = temporal_settings["pos_data"]["_command_line_custom"]
-
-        if info_board_x:                    _custom_pos_data["info_board_x"]                    = info_board_x
-        if info_board_bottom:               _custom_pos_data["info_board_bottom"]               = info_board_bottom
-
-        if control_region_x:                _custom_pos_data["control_region_x"]                = control_region_x
-        if control_region_y:                _custom_pos_data["control_region_y"]                = control_region_y
-        if control_region_width:            _custom_pos_data["control_region_width"]            = control_region_width
-        if control_region_height:           _custom_pos_data["control_region_height"]           = control_region_height
-
-        if in_game_exp_bar_x:               _custom_pos_data["in_game_exp_bar_x"]               = in_game_exp_bar_x
-        if in_game_exp_bar_y:               _custom_pos_data["in_game_exp_bar_y"]               = in_game_exp_bar_y
-        if in_game_exp_bar_width:           _custom_pos_data["in_game_exp_bar_width"]           = in_game_exp_bar_width
-        if in_game_exp_bar_height:          _custom_pos_data["in_game_exp_bar_height"]          = in_game_exp_bar_height
-
-        if in_game_exp_tooltip_x_offset:    _custom_pos_data["in_game_exp_tooltip_x_offset"]    = in_game_exp_tooltip_x_offset
-        if in_game_exp_tooltip_y:           _custom_pos_data["in_game_exp_tooltip_y"]           = in_game_exp_tooltip_y
-        if in_game_exp_tooltip_width:       _custom_pos_data["in_game_exp_tooltip_width"]       = in_game_exp_tooltip_width
-        if in_game_exp_tooltip_height:      _custom_pos_data["in_game_exp_tooltip_height"]      = in_game_exp_tooltip_height
-
-        to_logger().debug(f"temporal_settings={temporal_settings}")
-
-        settings.merge_with(temporal_settings, is_into_temporal_only = True)
-
         to_logger().info("Loaded settings.")
 
+        ### temporal settings ###
+
+        settings.set_tmp_val("data_path", data_path, str)
+        settings.set_tmp_val("is_debug", is_debug, bool)
+
+        if font_data is not None:
+            settings.set_tmp_val("font.name", font_data.name, str)
+            settings.set_tmp_val("font.size", font_data.size, int)
+            settings.set_tmp_val("font.is_bold", font_data.is_bold, bool)
+
+        if time_max_unit is not None:
+            settings.set_tmp_val("font.time_max_unit", time_max_unit, int)
+
+        namespace = "pos_data._command_line_custom."
+        if info_board_x:                    settings.set_tmp_val(namespace + "info_board_x",                    info_board_x, int)
+        if info_board_bottom:               settings.set_tmp_val(namespace + "info_board_bottom",               info_board_bottom, int)
+
+        if control_region_x:                settings.set_tmp_val(namespace + "control_region_x",                control_region_x, int)
+        if control_region_y:                settings.set_tmp_val(namespace + "control_region_y",                control_region_y, int)
+        if control_region_width:            settings.set_tmp_val(namespace + "control_region_width",            control_region_width, int)
+        if control_region_height:           settings.set_tmp_val(namespace + "control_region_height",           control_region_height, int)
+
+        if in_game_exp_bar_x:               settings.set_tmp_val(namespace + "in_game_exp_bar_x",               in_game_exp_bar_x, int)
+        if in_game_exp_bar_y:               settings.set_tmp_val(namespace + "in_game_exp_bar_y",               in_game_exp_bar_y, int)
+        if in_game_exp_bar_width:           settings.set_tmp_val(namespace + "in_game_exp_bar_width",           in_game_exp_bar_width, int)
+        if in_game_exp_bar_height:          settings.set_tmp_val(namespace + "in_game_exp_bar_height",          in_game_exp_bar_height, int)
+
+        if in_game_exp_tooltip_x_offset:    settings.set_tmp_val(namespace + "in_game_exp_tooltip_x_offset",    in_game_exp_tooltip_x_offset, int)
+        if in_game_exp_tooltip_y:           settings.set_tmp_val(namespace + "in_game_exp_tooltip_y",           in_game_exp_tooltip_y, int)
+        if in_game_exp_tooltip_width:       settings.set_tmp_val(namespace + "in_game_exp_tooltip_width",       in_game_exp_tooltip_width, int)
+        if in_game_exp_tooltip_height:      settings.set_tmp_val(namespace + "in_game_exp_tooltip_height",      in_game_exp_tooltip_height, int)
+
         def_format_file_name = data_path + "/formats/Default.format"
-        settings.set_val("def_format_file_name", def_format_file_name, str, is_into_temporal_only = True)
+        settings.set_tmp_val("def_format_file_name", def_format_file_name, str)
 
-        if not _os.path.exists(def_format_file_name) or is_overwrite_default_format:
-            _os.makedirs(_os.path.dirname(def_format_file_name), exist_ok = True)
+        to_logger().debug(f"temporal_settings={settings.to_temporal()}")
 
-            if is_overwrite_default_format and _os.path.exists(def_format_file_name):
-                _os.remove(def_format_file_name)
-
-            source_file_name = _base_path + "/assets/Default.format"
-            
-            _shutil.copy(source_file_name, def_format_file_name)
-
-            to_logger().info("Created \"Default.format\".")
+        _try_create_default_format_file(def_format_file_name, is_overwrite_default_format)
 
         logic = Logic(settings)
 
@@ -272,13 +255,7 @@ class Overlay:
 
         app = to_app() # initializes global QApplication object
 
-        font_data = FontData(
-            name = settings.get_val("font.name", str),
-            size = settings.get_val("font.size", int),
-            is_bold = settings.get_val("font.is_bold", bool),
-        )
-        font_style = "bold" if font_data.is_bold else "normal"
-        to_logger().info(f"Font: {font_data.name}, {font_data.size}px, {font_style}.")
+        to_logger().info(_get_font_info(settings))
 
         app.setStyle("Fusion")
 
@@ -475,3 +452,27 @@ class Overlay:
                 is_overwrite_default_format     = is_overwrite_default_format
             )
         return EXIT_SUCCESS
+
+
+def _get_font_info(settings : Settings) -> str:
+    name = settings.get_val("font.name", str)
+    size = settings.get_val("font.size", int)
+    is_bold = settings.get_val("font.is_bold", bool)
+ 
+    style = "bold" if is_bold else "normal"
+
+    return f"Font: {name}, {size}px, {style}."
+
+
+def _try_create_default_format_file(def_format_file_name : str, is_overwrite_default_format : bool):
+    if not _os.path.exists(def_format_file_name) or is_overwrite_default_format:
+        _os.makedirs(_os.path.dirname(def_format_file_name), exist_ok = True)
+
+        if is_overwrite_default_format and _os.path.exists(def_format_file_name):
+            _os.remove(def_format_file_name)
+
+        source_file_name = _base_path + "/assets/Default.format"
+        
+        _shutil.copy(source_file_name, def_format_file_name)
+
+        to_logger().info("Created \"Default.format\".")
