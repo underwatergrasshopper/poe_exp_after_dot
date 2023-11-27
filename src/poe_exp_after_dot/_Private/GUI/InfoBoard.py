@@ -22,7 +22,6 @@ from ..TextGenerator     import TextGenerator, TemplateLoader
 from ..CharacterRegister import CharacterRegister, Character
 
 from .ControlRegionInterface    import ControlRegionInterface
-from .Menu                      import Menu
 
 
 class InfoBoard(QWidget):

@@ -7,13 +7,13 @@ from PySide6.QtWidgets  import QMainWindow, QApplication, QWidget, QLabel, QSyst
 from PySide6.QtCore     import Qt, QPoint, QRect, QEvent, QLine, QTimer
 from PySide6.QtGui      import QColor, QMouseEvent, QIcon, QAction
 
-from .ControlRegionInterface import ControlRegionInterface
-
 from ..Commons           import EXIT_FAILURE, EXIT_SUCCESS, to_app
 from ..Logic             import Logic, PosData
 from ..LogManager        import to_log_manager, to_logger
 from ..Settings          import Settings
 from ..CharacterRegister import CharacterRegister, Character
+
+from .ControlRegionInterface import ControlRegionInterface
 
 
 GENERIC_CHARACTER_NAME = "[None]"
