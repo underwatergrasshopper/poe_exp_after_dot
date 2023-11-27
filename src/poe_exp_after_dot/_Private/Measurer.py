@@ -121,9 +121,12 @@ class Register:
 
         return _json.dumps(exp_data, indent = 4)
 
-    def remove_all_after_current(self):
+    def remove_current_and_all_above(self):
         if self._index > -1:
-            self._entries = self._entries[:self._index + 1]
+            self._entries = self._entries[:self._index]
+            self._index -= 1
+        elif self._index == -1:
+            self._entries = []
 
     def add_new(self, entry : Entry):
         self._index += 1
@@ -410,5 +413,5 @@ class Measurer:
     def go_to_last_entry(self):
         self._register.go_to_last()
 
-    def remove_all_after_current_entry(self):
-        self._register.remove_all_after_current()
+    def remove_current_entry_and_all_entries_above(self):
+        self._register.remove_current_and_all_above()

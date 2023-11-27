@@ -183,8 +183,7 @@ class ControlRegion(QMainWindow, ControlRegionInterface):
                 
                 self._frac_exp_bar.update_bar()
             elif modifiers == (_CTRL | _SHIFT | _ALT):
-                self._previous_entry()
-                self._logic.to_measurer().remove_all_after_current_entry()
+                self._logic.to_measurer().remove_current_entry_and_all_entries_above()
                 self.refresh()
             else:
                 _move_window_to_foreground("Path of Exile")
