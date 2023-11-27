@@ -6,13 +6,12 @@ from poe_exp_after_dot._Private.Settings import Settings
 def test_settings_none_existing(tmpdir):
     file_name = tmpdir + "/settings.json"
 
-    settings = Settings(file_name, {})
-    settings.load_and_add_temporal({})
-    settings.save()
+    settings = Settings()
+    settings.load(file_name)
+    settings.save(file_name)
 
-    assert settings._default == {}
-    assert settings._temporal == {}
-    assert settings._settings == {}
+    assert settings.to_temporal() == {}
+    assert settings.to_persistent() == {}
 
     assert _load_settings(file_name) == {}
 
@@ -21,51 +20,46 @@ def test_settings_empty(tmpdir):
 
     _make_settings(file_name, {})
 
-    settings = Settings(file_name, {})
-    settings.load_and_add_temporal({})
-    settings.save()
+    settings = Settings()
+    settings.load(file_name)
+    settings.save(file_name)
 
-    assert settings._default == {}
-    assert settings._temporal == {}
-    assert settings._settings == {}
+    assert settings.to_temporal() == {}
+    assert settings.to_persistent() == {}
 
     assert _load_settings(file_name) == {}
 
 def test_settings_no_default_no_file_no_temporal(tmpdir):
     file_name = tmpdir + "/settings.json"
 
-    settings = Settings(file_name, {})
-    settings.load_and_add_temporal({})
+    settings = Settings()
+    settings.load(file_name)
+    settings.save(file_name)
 
-    assert settings._default    == {}
-    assert settings._temporal   == {}
-    assert settings._settings   == {}
+    assert settings.to_temporal()   == {}
+    assert settings.to_persistent() == {}
 
     ### set ###
 
     settings.set_val("aaa", 12, int)
 
-    assert settings._default    == {}
-    assert settings._temporal   == {"aaa" : 12}
-    assert settings._settings   == {"aaa" : 12}
+    assert settings.to_temporal()   == {"aaa" : 12}
+    assert settings.to_persistent() == {"aaa" : 12}
     
     settings.set_val("bbb.ccc", 23, int)
 
-    assert settings._default    == {}
-    assert settings._temporal   == {"aaa" : 12, "bbb" : {"ccc" : 23}}
-    assert settings._settings   == {"aaa" : 12, "bbb" : {"ccc" : 23}}
+    assert settings.to_temporal()   == {"aaa" : 12, "bbb" : {"ccc" : 23}}
+    assert settings.to_persistent() == {"aaa" : 12, "bbb" : {"ccc" : 23}}
 
-    settings.set_val("bbb.ddd", 45, int, is_temporal_only = True)
+    settings.set_val("bbb.ddd", 45, int, is_into_temporal_only = True)
 
-    assert settings._default    == {}
-    assert settings._temporal   == {"aaa" : 12, "bbb" : {"ccc" : 23, "ddd" : 45}}
-    assert settings._settings   == {"aaa" : 12, "bbb" : {"ccc" : 23}}
+    assert settings.to_temporal()   == {"aaa" : 12, "bbb" : {"ccc" : 23, "ddd" : 45}}
+    assert settings.to_persistent() == {"aaa" : 12, "bbb" : {"ccc" : 23}}
     
     settings.set_val("bbb.eee", 67, str)
 
-    assert settings._default    == {}
-    assert settings._temporal   == {"aaa" : 12, "bbb" : {"ccc" : 23, "ddd" : 45, "eee" : "67"}}
-    assert settings._settings   == {"aaa" : 12, "bbb" : {"ccc" : 23, "eee" : "67"}}
+    assert settings.to_temporal()   == {"aaa" : 12, "bbb" : {"ccc" : 23, "ddd" : 45, "eee" : "67"}}
+    assert settings.to_persistent() == {"aaa" : 12, "bbb" : {"ccc" : 23, "eee" : "67"}}
 
     ### get ###
     try:
@@ -79,7 +73,7 @@ def test_settings_no_default_no_file_no_temporal(tmpdir):
     assert settings.get_val("bbb.ccc", int) == 23
     assert settings.get_val("bbb.eee", int) == 67
     assert settings.get_val("bbb.eee", str) == "67"
-    assert settings.get_val("bbb.ddd", int, is_temporal = True) == 45
+    assert settings.get_val("bbb.ddd", int, is_from_temporal = True) == 45
 
     assert settings.try_get_val("xxx", int) == None
 
@@ -91,45 +85,48 @@ def test_settings_no_default_no_file_no_temporal(tmpdir):
 
     ### save ###
 
-    settings.save()
+    settings.save(file_name)
 
     assert _load_settings(file_name) == {"aaa" : 12, "bbb" : {"ccc" : 23, "eee" : "67"}}
 
 def test_settings_no_file_no_temporal(tmpdir):
     file_name = tmpdir + "/settings.json"
 
-    settings = Settings(file_name, {"nnn" : 15, "bbb" : {"ccc" : 1}})
-    settings.load_and_add_temporal({})
+    settings = Settings()
 
-    assert settings._default    == {"nnn" : 15, "bbb" : {"ccc" : 1}}
-    assert settings._temporal   == {"nnn" : 15, "bbb" : {"ccc" : 1}}
-    assert settings._settings   == {"nnn" : 15, "bbb" : {"ccc" : 1}}
+    #### default ###
+    settings.set_val("nnn", 15, int)
+    settings.set_val("bbb.ccc", 1, int)
+
+    assert settings.to_temporal()     == {"nnn" : 15, "bbb" : {"ccc" : 1}}
+    assert settings.to_persistent()   == {"nnn" : 15, "bbb" : {"ccc" : 1}}
+
+    settings.load(file_name)
+
+    assert settings.to_temporal()     == {"nnn" : 15, "bbb" : {"ccc" : 1}}
+    assert settings.to_persistent()   == {"nnn" : 15, "bbb" : {"ccc" : 1}}
 
     ### set ###
 
     settings.set_val("aaa", 12, int)
 
-    assert settings._default    == {"nnn" : 15, "bbb" : {"ccc" : 1}}
-    assert settings._temporal   == {"aaa" : 12, "nnn" : 15, "bbb" : {"ccc" : 1}}
-    assert settings._settings   == {"aaa" : 12, "nnn" : 15, "bbb" : {"ccc" : 1}}
+    assert settings.to_temporal()   == {"aaa" : 12, "nnn" : 15, "bbb" : {"ccc" : 1}}
+    assert settings.to_persistent() == {"aaa" : 12, "nnn" : 15, "bbb" : {"ccc" : 1}}
     
     settings.set_val("bbb.ccc", 23, int)
 
-    assert settings._default    == {"nnn" : 15, "bbb" : {"ccc" : 1}}
-    assert settings._temporal   == {"aaa" : 12, "nnn" : 15, "bbb" : {"ccc" : 23}}
-    assert settings._settings   == {"aaa" : 12, "nnn" : 15, "bbb" : {"ccc" : 23}}
+    assert settings.to_temporal()   == {"aaa" : 12, "nnn" : 15, "bbb" : {"ccc" : 23}}
+    assert settings.to_persistent() == {"aaa" : 12, "nnn" : 15, "bbb" : {"ccc" : 23}}
 
-    settings.set_val("bbb.ddd", 45, int, is_temporal_only = True)
+    settings.set_val("bbb.ddd", 45, int, is_into_temporal_only = True)
 
-    assert settings._default    == {"nnn" : 15, "bbb" : {"ccc" : 1}}
-    assert settings._temporal   == {"aaa" : 12, "nnn" : 15, "bbb" : {"ccc" : 23, "ddd" : 45}}
-    assert settings._settings   == {"aaa" : 12, "nnn" : 15, "bbb" : {"ccc" : 23}}
+    assert settings.to_temporal()   == {"aaa" : 12, "nnn" : 15, "bbb" : {"ccc" : 23, "ddd" : 45}}
+    assert settings.to_persistent() == {"aaa" : 12, "nnn" : 15, "bbb" : {"ccc" : 23}}
     
     settings.set_val("bbb.eee", 67, str)
 
-    assert settings._default    == {"nnn" : 15, "bbb" : {"ccc" : 1}}
-    assert settings._temporal   == {"aaa" : 12, "nnn" : 15, "bbb" : {"ccc" : 23, "ddd" : 45, "eee" : "67"}}
-    assert settings._settings   == {"aaa" : 12, "nnn" : 15, "bbb" : {"ccc" : 23, "eee" : "67"}}
+    assert settings.to_temporal()   == {"aaa" : 12, "nnn" : 15, "bbb" : {"ccc" : 23, "ddd" : 45, "eee" : "67"}}
+    assert settings.to_persistent() == {"aaa" : 12, "nnn" : 15, "bbb" : {"ccc" : 23, "eee" : "67"}}
 
     ### get ###
 
@@ -144,11 +141,11 @@ def test_settings_no_file_no_temporal(tmpdir):
     assert settings.get_val("bbb.ccc", int) == 23
     assert settings.get_val("bbb.eee", int) == 67
     assert settings.get_val("bbb.eee", str) == "67"
-    assert settings.get_val("bbb.ddd", int, is_temporal = True) == 45
+    assert settings.get_val("bbb.ddd", int, is_from_temporal = True) == 45
 
     ### save ###
     
-    settings.save()
+    settings.save(file_name)
 
     assert _load_settings(file_name) == {"aaa" : 12, "nnn" : 15, "bbb" : {"ccc" : 23, "eee" : "67"}}
 
@@ -157,38 +154,39 @@ def test_settings_no_temporal(tmpdir):
 
     _make_settings(file_name, {"aaa" : 2, "bbb" : {"ccc" : -1}})
 
-    settings = Settings(file_name, {"nnn" : 15, "bbb" : {"ccc" : 1}})
-    settings.load_and_add_temporal({})
+    settings = Settings()
 
-    assert settings._default    == {"nnn" : 15, "bbb" : {"ccc" : 1}}
-    assert settings._temporal   == {"aaa" : 2, "nnn" : 15, "bbb" : {"ccc" : -1}}
-    assert settings._settings   == {"aaa" : 2, "nnn" : 15, "bbb" : {"ccc" : -1}}
+    ### default ###
+
+    settings.set_val("nnn", 15, int)
+    settings.set_val("bbb.ccc", 1, int)
+
+    settings.load(file_name)
+
+    assert settings.to_temporal()   == {"aaa" : 2, "nnn" : 15, "bbb" : {"ccc" : -1}}
+    assert settings.to_persistent() == {"aaa" : 2, "nnn" : 15, "bbb" : {"ccc" : -1}}
 
     ### set ###
 
     settings.set_val("aaa", 12, int)
 
-    assert settings._default    == {"nnn" : 15, "bbb" : {"ccc" : 1}}
-    assert settings._temporal   == {"aaa" : 12, "nnn" : 15, "bbb" : {"ccc" : -1}}
-    assert settings._settings   == {"aaa" : 12, "nnn" : 15, "bbb" : {"ccc" : -1}}
+    assert settings.to_temporal()   == {"aaa" : 12, "nnn" : 15, "bbb" : {"ccc" : -1}}
+    assert settings.to_persistent() == {"aaa" : 12, "nnn" : 15, "bbb" : {"ccc" : -1}}
     
     settings.set_val("bbb.ccc", 23, int)
 
-    assert settings._default    == {"nnn" : 15, "bbb" : {"ccc" : 1}}
-    assert settings._temporal   == {"aaa" : 12, "nnn" : 15, "bbb" : {"ccc" : 23}}
-    assert settings._settings   == {"aaa" : 12, "nnn" : 15, "bbb" : {"ccc" : 23}}
+    assert settings.to_temporal()   == {"aaa" : 12, "nnn" : 15, "bbb" : {"ccc" : 23}}
+    assert settings.to_persistent() == {"aaa" : 12, "nnn" : 15, "bbb" : {"ccc" : 23}}
 
-    settings.set_val("bbb.ddd", 45, int, is_temporal_only = True)
+    settings.set_val("bbb.ddd", 45, int, is_into_temporal_only = True)
 
-    assert settings._default    == {"nnn" : 15, "bbb" : {"ccc" : 1}}
-    assert settings._temporal   == {"aaa" : 12, "nnn" : 15, "bbb" : {"ccc" : 23, "ddd" : 45}}
-    assert settings._settings   == {"aaa" : 12, "nnn" : 15, "bbb" : {"ccc" : 23}}
+    assert settings.to_temporal()   == {"aaa" : 12, "nnn" : 15, "bbb" : {"ccc" : 23, "ddd" : 45}}
+    assert settings.to_persistent() == {"aaa" : 12, "nnn" : 15, "bbb" : {"ccc" : 23}}
     
     settings.set_val("bbb.eee", 67, str)
 
-    assert settings._default    == {"nnn" : 15, "bbb" : {"ccc" : 1}}
-    assert settings._temporal   == {"aaa" : 12, "nnn" : 15, "bbb" : {"ccc" : 23, "ddd" : 45, "eee" : "67"}}
-    assert settings._settings   == {"aaa" : 12, "nnn" : 15, "bbb" : {"ccc" : 23, "eee" : "67"}}
+    assert settings.to_temporal()   == {"aaa" : 12, "nnn" : 15, "bbb" : {"ccc" : 23, "ddd" : 45, "eee" : "67"}}
+    assert settings.to_persistent() == {"aaa" : 12, "nnn" : 15, "bbb" : {"ccc" : 23, "eee" : "67"}}
 
     ### get ###
 
@@ -203,11 +201,11 @@ def test_settings_no_temporal(tmpdir):
     assert settings.get_val("bbb.ccc", int) == 23
     assert settings.get_val("bbb.eee", int) == 67
     assert settings.get_val("bbb.eee", str) == "67"
-    assert settings.get_val("bbb.ddd", int, is_temporal = True) == 45
+    assert settings.get_val("bbb.ddd", int, is_from_temporal = True) == 45
 
     ### save ###
     
-    settings.save()
+    settings.save(file_name)
 
     assert _load_settings(file_name) == {"aaa" : 12, "nnn" : 15, "bbb" : {"ccc" : 23, "eee" : "67"}}
 
@@ -216,38 +214,42 @@ def test_settings_all(tmpdir):
 
     _make_settings(file_name, {"aaa" : 2, "bbb" : {"ccc" : -1}})
 
-    settings = Settings(file_name, {"nnn" : 15, "bbb" : {"ccc" : 1}})
-    settings.load_and_add_temporal({"nnn" : -15, "zzz" : {"qqq" : 67}})
+    settings = Settings()
 
-    assert settings._default    == {"nnn" : 15, "bbb" : {"ccc" : 1}}
-    assert settings._temporal   == {"aaa" : 2, "nnn" : -15, "bbb" : {"ccc" : -1}, "zzz" : {"qqq" : 67}}
-    assert settings._settings   == {"aaa" : 2, "nnn" : 15, "bbb" : {"ccc" : -1}}
+    ### default and temporal ###
+
+    settings.set_val("nnn", 15, int)
+    settings.set_val("bbb.ccc", 1, int)
+
+    settings.load(file_name)
+
+    settings.set_val("nnn", -15, int, is_into_temporal_only = True)
+    settings.set_val("zzz.qqq", 67, int, is_into_temporal_only = True)
+
+    assert settings.to_temporal()   == {"aaa" : 2, "nnn" : -15, "bbb" : {"ccc" : -1}, "zzz" : {"qqq" : 67}}
+    assert settings.to_persistent() == {"aaa" : 2, "nnn" : 15, "bbb" : {"ccc" : -1}}
 
     ### set ###
 
     settings.set_val("aaa", 12, int)
 
-    assert settings._default    == {"nnn" : 15, "bbb" : {"ccc" : 1}}
-    assert settings._temporal   == {"aaa" : 12, "nnn" : -15, "bbb" : {"ccc" : -1}, "zzz" : {"qqq" : 67}}
-    assert settings._settings   == {"aaa" : 12, "nnn" : 15, "bbb" : {"ccc" : -1}}
+    assert settings.to_temporal()   == {"aaa" : 12, "nnn" : -15, "bbb" : {"ccc" : -1}, "zzz" : {"qqq" : 67}}
+    assert settings.to_persistent() == {"aaa" : 12, "nnn" : 15, "bbb" : {"ccc" : -1}}
     
     settings.set_val("bbb.ccc", 23, int)
 
-    assert settings._default    == {"nnn" : 15, "bbb" : {"ccc" : 1}}
-    assert settings._temporal   == {"aaa" : 12, "nnn" : -15, "bbb" : {"ccc" : 23}, "zzz" : {"qqq" : 67}}
-    assert settings._settings   == {"aaa" : 12, "nnn" : 15, "bbb" : {"ccc" : 23}}
+    assert settings.to_temporal()   == {"aaa" : 12, "nnn" : -15, "bbb" : {"ccc" : 23}, "zzz" : {"qqq" : 67}}
+    assert settings.to_persistent() == {"aaa" : 12, "nnn" : 15, "bbb" : {"ccc" : 23}}
 
-    settings.set_val("bbb.ddd", 45, int, is_temporal_only = True)
+    settings.set_val("bbb.ddd", 45, int, is_into_temporal_only = True)
 
-    assert settings._default    == {"nnn" : 15, "bbb" : {"ccc" : 1}}
-    assert settings._temporal   == {"aaa" : 12, "nnn" : -15, "bbb" : {"ccc" : 23, "ddd" : 45}, "zzz" : {"qqq" : 67}}
-    assert settings._settings   == {"aaa" : 12, "nnn" : 15, "bbb" : {"ccc" : 23}}
+    assert settings.to_temporal()   == {"aaa" : 12, "nnn" : -15, "bbb" : {"ccc" : 23, "ddd" : 45}, "zzz" : {"qqq" : 67}}
+    assert settings.to_persistent() == {"aaa" : 12, "nnn" : 15, "bbb" : {"ccc" : 23}}
     
     settings.set_val("bbb.eee", 67, str)
 
-    assert settings._default    == {"nnn" : 15, "bbb" : {"ccc" : 1}}
-    assert settings._temporal   == {"aaa" : 12, "nnn" : -15, "bbb" : {"ccc" : 23, "ddd" : 45, "eee" : "67"}, "zzz" : {"qqq" : 67}}
-    assert settings._settings   == {"aaa" : 12, "nnn" : 15, "bbb" : {"ccc" : 23, "eee" : "67"}}
+    assert settings.to_temporal()   == {"aaa" : 12, "nnn" : -15, "bbb" : {"ccc" : 23, "ddd" : 45, "eee" : "67"}, "zzz" : {"qqq" : 67}}
+    assert settings.to_persistent() == {"aaa" : 12, "nnn" : 15, "bbb" : {"ccc" : 23, "eee" : "67"}}
 
     ### get ###
 
@@ -262,11 +264,82 @@ def test_settings_all(tmpdir):
     assert settings.get_val("bbb.ccc", int) == 23
     assert settings.get_val("bbb.eee", int) == 67
     assert settings.get_val("bbb.eee", str) == "67"
-    assert settings.get_val("bbb.ddd", int, is_temporal = True) == 45
+    assert settings.get_val("bbb.ddd", int, is_from_temporal = True) == 45
 
     ### save ###
     
-    settings.save()
+    settings.save(file_name)
+
+    assert _load_settings(file_name) == {"aaa" : 12, "nnn" : 15, "bbb" : {"ccc" : 23, "eee" : "67"}}
+
+def test_settings_all_with_merge(tmpdir):
+    file_name = tmpdir + "/settings.json"
+
+    _make_settings(file_name, {"aaa" : 2, "bbb" : {"ccc" : -1}})
+
+    settings = Settings()
+
+    ### default and temporal ###
+
+    settings.merge_with({
+        "nnn" : 15,
+        "bbb" : {
+            "ccc" : 1
+        }
+    })
+
+    settings.load(file_name)
+
+    settings.merge_with({
+        "nnn" : -15,
+        "zzz" : {
+            "qqq" : 67
+        }
+    }, is_into_temporal_only = True)
+
+    assert settings.to_temporal()   == {"aaa" : 2, "nnn" : -15, "bbb" : {"ccc" : -1}, "zzz" : {"qqq" : 67}}
+    assert settings.to_persistent() == {"aaa" : 2, "nnn" : 15, "bbb" : {"ccc" : -1}}
+
+    ### set ###
+
+    settings.set_val("aaa", 12, int)
+
+    assert settings.to_temporal()   == {"aaa" : 12, "nnn" : -15, "bbb" : {"ccc" : -1}, "zzz" : {"qqq" : 67}}
+    assert settings.to_persistent() == {"aaa" : 12, "nnn" : 15, "bbb" : {"ccc" : -1}}
+    
+    settings.set_val("bbb.ccc", 23, int)
+
+    assert settings.to_temporal()   == {"aaa" : 12, "nnn" : -15, "bbb" : {"ccc" : 23}, "zzz" : {"qqq" : 67}}
+    assert settings.to_persistent() == {"aaa" : 12, "nnn" : 15, "bbb" : {"ccc" : 23}}
+
+    settings.set_val("bbb.ddd", 45, int, is_into_temporal_only = True)
+
+    assert settings.to_temporal()   == {"aaa" : 12, "nnn" : -15, "bbb" : {"ccc" : 23, "ddd" : 45}, "zzz" : {"qqq" : 67}}
+    assert settings.to_persistent() == {"aaa" : 12, "nnn" : 15, "bbb" : {"ccc" : 23}}
+    
+    settings.set_val("bbb.eee", 67, str)
+
+    assert settings.to_temporal()   == {"aaa" : 12, "nnn" : -15, "bbb" : {"ccc" : 23, "ddd" : 45, "eee" : "67"}, "zzz" : {"qqq" : 67}}
+    assert settings.to_persistent() == {"aaa" : 12, "nnn" : 15, "bbb" : {"ccc" : 23, "eee" : "67"}}
+
+    ### get ###
+
+    try:
+        settings.get_val("xxx", int)
+    except Exception as exception:
+        assert str(exception) == "Can not get value from temporal settings with full name \"xxx\"."
+    else:
+        assert False, "Expected exception."
+
+    assert settings.get_val("aaa", int) == 12
+    assert settings.get_val("bbb.ccc", int) == 23
+    assert settings.get_val("bbb.eee", int) == 67
+    assert settings.get_val("bbb.eee", str) == "67"
+    assert settings.get_val("bbb.ddd", int, is_from_temporal = True) == 45
+
+    ### save ###
+    
+    settings.save(file_name)
 
     assert _load_settings(file_name) == {"aaa" : 12, "nnn" : 15, "bbb" : {"ccc" : 23, "eee" : "67"}}
 

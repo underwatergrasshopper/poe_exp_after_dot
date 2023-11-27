@@ -168,7 +168,11 @@ class Overlay:
         to_logger().info("====== NEW RUN ======")
         to_logger().debug(f"data_path={data_path}")
 
-        settings = Settings(data_path + "/settings.json", {
+        settings_path = data_path + "/settings.json"
+
+        settings = Settings()
+
+        settings.merge_with({
             "_comment" : "Type 'py -3-64 poe_exp_after_dot.py --settings-help' in console to see possible values.",
             "font" : {
                 "name" : "Consolas",
@@ -199,6 +203,8 @@ class Overlay:
                 }
             }
         })
+
+        settings.load(settings_path)
 
         temporal_settings : dict[str, Any] = {
             "data_path" : data_path,
@@ -241,12 +247,12 @@ class Overlay:
 
         to_logger().debug(f"temporal_settings={temporal_settings}")
 
-        settings.load_and_add_temporal(temporal_settings)
+        settings.merge_with(temporal_settings, is_into_temporal_only = True)
 
         to_logger().info("Loaded settings.")
 
         def_format_file_name = data_path + "/formats/Default.format"
-        settings.set_val("def_format_file_name", def_format_file_name, str, is_temporal_only = True)
+        settings.set_val("def_format_file_name", def_format_file_name, str, is_into_temporal_only = True)
 
         if not _os.path.exists(def_format_file_name) or is_overwrite_default_format:
             _os.makedirs(_os.path.dirname(def_format_file_name), exist_ok = True)
@@ -312,7 +318,7 @@ class Overlay:
         
         logic.save_character()
     
-        settings.save()
+        settings.save(settings_path)
         to_logger().info("Saved settings.")
 
         to_logger().info("Exit.")

@@ -1,4 +1,5 @@
-from poe_exp_after_dot._Private.TextGenerator import TextGenerator, TemplateLoader, TextGenFail
+from poe_exp_after_dot._Private.TextGenerator   import TextGenerator, TextGenFail
+from poe_exp_after_dot._Private.TemplateLoader  import TemplateLoader
 
 _TEMPLATES = """
 --- AAA ---
