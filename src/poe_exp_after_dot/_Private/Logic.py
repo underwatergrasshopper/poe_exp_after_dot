@@ -57,6 +57,7 @@ class Point:
     def __str__(self):
         return f"PointI(x={self.x}, y={self.y})"
 
+
 class Polygon:
     lb : Point
     rb : Point
@@ -73,6 +74,7 @@ class Polygon:
     def __str__(self):
         return f"Polygon(lb={self.lb}, rb={self.rb}, rt={self.rt}, lt={self.lt})" 
 
+
 class TextFragment:
     text    : str
     polygon : Polygon
@@ -86,6 +88,7 @@ class TextFragment:
     
     def __repr__(self):
         return self.__str__()
+
 
 class Logic:
     _settings   : Settings
@@ -110,10 +113,10 @@ class Logic:
             info_board_x                    = get_val("1920x1080", "info_board_x"),       
             info_board_bottom               = get_val("1920x1080", "info_board_bottom"),  
 
-            control_region_x                     = get_val("1920x1080", "control_region_x"),        
-            control_region_y                     = get_val("1920x1080", "control_region_y"),        
-            control_region_width                 = get_val("1920x1080", "control_region_width"),    
-            control_region_height                = get_val("1920x1080", "control_region_height"),   
+            control_region_x                = get_val("1920x1080", "control_region_x"),        
+            control_region_y                = get_val("1920x1080", "control_region_y"),        
+            control_region_width            = get_val("1920x1080", "control_region_width"),    
+            control_region_height           = get_val("1920x1080", "control_region_height"),   
         
             in_game_exp_bar_x               = get_val("1920x1080", "in_game_exp_bar_x"),  
             in_game_exp_bar_y               = get_val("1920x1080", "in_game_exp_bar_y"),      
