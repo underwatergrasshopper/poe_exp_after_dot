@@ -2,10 +2,7 @@ from PySide6.QtWidgets  import QWidget
 from PySide6.QtCore     import Qt, QRect
 from PySide6.QtGui      import QColor, QPainter
 
-from ..Commons           import to_app
-from ..Logic             import Logic, PosData
-from ..LogManager        import to_log_manager, to_logger
-from ..Settings          import Settings
+from ..Logic             import Logic
 
 
 class FracExpBar(QWidget):

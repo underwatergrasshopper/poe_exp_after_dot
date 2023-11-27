@@ -1,14 +1,13 @@
 import os as _os
 
-from PySide6.QtWidgets  import QMainWindow, QApplication, QWidget, QLabel, QSystemTrayIcon, QMenu, QWidgetAction, QLineEdit
-from PySide6.QtCore     import Qt, QPoint, QRect, QEvent, QLine, QTimer
-from PySide6.QtGui      import QColor, QMouseEvent, QIcon, QAction, QCloseEvent, QContextMenuEvent, QFocusEvent, QFont, QEnterEvent, QKeyEvent, QPainter, QWheelEvent, QActionGroup
+from PySide6.QtWidgets  import QWidget, QLabel
+from PySide6.QtCore     import Qt
+from PySide6.QtGui      import QColor, QMouseEvent, QPainter
 
-from ..Commons           import to_app
-from ..Logic             import Logic, PosData
-from ..LogManager        import to_log_manager, to_logger
-from ..Settings          import Settings
-from ..TextGenerator     import TextGenerator, TemplateLoader
+from ..Logic             import Logic
+from ..LogManager        import to_logger
+from ..TemplateLoader    import TemplateLoader
+from ..TextGenerator     import TextGenerator
 
 from .ControlRegionInterface import ControlRegionInterface
 

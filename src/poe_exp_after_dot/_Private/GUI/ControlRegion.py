@@ -5,9 +5,7 @@ from PySide6.QtCore     import Qt, QPoint, QRect, QEvent, QTimer
 from PySide6.QtGui      import QColor, QMouseEvent, QEnterEvent, QPainter, QWheelEvent
 
 from ..Commons               import to_app
-from ..Logic                 import Logic, PosData
-from ..LogManager            import to_log_manager, to_logger
-from ..Settings              import Settings
+from ..Logic                 import Logic
 from ..ForegroundGuardian    import ForegroundGuardian
 
 from .ControlRegionInterface    import ControlRegionInterface

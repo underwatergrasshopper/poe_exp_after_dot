@@ -1,14 +1,12 @@
 import os as _os
 
-from PySide6.QtWidgets  import QApplication, QWidget, QMenu, QWidgetAction, QLineEdit
+from PySide6.QtWidgets  import QWidget, QMenu, QWidgetAction, QLineEdit
 from PySide6.QtCore     import Qt
 from PySide6.QtGui      import QMouseEvent, QAction
 
 from ..Commons           import to_app
 from ..Logic             import Logic
 from ..LogManager        import to_log_manager, to_logger
-from ..Settings          import Settings
-from ..CharacterRegister import CharacterRegister, Character
 
 from .ControlRegionInterface import ControlRegionInterface
 

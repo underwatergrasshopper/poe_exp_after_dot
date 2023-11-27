@@ -6,7 +6,6 @@ from typing             import Any
 from dataclasses        import dataclass
 
 from .FineFormatters    import SECONDS_IN_DAY, SECONDS_IN_HOUR, SECONDS_IN_MINUTE, SECONDS_IN_WEEK
-from .Settings          import Settings
 from .LogManager        import to_logger
 from .ExpThresholdInfo  import ExpThresholdInfo, EXP_THRESHOLD_INFO_TABLE
 

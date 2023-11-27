@@ -2,7 +2,7 @@ from typing             import Callable, Any
 
 from PySide6.QtCore     import QTimer
 
-from .TemplateLoader    import TemplateLoader, Template
+from .TemplateLoader    import Template
 from .LogManager        import to_logger, logging
 
 from ..Exceptions       import TextGenFail
