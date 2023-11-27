@@ -110,6 +110,8 @@ pos_data.<resolution>.*_height
     false
 """.strip("\n")
 
+# path to top level package
+_base_path = os.path.abspath(os.path.dirname(__file__) + "/..")
 
 class _ExceptionStash:
     exception : BaseException | None
@@ -259,7 +261,7 @@ class Overlay:
             if is_overwrite_default_format and os.path.exists(def_format_file_name):
                 os.remove(def_format_file_name)
 
-            source_file_name = os.path.abspath(os.path.dirname(__file__) + "/../assets/Default.format")
+            source_file_name = _base_path + "/assets/Default.format"
             
             shutil.copy(source_file_name, def_format_file_name)
 
