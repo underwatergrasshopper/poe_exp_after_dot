@@ -1,14 +1,11 @@
-import os
+import os as _os
 
-from typing import SupportsFloat, SupportsInt, Sequence, Any
-from dataclasses import dataclass
+from PySide6.QtWidgets  import QApplication, QWidget, QMenu, QWidgetAction, QLineEdit
+from PySide6.QtCore     import Qt
+from PySide6.QtGui      import QMouseEvent, QAction
 
-from PySide6.QtWidgets  import QMainWindow, QApplication, QWidget, QLabel, QSystemTrayIcon, QMenu, QWidgetAction, QLineEdit
-from PySide6.QtCore     import Qt, QPoint, QRect, QEvent, QLine, QTimer
-from PySide6.QtGui      import QColor, QMouseEvent, QIcon, QAction
-
-from ..Commons           import EXIT_FAILURE, EXIT_SUCCESS, to_app
-from ..Logic             import Logic, PosData
+from ..Commons           import to_app
+from ..Logic             import Logic
 from ..LogManager        import to_log_manager, to_logger
 from ..Settings          import Settings
 from ..CharacterRegister import CharacterRegister, Character
@@ -230,7 +227,7 @@ class Menu(QMenu):
 
         self._open_data_folder_action = QAction("Open Data Folder", self)
         def open_data_folder():
-            os.startfile(os.path.abspath(self._logic.to_settings().get_val("data_path", str)))
+            _os.startfile(_os.path.abspath(self._logic.to_settings().get_val("data_path", str)))
             self.setWindowFlags(self._flags_backup)
 
         self._open_data_folder_action.triggered.connect(open_data_folder)

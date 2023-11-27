@@ -1,27 +1,21 @@
-from typing import SupportsFloat, SupportsInt, Sequence, Any
-from dataclasses import dataclass
+import re       as _re
+import logging  as _logging
+import numpy    as _numpy
+import cv2      as _cv2
+import easyocr  as _easyocr # type: ignore
 
-import re
-import os
-import json
-import logging
-import numpy
-import cv2
-import easyocr # type: ignore
-
-from datetime import datetime as _datetime
-from time import time as _get_time_since_epoch
-from PIL import ImageGrab
+from typing         import Any
+from dataclasses    import dataclass
+from time           import time as _get_time_since_epoch
+from PIL            import ImageGrab as _ImageGrab
 
 from PySide6.QtWidgets  import QWidget
 
 from .Commons           import EXIT_FAILURE, EXIT_SUCCESS, time_unit_to_short, character_name_to_log_name
 from .FineFormatters    import FineBareLevel, FineExp, FineExpPerHour, FinePercent, FineTime
-from .FineFormatters    import SECONDS_IN_DAY, SECONDS_IN_HOUR, SECONDS_IN_MINUTE, SECONDS_IN_WEEK
 from .Settings          import Settings
 from .LogManager        import to_logger
 from .CharacterRegister import CharacterRegister, Character
-from .ExpThresholdInfo  import ExpThresholdInfo, EXP_THRESHOLD_INFO_TABLE
 from .Measurer          import Measurer
 
 
@@ -98,7 +92,7 @@ class Logic:
     _measurer           : Measurer
     _character_register : CharacterRegister
 
-    _reader             : easyocr.Reader
+    _reader             : _easyocr.Reader
 
     _is_fetch_failed : bool
 
@@ -135,7 +129,7 @@ class Logic:
 
         self._measurer = Measurer()
 
-        self._reader = easyocr.Reader(['en'], gpu = True, verbose = False)
+        self._reader = _easyocr.Reader(['en'], gpu = True, verbose = False)
 
         self._character_register = CharacterRegister(settings.get_val("data_path", str))
 
@@ -245,7 +239,7 @@ class Logic:
         for widget in widgets_to_hide:
             widget.hide()
 
-        screenshot = ImageGrab.grab()
+        screenshot = _ImageGrab.grab()
 
         for widget in widgets_to_hide:
             widget.show()
@@ -261,7 +255,7 @@ class Logic:
             left + width,
             right + height,
         ))
-        in_game_exp_tooltip_image = cv2.cvtColor(numpy.array(in_game_exp_tooltip_image), cv2.COLOR_RGB2BGR) # converts image from Pillow format to OpenCV format
+        in_game_exp_tooltip_image = _cv2.cvtColor(_numpy.array(in_game_exp_tooltip_image), _cv2.COLOR_RGB2BGR) # converts image from Pillow format to OpenCV format
 
         text_fragments = [TextFragment(text_fragment) for text_fragment in self._reader.readtext(in_game_exp_tooltip_image)]
 
@@ -283,13 +277,13 @@ class Logic:
         for text_fragment in text_fragments:
             full_text += text_fragment.text + " "
 
-        if to_logger().isEnabledFor(logging.DEBUG):
+        if to_logger().isEnabledFor(_logging.DEBUG):
             to_logger().debug(f"Scanned In-Game Exp Tooltip Text: {full_text}")
             for text_fragment in text_fragments:
                 to_logger().debug(text_fragment)
             to_logger().debug("---")
 
-        match_ = re.search(r"^.*?Current[ ]+Exp\:[ ]+([0-9,]+)[ ]+.*$", full_text)
+        match_ = _re.search(r"^.*?Current[ ]+Exp\:[ ]+([0-9,]+)[ ]+.*$", full_text)
         if match_:
             return int(match_.group(1).replace(",", ""))
         

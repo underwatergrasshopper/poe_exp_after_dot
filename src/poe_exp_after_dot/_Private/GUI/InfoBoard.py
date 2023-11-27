@@ -1,27 +1,16 @@
-import os
-import sys
-import ctypes
-import re
-import enum
-import gc
-import shutil
-
-from typing import SupportsFloat, SupportsInt, Sequence, Any
-from dataclasses import dataclass
-from copy import deepcopy as _deepcopy
+import os as _os
 
 from PySide6.QtWidgets  import QMainWindow, QApplication, QWidget, QLabel, QSystemTrayIcon, QMenu, QWidgetAction, QLineEdit
 from PySide6.QtCore     import Qt, QPoint, QRect, QEvent, QLine, QTimer
 from PySide6.QtGui      import QColor, QMouseEvent, QIcon, QAction, QCloseEvent, QContextMenuEvent, QFocusEvent, QFont, QEnterEvent, QKeyEvent, QPainter, QWheelEvent, QActionGroup
 
-from ..Commons           import EXIT_FAILURE, EXIT_SUCCESS, to_app, merge_on_all_levels, get_default_data_path
+from ..Commons           import to_app
 from ..Logic             import Logic, PosData
 from ..LogManager        import to_log_manager, to_logger
 from ..Settings          import Settings
 from ..TextGenerator     import TextGenerator, TemplateLoader
-from ..CharacterRegister import CharacterRegister, Character
 
-from .ControlRegionInterface    import ControlRegionInterface
+from .ControlRegionInterface import ControlRegionInterface
 
 
 class InfoBoard(QWidget):
@@ -61,7 +50,7 @@ class InfoBoard(QWidget):
         ### info board text templates ###
         template_loader = TemplateLoader()
         def_format_file_name = logic.to_settings().get_val("def_format_file_name", str)
-        to_logger().info(f"Loading formats for info board from \"{os.path.basename(def_format_file_name)}\" ...")
+        to_logger().info(f"Loading formats for info board from \"{_os.path.basename(def_format_file_name)}\" ...")
         template_loader.load_and_parse(logic.to_settings().get_val("def_format_file_name", str))
         to_logger().info("Formats has been loaded.")
 

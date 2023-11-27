@@ -1,25 +1,18 @@
-import os
-import sys
-import ctypes
-import re
-import enum
-import gc
-import shutil
+import os       as _os
+import sys      as _sys
+import re       as _re
+import shutil   as _shutil
 
-from typing import SupportsFloat, SupportsInt, Sequence, Any
-from dataclasses import dataclass
-from copy import deepcopy as _deepcopy
+from typing         import Any
+from dataclasses    import dataclass
 
-from PySide6.QtWidgets  import QMainWindow, QApplication, QWidget, QLabel, QSystemTrayIcon, QMenu, QWidgetAction, QLineEdit
-from PySide6.QtCore     import Qt, QPoint, QRect, QEvent, QLine, QTimer
-from PySide6.QtGui      import QColor, QMouseEvent, QIcon, QAction, QCloseEvent, QContextMenuEvent, QFocusEvent, QFont, QEnterEvent, QKeyEvent, QPainter, QWheelEvent, QActionGroup
+from PySide6.QtWidgets  import QApplication
+from PySide6.QtCore     import Qt
 
 from .Commons               import EXIT_FAILURE, EXIT_SUCCESS, to_app, merge_on_all_levels, get_default_data_path
-from .Logic                 import Logic, PosData
+from .Logic                 import Logic
 from .LogManager            import to_log_manager, to_logger
 from .Settings              import Settings
-from .TextGenerator         import TextGenerator, TemplateLoader
-from .CharacterRegister     import CharacterRegister, Character
 
 from .GUI.ControlRegion     import ControlRegion
 from .GUI.TrayMenu          import TrayMenu
@@ -111,7 +104,7 @@ pos_data.<resolution>.*_height
 """.strip("\n")
 
 # path to top level package
-_base_path = os.path.abspath(os.path.dirname(__file__) + "/..")
+_base_path = _os.path.abspath(_os.path.dirname(__file__) + "/..")
 
 class _ExceptionStash:
     exception : BaseException | None
@@ -168,7 +161,7 @@ class Overlay:
         if data_path is None:
             data_path = get_default_data_path()
 
-        os.makedirs(data_path, exist_ok = True)
+        _os.makedirs(data_path, exist_ok = True)
 
         to_log_manager().setup_logger(data_path + "/runtime.log", is_debug = is_debug, is_stdout = True)
         
@@ -255,15 +248,15 @@ class Overlay:
         def_format_file_name = data_path + "/formats/Default.format"
         settings.set_val("def_format_file_name", def_format_file_name, str, is_temporal_only = True)
 
-        if not os.path.exists(def_format_file_name) or is_overwrite_default_format:
-            os.makedirs(os.path.dirname(def_format_file_name), exist_ok = True)
+        if not _os.path.exists(def_format_file_name) or is_overwrite_default_format:
+            _os.makedirs(_os.path.dirname(def_format_file_name), exist_ok = True)
 
-            if is_overwrite_default_format and os.path.exists(def_format_file_name):
-                os.remove(def_format_file_name)
+            if is_overwrite_default_format and _os.path.exists(def_format_file_name):
+                _os.remove(def_format_file_name)
 
             source_file_name = _base_path + "/assets/Default.format"
             
-            shutil.copy(source_file_name, def_format_file_name)
+            _shutil.copy(source_file_name, def_format_file_name)
 
             to_logger().info("Created \"Default.format\".")
 
@@ -304,13 +297,13 @@ class Overlay:
 
             QApplication.exit(EXIT_FAILURE)
 
-        previous_excepthook = sys.excepthook
-        sys.excepthook = excepthook
+        previous_excepthook = _sys.excepthook
+        _sys.excepthook = excepthook
 
         to_logger().info(f"Running.")
         exit_code = to_app().exec()
 
-        sys.excepthook = previous_excepthook
+        _sys.excepthook = previous_excepthook
 
         if _exception_stash.exception:
             exception = _exception_stash.exception
@@ -391,7 +384,7 @@ class Overlay:
                     name_format = r"(|[^,]+)"
                     size_format = r"(|0|[1-9][0-9]*)"
                     style_format = r"(|normal|bold)"
-                    match_ = re.search(fr"^{name_format},{size_format},{style_format}$", font_data_text)
+                    match_ = _re.search(fr"^{name_format},{size_format},{style_format}$", font_data_text)
                     if match_:
                         font_data = FontData(
                             name               = match_.group(1) if match_.group(1) else None,
@@ -403,7 +396,7 @@ class Overlay:
 
                 case ["--custom", raw_custom_pos_data]:
                     n = r"(|0|[1-9][0-9]*)"
-                    match_ = re.search(fr"^{n},{n};{n},{n},{n},{n};{n},{n},{n},{n};{n},{n},{n},{n}$", raw_custom_pos_data)
+                    match_ = _re.search(fr"^{n},{n};{n},{n},{n},{n};{n},{n},{n},{n};{n},{n},{n},{n}$", raw_custom_pos_data)
                     if match_:
                         index = 1
                         def next_group():

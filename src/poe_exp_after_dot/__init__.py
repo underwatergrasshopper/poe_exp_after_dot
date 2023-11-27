@@ -10,24 +10,21 @@ poe_exp_after_dot.py [<option> ...]
 __author__  = "underwatergrasshopper"
 __version__ = "0.1.0"
 
-import traceback as _traceback
-import sys as _sys
-import os as _os
 
-from ._Private.Overlay import (
-    Overlay as _Overlay
+import os           as _os
+import sys          as _sys
+import traceback    as _traceback
+
+from ._Private.Overlay      import Overlay as _Overlay
+from ._Private.LogManager   import to_logger as _to_logger
+from ._Private.Commons      import (
+    EXIT_FAILURE            as _EXIT_FAILURE,
+    hide_abs_paths          as _hide_abs_paths,
+    run_error_board         as _run_error_board,
+    get_argument_value      as _get_argument_value,
+    get_default_data_path   as _get_default_data_path
 )
 
-from ._Private.Commons import (
-    EXIT_FAILURE as _EXIT_FAILURE,
-    hide_abs_paths as _hide_abs_paths,
-    run_error_board as _run_error_board,
-    get_argument_value as _get_argument_value,
-    get_default_data_path as _get_default_data_path
-)
-from ._Private.LogManager import (
-    to_logger as _to_logger
-)
 
 def _main(argv : list[str]) -> int:
     """

@@ -1,20 +1,8 @@
-import os
-import sys
-import ctypes
-import re
-import enum
-import gc
-import shutil
+from PySide6.QtWidgets  import QWidget
+from PySide6.QtCore     import Qt, QRect
+from PySide6.QtGui      import QColor, QPainter
 
-from typing import SupportsFloat, SupportsInt, Sequence, Any
-from dataclasses import dataclass
-from copy import deepcopy as _deepcopy
-
-from PySide6.QtWidgets  import QMainWindow, QApplication, QWidget, QLabel, QSystemTrayIcon, QMenu, QWidgetAction, QLineEdit
-from PySide6.QtCore     import Qt, QPoint, QRect, QEvent, QLine, QTimer
-from PySide6.QtGui      import QColor, QMouseEvent, QIcon, QAction, QCloseEvent, QContextMenuEvent, QFocusEvent, QFont, QEnterEvent, QKeyEvent, QPainter, QWheelEvent, QActionGroup
-
-from ..Commons           import EXIT_FAILURE, EXIT_SUCCESS, to_app, merge_on_all_levels, get_default_data_path
+from ..Commons           import to_app
 from ..Logic             import Logic, PosData
 from ..LogManager        import to_log_manager, to_logger
 from ..Settings          import Settings

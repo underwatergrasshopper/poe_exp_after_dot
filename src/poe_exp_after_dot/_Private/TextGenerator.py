@@ -1,10 +1,10 @@
 from typing             import Callable, Any
-import os as _os
 
 from PySide6.QtCore     import QTimer
 
 from .TemplateLoader    import TemplateLoader, Template
 from .LogManager        import to_logger, logging
+
 from ..Exceptions       import TextGenFail
 
 

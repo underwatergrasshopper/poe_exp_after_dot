@@ -1,9 +1,8 @@
-import re
-import os
+import os as _os
+import re as _re
 
-from typing import SupportsFloat, SupportsInt, Sequence, Any
-from dataclasses import dataclass
-from copy import deepcopy as _deepcopy
+from dataclasses    import dataclass
+from copy           import deepcopy as _deepcopy
 
 from ..Exceptions import TemplateLoadFail
 
@@ -80,7 +79,7 @@ class TemplateLoader:
             try:
                 self.parse(file.read())
             except TemplateLoadFail as exception:
-                just_file_name = os.path.basename(file_name)
+                just_file_name = _os.path.basename(file_name)
                 raise TemplateLoadFail(f"Failed to parse templates from file: \"{just_file_name}\". " + str(exception)) from exception
 
     def parse(self, template : str):
@@ -98,12 +97,12 @@ class TemplateLoader:
         for line in lines:
             line_id += 1
 
-            match_ = re.search(fr"^([^#]*){COMMENT_PATTERN}$", line)
+            match_ = _re.search(fr"^([^#]*){COMMENT_PATTERN}$", line)
             if match_:
                 # comment
                 line = match_.group(1)
             
-            match_ = re.search(fr"^[ \t]*---(.*?)---[ \t]*$", line)
+            match_ = _re.search(fr"^[ \t]*---(.*?)---[ \t]*$", line)
             if match_:
                 self._store_template_if_exists()
 
@@ -125,7 +124,7 @@ class TemplateLoader:
                     if condition == "done":
                         self._delay  = 0.0
                     else:
-                        match_ = re.search(fr"^(0|[1-9][0-9]*)s$", condition)
+                        match_ = _re.search(fr"^(0|[1-9][0-9]*)s$", condition)
                         if match_:
                             self._delay  = float(match_.group(1))
                         else:
@@ -190,8 +189,8 @@ class TemplateLoader:
 
     def _paste_section(self):
         for name, template in self._templates.items():
-            def combine(match_ : re.Match):
+            def combine(match_ : _re.Match):
                 return "%s%s%s" % (match_.group(1), template.text_format, match_.group(2))
             
-            self._text_format = re.sub("(^|[^{]){%s}($|[^}])" % name, combine, self._text_format)
+            self._text_format = _re.sub("(^|[^{]){%s}($|[^}])" % name, combine, self._text_format)
 

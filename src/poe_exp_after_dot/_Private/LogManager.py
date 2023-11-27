@@ -1,5 +1,6 @@
-import os
-import sys
+import os       as _os
+import sys      as _sys
+
 import logging
 
 
@@ -17,13 +18,13 @@ class LogManager:
         formatter = logging.Formatter(fmt = "[%(asctime)s][%(name)s][%(levelname)s]: %(message)s", datefmt = "%Y-%m-%d %H:%M:%S")
 
         if is_stdout:
-            stream_handler = logging.StreamHandler(sys.stdout)
+            stream_handler = logging.StreamHandler(_sys.stdout)
             stream_handler.setFormatter(formatter)
             self._logger.addHandler(stream_handler)
 
         if log_file_name:
-            path = os.path.dirname(log_file_name)
-            os.makedirs(path, exist_ok = True)
+            path = _os.path.dirname(log_file_name)
+            _os.makedirs(path, exist_ok = True)
 
             self._file_handler = logging.FileHandler(log_file_name, "a")
             self._file_handler.setFormatter(formatter)

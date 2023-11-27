@@ -1,9 +1,8 @@
-from typing import Any
-import typing
-from PySide6.QtWidgets import QApplication
+import re       as _re
+import os       as _os
+import typing   as _typing
 
-import re as _re
-import os as _os
+from PySide6.QtWidgets import QApplication
 
 
 # path to top level package
@@ -25,7 +24,7 @@ def pad_to_length(text : str, length : int):
 def to_app() -> QApplication:
     app = QApplication.instance()
     if app:
-        return typing.cast(QApplication, app)
+        return _typing.cast(QApplication, app)
     return QApplication([])
 
 

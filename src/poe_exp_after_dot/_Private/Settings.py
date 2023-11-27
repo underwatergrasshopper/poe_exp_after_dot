@@ -1,8 +1,8 @@
-import os
-import json
+import os   as _os
+import json as _json
 
 from typing import Any
-from copy import deepcopy as _deepcopy
+from copy   import deepcopy as _deepcopy
 
 from .Commons import merge_on_all_levels as _merge_on_all_levels
 
@@ -19,12 +19,12 @@ class Settings:
         self._settings  = {}
 
     def load_and_add_temporal(self, temporal : dict[str, Any]):
-        if os.path.isfile(self._file_name):
+        if _os.path.isfile(self._file_name):
             with open(self._file_name, "r") as file:
-                self._settings = json.load(file)
+                self._settings = _json.load(file)
         else:
             with open(self._file_name, "w") as file:
-                file.write(json.dumps(self._default, indent = 4))
+                file.write(_json.dumps(self._default, indent = 4))
 
         self._settings = _deepcopy(_merge_on_all_levels(self._default, self._settings))
         self._temporal = _deepcopy(_merge_on_all_levels(self._settings, temporal))
@@ -82,7 +82,7 @@ class Settings:
 
     def save(self):
         with open(self._file_name, "w") as file:
-            file.write(json.dumps(self._settings, indent = 4))
+            file.write(_json.dumps(self._settings, indent = 4))
 
     def _set_val(self, settings : dict[str, Any], names : list[str], value, value_type : type):
         level = settings

@@ -1,11 +1,9 @@
-from typing import SupportsFloat, SupportsInt, Sequence, Any
-from dataclasses import dataclass
 
-import re
-import os
-import json
+import json as _json
 
-from datetime import datetime as _datetime
+from datetime           import datetime as _datetime
+from typing             import Any
+from dataclasses        import dataclass
 
 from .FineFormatters    import SECONDS_IN_DAY, SECONDS_IN_HOUR, SECONDS_IN_MINUTE, SECONDS_IN_WEEK
 from .Settings          import Settings
@@ -111,7 +109,7 @@ class Register:
     def load_from_str(self, exp_data_text : str):
         self._entries = []
 
-        exp_data = json.loads(exp_data_text)
+        exp_data = _json.loads(exp_data_text)
         for entry in exp_data:
             self._entries.append(Entry.from_dict(entry))
 
@@ -122,7 +120,7 @@ class Register:
         for entry in self._entries:
             exp_data.append(entry.to_dict())
 
-        return json.dumps(exp_data, indent = 4)
+        return _json.dumps(exp_data, indent = 4)
 
     def remove_all_after_current(self):
         if self._index > -1:
