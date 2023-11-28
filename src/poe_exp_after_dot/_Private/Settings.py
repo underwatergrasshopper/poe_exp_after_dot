@@ -239,7 +239,7 @@ def _set_val(
             level[name] = {}
         level = level[name]
 
-    if isinstance(value, dict):
+    if isinstance(value, (dict, list)):
         value = _deepcopy(value)
 
     if value_type == Any:
@@ -258,7 +258,7 @@ def _get_val(
         level = level[name]
 
     value = level[names[-1]]
-    if isinstance(value, dict):
+    if isinstance(value, (dict, list)):
         value = _deepcopy(value)
 
     if value_type == Any:
