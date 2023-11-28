@@ -383,11 +383,10 @@ class Overlay:
                     "in_game_exp_bar_width"         : 1092,
                     "in_game_exp_bar_height"        : 8,
 
-                    # tooltip might differ
                     "in_game_exp_tooltip_x_offset"  : 64,
-                    "in_game_exp_tooltip_y"         : 1367,
-                    "in_game_exp_tooltip_width"     : 446,
-                    "in_game_exp_tooltip_height"    : 73,
+                    "in_game_exp_tooltip_y"         : 1343,
+                    "in_game_exp_tooltip_width"     : 587,
+                    "in_game_exp_tooltip_height"    : 97,
                 }
             }
         })
