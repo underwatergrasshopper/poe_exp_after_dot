@@ -140,13 +140,6 @@ class _ExceptionStash:
 _exception_stash = _ExceptionStash()
 
 
-@dataclass
-class FontData:
-    name        : str | None
-    size        : int | None    # in pixels
-    is_bold     : bool | None
-
-
 class Overlay:
     def __init__(self):
         pass
@@ -162,7 +155,11 @@ class Overlay:
         ### parses command line options ###
         is_run                                              = True
         is_debug                                            = False
-        font_data                       : FontData | None   = None
+
+        font_name                       : str | None        = None
+        font_size                       : int | None        = None
+        is_font_bold                    : bool | None       = None
+
         raw_custom_pos_data             : str | None        = None
         data_path                       : str | None        = None
         time_max_unit                   : str | None        = None
@@ -217,11 +214,9 @@ class Overlay:
                     style_format = r"(|normal|bold)"
                     match_ = _re.search(fr"^{name_format},{size_format},{style_format}$", font_data_text)
                     if match_:
-                        font_data = FontData(
-                            name               = match_.group(1) if match_.group(1) else None,
-                            size               = int(match_.group(2)),
-                            is_bold            = match_.group(3) == "bold",
-                        )
+                        font_name       = match_.group(1)           if match_.group(1) else None
+                        font_size       = int(match_.group(2))      if match_.group(2) else None
+                        is_font_bold    = match_.group(3) == "bold" if match_.group(3) else None
                     else:
                         raise ValueError(f"Incorrect command line argument. Option \"{option_name}\" have wrong format.")
 
@@ -253,8 +248,6 @@ class Overlay:
                         in_game_exp_tooltip_y           = next_group()
                         in_game_exp_tooltip_width       = next_group()
                         in_game_exp_tooltip_height      = next_group()
-                        
-
                     else:
                         raise ValueError(f"Incorrect command line argument. Option \"{option_name}\" have wrong format.")
                 
@@ -337,10 +330,9 @@ class Overlay:
         settings.set_tmp_val("_data_path", data_path, str)
         settings.set_tmp_val("_is_debug", is_debug, bool)
 
-        if font_data is not None:
-            if font_data.name is not None:      settings.set_tmp_val("font.name", font_data.name, str)
-            if font_data.size is not None:      settings.set_tmp_val("font.size", font_data.size, int)
-            if font_data.is_bold is not None:   settings.set_tmp_val("font.is_bold", font_data.is_bold, bool)
+        if font_name is not None:       settings.set_tmp_val("font.name", font_name, str)
+        if font_size is not None:       settings.set_tmp_val("font.size", font_size, int)
+        if is_font_bold is not None:    settings.set_tmp_val("font.is_bold", is_font_bold, bool)
 
         if time_max_unit is not None:
             settings.set_tmp_val("font.time_max_unit", time_max_unit, int)
