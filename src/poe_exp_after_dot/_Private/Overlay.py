@@ -86,6 +86,15 @@ poe_exp_after_dot.py [<option> ...]
             off     (default)
 
         If time is below 1s then displays in milliseconds.
+    --format=<name>
+        <name>
+            Default
+            <text> # Name without extension of file located in 'formats' directory.
+
+        Sets info board format.
+        
+        Examples
+            --format=Default
 """.strip("\n")
 
 _SETTINGS_HELP_TEXT = """
@@ -103,6 +112,13 @@ time_max_unit
     "hour"
     "day"
     "week"
+is_just_weeks_if_cap
+    <boolean>
+is_ms_if_below_1s
+    <boolean>
+info_board_format
+    "Default"
+    <text> # Name without extension of file located in 'formats' directory.
 selected_pos_data_name
     <text>
 pos_data.<resolution>.info_board_x
@@ -177,6 +193,7 @@ class Overlay:
         time_max_unit                   : str | None        = None
         is_just_weeks_if_cap            : bool | None       = None
         is_ms_if_below_1s               : bool | None       = None
+        info_board_format               : str | None        = None
 
         info_board_x                    : int | None        = None
         info_board_bottom               : int | None        = None
@@ -283,13 +300,16 @@ class Overlay:
                         is_ms_if_below_1s = False
                     else:
                         raise ValueError(f"Incorrect command line argument. Option \"{option_name}\" have wrong format.")
+                    
+                case ["--format", info_board_format]:
+                    pass
 
                 ### incorrect ###
 
                 case ["--help" | "-h" | "--debug" | "--settings-help" | "--overwrite-default-format", _]:
                     raise ValueError(f"Incorrect command line argument. Option \"{option_name}\" can't have a value.")
                 
-                case ["--data-path" | "--custom" | "--font" | "--time-max-unit" | "--just-weeks-if-cap" | "--ms-if-below-1s"]:
+                case ["--data-path" | "--custom" | "--font" | "--time-max-unit" | "--just-weeks-if-cap" | "--ms-if-below-1s", "--format"]:
                     raise ValueError(f"Incorrect command line argument. Option \"{option_name}\" need to have a value.")
 
                 case [option_name, *_]:
@@ -326,6 +346,7 @@ class Overlay:
             "time_max_unit" : "hour",
             "is_just_weeks_if_cap" : True,
             "is_ms_if_below_1s" : False,
+            "info_board_format" : "Default",
             "selected_pos_data_name" : "1920x1080",
             "pos_data" : {
                 "1920x1080" : {
@@ -375,6 +396,9 @@ class Overlay:
 
         if is_ms_if_below_1s is not None:
             settings.set_tmp_val("is_ms_if_below_1s", is_ms_if_below_1s, bool)
+
+        if info_board_format is not None:
+            settings.set_tmp_val("info_board_format", info_board_format, str)
 
         selected_pos_data_name = settings.get_val("selected_pos_data_name", str)
 
