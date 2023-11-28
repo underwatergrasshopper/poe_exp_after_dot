@@ -48,9 +48,9 @@ class InfoBoard(QWidget):
 
         ### info board text templates ###
         template_loader = TemplateLoader()
-        def_format_file_name = logic.to_settings().get_val("def_format_file_name", str)
+        def_format_file_name = logic.to_settings().get_val("_def_format_file_name", str)
         to_logger().info(f"Loading formats for info board from \"{_os.path.basename(def_format_file_name)}\" ...")
-        template_loader.load_and_parse(logic.to_settings().get_val("def_format_file_name", str))
+        template_loader.load_and_parse(def_format_file_name)
         to_logger().info("Formats has been loaded.")
 
         for name, value in template_loader.to_variables().items():

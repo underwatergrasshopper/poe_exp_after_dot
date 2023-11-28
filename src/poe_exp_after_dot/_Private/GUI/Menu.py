@@ -225,7 +225,7 @@ class Menu(QMenu):
 
         self._open_data_folder_action = QAction("Open Data Folder", self)
         def open_data_folder():
-            _os.startfile(_os.path.abspath(self._logic.to_settings().get_val("data_path", str)))
+            _os.startfile(_os.path.abspath(self._logic.to_settings().get_val("_data_path", str)))
             self.setWindowFlags(self._flags_backup)
 
         self._open_data_folder_action.triggered.connect(open_data_folder)
@@ -243,13 +243,13 @@ class Menu(QMenu):
         self.addAction(self._hide_action)
 
         self._enable_debug_action = QAction("Enable Debug", self, checkable = True) # type: ignore
-        self._enable_debug_action.setChecked(self._logic.to_settings().get_val("is_debug", bool))
+        self._enable_debug_action.setChecked(self._logic.to_settings().get_val("_is_debug", bool))
         def enable_debug(is_enable):
             if is_enable:
-                self._logic.to_settings().set_val("is_debug", True, bool)
+                self._logic.to_settings().set_val("_is_debug", True, bool)
                 to_log_manager().set_is_debug(True)
             else:
-                self._logic.to_settings().set_val("is_debug", False, bool)
+                self._logic.to_settings().set_val("_is_debug", False, bool)
                 to_log_manager().set_is_debug(False)
 
             self._control_region.repaint()

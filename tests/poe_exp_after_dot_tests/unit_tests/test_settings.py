@@ -445,6 +445,16 @@ def test_settings_set_dict():
 
     assert settings.get_val("aaa.bbb") == {"xxx" : 23, "yyy" : 34}
 
+def test_settings_set_list():
+
+    settings = Settings()
+
+    settings.set_val("aaa.bbb", [12, 23, 34])
+
+    assert settings.to_temporal()   == {"aaa" : {"bbb" : [12, 23, 34]}}
+    assert settings.to_persistent() == settings.to_temporal() 
+
+    assert settings.get_val("aaa.bbb") == [12, 23, 34]
 
 
 def _make_settings(file_name : str, settings : dict[str, Any]):

@@ -78,7 +78,7 @@ class Logic:
 
         self._reader = _easyocr.Reader(['en'], gpu = True, verbose = False)
 
-        self._character_register = CharacterRegister(settings.get_val("data_path", str))
+        self._character_register = CharacterRegister(settings.get_val("_data_path", str))
 
         self._is_fetch_failed = False
 

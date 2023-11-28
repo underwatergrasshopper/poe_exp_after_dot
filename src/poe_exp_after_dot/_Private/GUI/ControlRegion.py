@@ -105,7 +105,7 @@ class ControlRegion(QMainWindow, ControlRegionInterface):
         painter = QPainter(self)
         painter.fillRect(self.rect(), QColor(0, 0, 0, 1))
 
-        if self._logic.to_settings().get_val("is_debug", bool):
+        if self._logic.to_settings().get_val("_is_debug", bool):
             painter.setPen(QColor(0, 255, 0))
             painter.drawRect(0, 0, self.width() - 1, self.height() - 1)
         

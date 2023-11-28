@@ -198,7 +198,7 @@ class Overlay:
         ### default settings ###
 
         settings.merge({
-            "_comment_help" : ["Type 'py -3-64 poe_exp_after_dot.py --settings-help' in console to see this info.", ""] + _SETTINGS_HELP_TEXT.split("\n"),
+            "_comment_help" : "", # to reserve place
             "font" : {
                 "name" : "Consolas",
                 "size" : 16,
@@ -236,10 +236,12 @@ class Overlay:
         settings.load(settings_path)
         to_logger().info("Loaded settings.")
 
+        settings.set_val("_comment_help", ["Type 'py -3-64 poe_exp_after_dot.py --settings-help' in console to see this info.", ""] + _SETTINGS_HELP_TEXT.split("\n"),)
+
         ### temporal settings ###
 
-        settings.set_tmp_val("data_path", data_path, str)
-        settings.set_tmp_val("is_debug", is_debug, bool)
+        settings.set_tmp_val("_data_path", data_path, str)
+        settings.set_tmp_val("_is_debug", is_debug, bool)
 
         if font_data is not None:
             if font_data.name is not None:      settings.set_tmp_val("font.name", font_data.name, str)
@@ -276,7 +278,7 @@ class Overlay:
         solve_pos_data(in_game_exp_tooltip_height,      "in_game_exp_tooltip_height", int)
     
         def_format_file_name = data_path + "/formats/Default.format"
-        settings.set_tmp_val("def_format_file_name", def_format_file_name, str)
+        settings.set_tmp_val("_def_format_file_name", def_format_file_name, str)
 
         to_logger().debug(f"temporal_settings={settings.to_temporal()}")
 

@@ -7,7 +7,7 @@ from copy   import deepcopy as _deepcopy
 from .Commons import merge_on_all_levels as _merge_on_all_levels
 
 
-ValueType   = Union[bool, int, float, str, dict[str, "ValueType"]]
+ValueType   = Union[bool, int, float, str, list["ValueType"], dict[str, "ValueType"]]
 
 
 class Settings:
@@ -70,7 +70,7 @@ class Settings:
             If value do not exist, then will be created.
         value_type
             One of following types: bool, int, float, str, Any 
-            If Any, then does not convert value to other type.
+            If Any, then does not convert value type to value_type.
         is_into_temporal_only
             True  - Sets value in temporal space only.
             False - Sets value in both temporal space and persistent space.
@@ -99,8 +99,8 @@ class Settings:
             For Example: "ui.box.size".
             If value do not exist, then will be created.
         value_type
-            One of following types: bool, int, float, str, Any 
-            If Any, then does not convert value to other type.
+            One of following types: bool, int, float, str, Any  
+            If Any, then does not convert value type to value_type.
 
         Raises
             TypeError - When value have unexpected type.
@@ -119,8 +119,8 @@ class Settings:
             Name of namespaced value.
             For Example: "ui.box.size".
         value_type
-            One of following types: bool, int, float, str, Any 
-            If Any, then does not convert value to other type.
+            One of following types: bool, int, float, str, Any  
+            If Any, then does not convert value type to value_type.
         is_from_temporal
             True    - Gets value from temporal space.
             False   - Gets value from persistent space.
@@ -156,8 +156,8 @@ class Settings:
             Name of namespaced value.
             For Example: "ui.box.size".
         value_type
-            One of following types: bool, int, float, str, Any 
-            If Any, then does not convert value to other type.
+            One of following types: bool, int, float, str, Any  
+            If Any, then does not convert value type to value_type.
         is_from_temporal
             True    - Gets value from temporal space.
             False   - Gets value from persistent space.
@@ -230,7 +230,7 @@ def _set_val(
         value       : ValueType, 
         value_type  : Type
             ):
-    if not isinstance(value, (bool, int, float, str, dict)): # assumes that dictionaries are ValueType on all levels
+    if not isinstance(value, (bool, int, float, str, list, dict)): # assumes that dictionaries are ValueType on all levels
         raise TypeError("Parameter 'value' have unexpected type.")
 
     level = settings
