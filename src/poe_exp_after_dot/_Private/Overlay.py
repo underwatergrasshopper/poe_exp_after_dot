@@ -265,6 +265,7 @@ class Overlay:
                 case [option_name, *_]:
                     raise ValueError(f"Incorrect command line argument. Unknown option \"{option_name}\".")
         
+        # Cuts here in case of just printing out help.
         if not is_run:
             return EXIT_SUCCESS
         
