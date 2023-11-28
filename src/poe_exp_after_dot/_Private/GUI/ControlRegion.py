@@ -54,10 +54,10 @@ class ControlRegion(QMainWindow, ControlRegionInterface):
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
         self.setGeometry(QRect(
-            logic.to_pos_data().control_region_x,
-            logic.to_pos_data().control_region_y,
-            logic.to_pos_data().control_region_width,
-            logic.to_pos_data().control_region_height,
+            logic.to_settings().get_val("_solved_pos_data.control_region_x", int),
+            logic.to_settings().get_val("_solved_pos_data.control_region_y", int),
+            logic.to_settings().get_val("_solved_pos_data.control_region_width", int),
+            logic.to_settings().get_val("_solved_pos_data.control_region_height", int),
         ))
 
         self._logic         = logic

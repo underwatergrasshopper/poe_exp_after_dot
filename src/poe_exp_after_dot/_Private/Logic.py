@@ -19,27 +19,6 @@ from .CharacterRegister import CharacterRegister, Character
 from .Measurer          import Measurer
 
 
-@dataclass
-class PosData:
-    info_board_x                    : int
-    info_board_bottom               : int
-
-    control_region_x                     : int
-    control_region_y                     : int
-    control_region_width                 : int
-    control_region_height                : int
-
-    in_game_exp_bar_x               : int
-    in_game_exp_bar_y               : int
-    in_game_exp_bar_width           : int
-    in_game_exp_bar_height          : int
-
-    in_game_exp_tooltip_x_offset    : int # from cursor pos
-    in_game_exp_tooltip_y           : int 
-    in_game_exp_tooltip_width       : int 
-    in_game_exp_tooltip_height      : int 
-
-
 class Point:
     x : int
     y : int
@@ -86,43 +65,14 @@ class TextFragment:
 
 class Logic:
     _settings           : Settings
-    _resolution_name    : str
-
-    _pos_data           : PosData
     _measurer           : Measurer
     _character_register : CharacterRegister
 
     _reader             : _easyocr.Reader
-
-    _is_fetch_failed : bool
+    _is_fetch_failed    : bool
 
     def __init__(self, settings : Settings):
         self._settings = settings
-
-        self._resolution_name = "1920x1080"
-
-        def get_val(data_name : str) -> int:
-            return settings.get_val(f"_solved_pos_data.{data_name}", int) 
-
-        self._pos_data = PosData(
-            info_board_x                    = get_val("info_board_x"),       
-            info_board_bottom               = get_val("info_board_bottom"),  
-
-            control_region_x                = get_val("control_region_x"),        
-            control_region_y                = get_val("control_region_y"),        
-            control_region_width            = get_val("control_region_width"),    
-            control_region_height           = get_val("control_region_height"),   
-        
-            in_game_exp_bar_x               = get_val("in_game_exp_bar_x"),  
-            in_game_exp_bar_y               = get_val("in_game_exp_bar_y"),      
-            in_game_exp_bar_width           = get_val("in_game_exp_bar_width"),  
-            in_game_exp_bar_height          = get_val("in_game_exp_bar_height"), 
-
-            in_game_exp_tooltip_x_offset    = get_val("in_game_exp_tooltip_x_offset"),
-            in_game_exp_tooltip_y           = get_val("in_game_exp_tooltip_y"),       
-            in_game_exp_tooltip_width       = get_val("in_game_exp_tooltip_width"),   
-            in_game_exp_tooltip_height      = get_val("in_game_exp_tooltip_height"),  
-        )
 
         self._measurer = Measurer()
 
@@ -203,9 +153,6 @@ class Logic:
 
     def to_measurer(self) -> Measurer:
         return self._measurer
-    
-    def to_pos_data(self) -> PosData:
-        return self._pos_data
         
     def measure(self, cursor_x_in_screen : int, cursor_y_in_screen : int, widgets_to_hide : list[QWidget]):
         time_ = _get_time_since_epoch()
@@ -241,10 +188,10 @@ class Logic:
         for widget in widgets_to_hide:
             widget.show()
 
-        left    = cursor_x_in_screen + self._pos_data.in_game_exp_tooltip_x_offset
-        right   = self._pos_data.in_game_exp_tooltip_y
-        width   = self._pos_data.in_game_exp_tooltip_width
-        height  = self._pos_data.in_game_exp_tooltip_height
+        left    = cursor_x_in_screen + self._settings.get_val("_solved_pos_data.in_game_exp_tooltip_x_offset", int)
+        right   = self._settings.get_val("_solved_pos_data.in_game_exp_tooltip_y", int)
+        width   = self._settings.get_val("_solved_pos_data.in_game_exp_tooltip_width", int)
+        height  = self._settings.get_val("_solved_pos_data.in_game_exp_tooltip_height", int)
 
         in_game_exp_tooltip_image = screenshot.crop((
             left,

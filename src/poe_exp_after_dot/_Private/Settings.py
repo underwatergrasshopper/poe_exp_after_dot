@@ -30,6 +30,9 @@ class Settings:
                 self._temporal      = _deepcopy(_merge_on_all_levels(self._temporal, loaded))
 
     def save(self, file_name : str):
+        """
+        Only values form persistent space are saved.
+        """
         with open(file_name, "w") as file:
             file.write(_json.dumps(self._persistent, indent = 4))
 
@@ -39,6 +42,9 @@ class Settings:
             Name containing names of levels and variable separated by '.'. 
             For Example: "ui.box.size".
             If value with levels do not exist, then will be created.
+        is_into_temporal_only
+            True  - Sets in temporal space only.
+            False - Sets in both temporal space and persistent space.
         value_type
             If Any, then does not convert value to other type.
         """
@@ -76,6 +82,12 @@ class Settings:
             For Example: "ui.box.size".
         value_type
             If Any, then does not convert value to other type.
+        is_from_temporal
+            True - Gets value from temporal space.
+            False - Gets value from persistent space.
+        
+        Returns
+            Either value or dictionary.
         """
         names = full_name.split(".")
 
@@ -98,6 +110,8 @@ class Settings:
             For Example: "ui.box.size".
         value_type
             If Any, then does not convert value to other type.
+        Returns
+            Value, dictionary or None if can not find.
         """
         try:
             return self.get_val(full_name, value_type, is_from_temporal = is_from_temporal)
@@ -108,8 +122,12 @@ class Settings:
         val = self.get_val(full_name_from, is_from_temporal = is_from_temporal)
         self.set_val(full_name_to, val, is_into_temporal_only = is_into_temporal_only)
 
-    def copy_tmp_val(self, full_name_from : str, full_name_to : str, *, is_from_temporal : bool = True):
-        val = self.get_val(full_name_from, is_from_temporal = is_from_temporal)
+    def copy_tmp_val(self, full_name_from : str, full_name_to : str):
+        """
+        Copies temporal value to temporals, or renames temporal value. 
+        Type of of value is preserved.
+        """
+        val = self.get_val(full_name_from, is_from_temporal = True)
         self.set_tmp_val(full_name_to, val)
         
     def merge_with(self, settings : dict[str, Any], *, is_into_temporal_only : bool = False):

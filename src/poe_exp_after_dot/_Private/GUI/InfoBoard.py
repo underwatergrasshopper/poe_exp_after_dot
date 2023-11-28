@@ -75,8 +75,8 @@ class InfoBoard(QWidget):
         return self._is_dismissed
 
     def set_text(self, text : str):
-        x = self._logic.to_pos_data().info_board_x
-        bottom = self._logic.to_pos_data().info_board_bottom
+        x = self._logic.to_settings().get_val("_solved_pos_data.info_board_x", int)
+        bottom = self._logic.to_settings().get_val("_solved_pos_data.info_board_bottom", int)
 
         self._label.setWordWrap(False)  
         self._label.setText(text)

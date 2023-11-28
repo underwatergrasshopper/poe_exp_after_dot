@@ -29,13 +29,11 @@ class FracExpBar(QWidget):
             Qt.WindowType.WindowTransparentForInput
         )
 
-        pos_data = self._logic.to_pos_data()
-
         self.setGeometry(QRect(
-            pos_data.in_game_exp_bar_x,
-            pos_data.in_game_exp_bar_y,
-            pos_data.in_game_exp_bar_width,
-            pos_data.in_game_exp_bar_height
+            logic.to_settings().get_val("_solved_pos_data.in_game_exp_bar_x", int),
+            logic.to_settings().get_val("_solved_pos_data.in_game_exp_bar_y", int),
+            logic.to_settings().get_val("_solved_pos_data.in_game_exp_bar_width", int),
+            logic.to_settings().get_val("_solved_pos_data.in_game_exp_bar_height", int),
         ))
 
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
@@ -72,7 +70,7 @@ class FracExpBar(QWidget):
             self._base_width = 0.0
             self._step_width = gain % 1
 
-        width = self._logic.to_pos_data().in_game_exp_bar_width
+        width = self._logic.to_settings().get_val("_solved_pos_data.in_game_exp_bar_width", int)
         self._base_width = int((self._base_width * width) // 1)
         self._step_width = int((self._step_width * width) // 1)
 

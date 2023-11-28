@@ -343,6 +343,13 @@ def test_settings_all_with_merge(tmpdir):
 
     assert _load_settings(file_name) == {"aaa" : 12, "nnn" : 15, "bbb" : {"ccc" : 23, "eee" : "67"}}
 
+def test_settings_get_dict():
+    settings = Settings()
+
+    settings.set_val("aaa.bbb.ccc", 1, int)
+    settings.set_val("aaa.bbb.ddd", 12, int)
+
+    assert settings.get_val("aaa") == {"bbb" : { "ccc" : 1 , "ddd" : 12}}
 
 def test_settings_copy():
     settings = Settings()
