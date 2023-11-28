@@ -124,6 +124,7 @@ class Logic:
     def get_info_board_text_parameters(self) -> dict[str, Any]:
         max_unit = time_unit_to_short(self._settings.get_val("time_max_unit", str))
         is_just_weeks_if_cap = self._settings.get_val("is_just_weeks_if_cap", bool)
+        is_ms_if_below_1s = self._settings.get_val("is_ms_if_below_1s", bool)
 
         return {
             "page"                  : self._measurer.get_current_entry_page(),
@@ -137,11 +138,11 @@ class Logic:
             "progress"              : FinePercent(self._measurer.get_progress(), integer_color = "#F8CD82", two_dig_after_dot_color = "#7F7FFF"),
             "exp"                   : FineExp(self._measurer.get_total_exp(), unit_color = "#9F9F9F"),
             "progress_step"         : FinePercent(self._measurer.get_progress_step(), is_sign = True, integer_color = "#7FFFFF", two_dig_after_dot_color = "#7FFFFF"),
-            "progress_step_time"    : FineTime(self._measurer.get_progress_step_time(), max_unit = max_unit, unit_color = "#8F8F8F", never_color = "#FF4F1F"),
+            "progress_step_time"    : FineTime(self._measurer.get_progress_step_time(), max_unit = max_unit, unit_color = "#8F8F8F", never_color = "#FF4F1F", is_just_weeks_if_cap = is_just_weeks_if_cap, is_show_ms_if_below_1s = is_ms_if_below_1s),
             "exp_per_hour"          : FineExpPerHour(self._measurer.get_exp_per_hour(), value_color = "#6FFF6F", unit_color = "#9F9F9F"),
 
-            "time_to_10_percent"    : FineTime(self._measurer.get_time_to_10_percent(), max_unit = max_unit, unit_color = "#9F9F9F", never_color = "#FF4F1F", is_just_weeks_if_cap = is_just_weeks_if_cap),
-            "time_to_next_level"    : FineTime(self._measurer.get_time_to_next_level(), max_unit = max_unit, unit_color = "#9F9F9F", never_color = "#FF4F1F", is_just_weeks_if_cap = is_just_weeks_if_cap),
+            "time_to_10_percent"    : FineTime(self._measurer.get_time_to_10_percent(), max_unit = max_unit, unit_color = "#9F9F9F", never_color = "#FF4F1F", is_just_weeks_if_cap = is_just_weeks_if_cap, is_show_ms_if_below_1s = is_ms_if_below_1s),
+            "time_to_next_level"    : FineTime(self._measurer.get_time_to_next_level(), max_unit = max_unit, unit_color = "#9F9F9F", never_color = "#FF4F1F", is_just_weeks_if_cap = is_just_weeks_if_cap, is_show_ms_if_below_1s = is_ms_if_below_1s),
             "hint_begin"            : "<font size=10px color=\"#7f7f7f\">",
             "hint_end"              : "</font>",
             "h"                     : "#",
