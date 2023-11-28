@@ -47,10 +47,18 @@ class InfoBoard(QWidget):
         self._label.setStyleSheet(f"font-weight: {font_wight}; font-size: {font_size}px; font-family: {font_name}; color: white;")
 
         ### info board text templates ###
-        template_loader = TemplateLoader()
+        
+        self._text_generator = TextGenerator(None, self._logic.get_info_board_text_parameters, self.set_text)
 
-        format_name = logic.to_settings().get_val("info_board_format", str)
-        data_path = logic.to_settings().get_val("_data_path", str)
+        format_name = self._logic.to_settings().get_val("info_board_format", str)
+        self.load_format(format_name)
+
+        self._text_generator.start()
+        ###
+
+    def load_format(self, format_name : str):
+        template_loader = TemplateLoader()
+        data_path = self._logic.to_settings().get_val("_data_path", str)
 
         format_file_name = data_path + "/formats/" + format_name + ".format"
 
@@ -58,12 +66,11 @@ class InfoBoard(QWidget):
         template_loader.load_and_parse(format_file_name)
         to_logger().info("Formats has been loaded.")
 
+        self._logic.to_settings().set_tmp_val("_fmt_var", {}) # clears previous format variables
         for name, value in template_loader.to_variables().items():
-            logic.to_settings().set_tmp_val("_fmt_var." + name, value, str)
+            self._logic.to_settings().set_tmp_val("_fmt_var." + name, value, str)
 
-        self._text_generator = TextGenerator(template_loader.to_templates(), self._logic.get_info_board_text_parameters, self.set_text)
-        self._text_generator.start()
-        ###
+        self._text_generator.set_templates(template_loader.to_templates())
 
     def set_text_by_template(self, template_name : str | None = None):
         self._text_generator.gen_text(template_name)

@@ -77,6 +77,10 @@ class ControlRegion(QMainWindow, ControlRegionInterface):
         else:
             self._info_board.set_text_by_template("First Help")
         
+    def change_info_board_format(self, format_name : str):
+        self._info_board.load_format(format_name)
+        self._info_board.set_text_by_template()
+
     def to_menu(self) -> Menu:
         return self._menu
  

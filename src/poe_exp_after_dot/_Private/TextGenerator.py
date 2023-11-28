@@ -21,14 +21,17 @@ class TextGenerator:
     _time_left          : float # in seconds
     _format_file_name   : str
 
-    def __init__(self, templates : dict[str, Template], get_parameters : GetParametersFunction, set_text : SetTextFunction):
-        self._templates         = templates
+    def __init__(self, templates : dict[str, Template] | None, get_parameters : GetParametersFunction, set_text : SetTextFunction):
+        self._templates         = templates if templates else {}
         self._template          = Template("", 0.0, "")
         self._template_name     = ""
         self._get_parameters    = get_parameters
         self._set_text          = set_text
         self._is_started        = False
         self._time_left         = 0.0    
+
+    def set_templates(self, templates : dict[str, Template]):
+        self._templates = templates
 
     def gen_text(self, template_name : str | None = None) -> str:
         """

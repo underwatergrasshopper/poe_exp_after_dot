@@ -2,7 +2,7 @@ import os as _os
 
 from PySide6.QtWidgets  import QWidget, QMenu, QWidgetAction, QLineEdit
 from PySide6.QtCore     import Qt
-from PySide6.QtGui      import QMouseEvent, QAction
+from PySide6.QtGui      import QMouseEvent, QAction, QActionGroup
 
 from ..Commons           import to_app
 from ..Logic             import Logic
@@ -70,6 +70,56 @@ class PersistentMenu(QMenu):
             action.trigger()
         else:
             super().mouseReleaseEvent(event)
+
+
+class FormatMenu(QMenu):
+    _logic              : Logic
+    _control_region     : ControlRegionInterface
+
+    _action_group       : QActionGroup
+    _formats            : dict[str, str] # name, file_name
+
+    def __init__(self, parent : "Menu", logic : Logic, control_region : ControlRegionInterface):
+        super().__init__("Format", parent)
+
+        self._logic = logic
+        self._control_region = control_region
+
+        self._scan_for_formats()
+
+        current_name = self._logic.to_settings().get_val("info_board_format", str)
+
+        self._action_group = QActionGroup(self)
+
+        for name in self._formats.keys():
+            if name == current_name:
+                action = QAction(name, self, checkable = True, checked = True)
+                self.setTitle("Format: " + name)
+            else:
+                action = QAction(name, self, checkable = True, checked = False)
+            self.addAction(action)
+            action.triggered.connect(self._switch_format)
+            self._action_group.addAction(action)
+
+    def _switch_format(self):
+        sender : QAction = self.sender()
+        name = sender.text()
+
+        self._control_region.change_info_board_format(name)
+        self.setTitle("Format: " + name)
+            
+    def _scan_for_formats(self):
+        data_path = self._logic.to_settings().get_val("_data_path", str)
+        format_folder_path = data_path + "/formats"
+
+        self._formats = {}
+
+        for file_name in _os.listdir(format_folder_path):
+            full_file_name = format_folder_path + "/" + file_name
+            if _os.path.isfile(full_file_name):
+                name, *extension = file_name.split(".", 1)
+                if extension and extension[0] == "format":
+                    self._formats[name] = full_file_name
 
 
 class ExpDataSubMenu(PersistentMenu):
@@ -260,7 +310,8 @@ class Menu(QMenu):
         self.addAction(self._enable_debug_action)
 
         self.addMenu(ExpDataSubMenu(self, logic, control_region))
-
+        self.addMenu(FormatMenu(self, logic, control_region))
+    
         self.addSeparator()
 
         self._close_menu_action = QAction("Close Menu", self)

@@ -1,4 +1,7 @@
 class ControlRegionInterface:
+    def change_info_board_format(self, format_name : str):
+        raise RuntimeError("This method need to be overridden.")
+
     def pause_foreground_guardian(self):
         raise RuntimeError("This method need to be overridden.")
     
