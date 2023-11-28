@@ -151,38 +151,132 @@ class Overlay:
     def __init__(self):
         pass
 
-    def run(
-            self, 
-            *, 
-            is_debug        : bool                  = False, 
-            font_data       : FontData | None       = None,
-            data_path       : str | None            = None, 
-            time_max_unit   : str | None            = None,
-
-            info_board_x                    : int | None    = None,
-            info_board_bottom               : int | None    = None,
-
-            control_region_x                : int | None    = None,
-            control_region_y                : int | None    = None,
-            control_region_width            : int | None    = None,
-            control_region_height           : int | None    = None,
-
-            in_game_exp_bar_x               : int | None    = None,
-            in_game_exp_bar_y               : int | None    = None,
-            in_game_exp_bar_width           : int | None    = None,
-            in_game_exp_bar_height          : int | None    = None,
-
-            in_game_exp_tooltip_x_offset    : int | None    = None,
-            in_game_exp_tooltip_y           : int | None    = None,
-            in_game_exp_tooltip_width       : int | None    = None,
-            in_game_exp_tooltip_height      : int | None    = None,
-
-            is_overwrite_default_format     : bool          = False,
-                ) -> int:
+    def main(self, argv : list[str]) -> int:
         """
         Returns
             Exit code.
+        Exceptions
+            ValueError
+                When any given option in argument list is incorrect
         """
+        ### parses command line options ###
+        is_run                                              = True
+        is_debug                                            = False
+        font_data                       : FontData | None   = None
+        raw_custom_pos_data             : str | None        = None
+        data_path                       : str | None        = None
+        time_max_unit                   : str | None        = None
+
+        info_board_x                    : int | None        = None
+        info_board_bottom               : int | None        = None
+
+        control_region_x                : int | None        = None
+        control_region_y                : int | None        = None
+        control_region_width            : int | None        = None
+        control_region_height           : int | None        = None
+
+        in_game_exp_bar_x               : int | None        = None
+        in_game_exp_bar_y               : int | None        = None
+        in_game_exp_bar_width           : int | None        = None
+        in_game_exp_bar_height          : int | None        = None
+
+        in_game_exp_tooltip_x_offset    : int | None        = None
+        in_game_exp_tooltip_y           : int | None        = None
+        in_game_exp_tooltip_width       : int | None        = None
+        in_game_exp_tooltip_height      : int | None        = None
+
+        is_overwrite_default_format                         = False
+
+        for argument in argv[1:]:
+            option_name, *value = argument.split("=", 1)
+
+            match (option_name, *value):
+                ### correct ###
+
+                case ["--help" | "-h"]:
+                    print(_HELP_TEXT)
+                    is_run = False
+
+                case ["--settings-help"]:
+                    print(_SETTINGS_HELP_TEXT)
+                    is_run = False
+
+                case ["--debug"]:
+                    is_debug = True
+
+                case ["--data-path", data_path]:
+                    data_path = data_path.lstrip("/").lstrip("\\").lstrip("\\")
+
+                case ["--time-max-unit", time_max_unit]:
+                    if time_max_unit not in ["second", "minute", "hour", "day", "week"]:
+                        raise ValueError(f"Incorrect command line argument. Option \"{option_name}\" have unknown value.")
+
+                case ["--font", font_data_text]:
+                    name_format = r"(|[^,]+)"
+                    size_format = r"(|0|[1-9][0-9]*)"
+                    style_format = r"(|normal|bold)"
+                    match_ = _re.search(fr"^{name_format},{size_format},{style_format}$", font_data_text)
+                    if match_:
+                        font_data = FontData(
+                            name               = match_.group(1) if match_.group(1) else None,
+                            size               = int(match_.group(2)),
+                            is_bold            = match_.group(3) == "bold",
+                        )
+                    else:
+                        raise ValueError(f"Incorrect command line argument. Option \"{option_name}\" have wrong format.")
+
+                case ["--custom", raw_custom_pos_data]:
+                    n = r"(|0|[1-9][0-9]*)"
+                    match_ = _re.search(fr"^{n},{n};{n},{n},{n},{n};{n},{n},{n},{n};{n},{n},{n},{n}$", raw_custom_pos_data)
+                    if match_:
+                        index = 1
+                        def next_group():
+                            nonlocal index
+                            group = match_.group(index)
+                            index += 1
+                            return int(group) if group else None
+                        
+                        info_board_x                    = next_group()
+                        info_board_bottom               = next_group()
+
+                        control_region_x                = next_group()
+                        control_region_y                = next_group()
+                        control_region_width            = next_group()
+                        control_region_height           = next_group()
+
+                        in_game_exp_bar_x               = next_group()
+                        in_game_exp_bar_y               = next_group()
+                        in_game_exp_bar_width           = next_group()
+                        in_game_exp_bar_height          = next_group()
+
+                        in_game_exp_tooltip_x_offset    = next_group()
+                        in_game_exp_tooltip_y           = next_group()
+                        in_game_exp_tooltip_width       = next_group()
+                        in_game_exp_tooltip_height      = next_group()
+                        
+
+                    else:
+                        raise ValueError(f"Incorrect command line argument. Option \"{option_name}\" have wrong format.")
+                
+                case ["--overwrite-default-format"]:
+                    is_overwrite_default_format = True
+
+                ### incorrect ###
+
+                case ["--help" | "-h" | "--debug" | "--settings-help" | "--overwrite-default-format", _]:
+                    raise ValueError(f"Incorrect command line argument. Option \"{option_name}\" can't have a value.")
+                
+                case ["--data-path" | "--custom" | "--font" | "--time-max-unit"]:
+                    raise ValueError(f"Incorrect command line argument. Option \"{option_name}\" need to have a value.")
+
+                case [option_name, *_]:
+                    raise ValueError(f"Incorrect command line argument. Unknown option \"{option_name}\".")
+        
+        if not is_run:
+            return EXIT_SUCCESS
+        
+        ### starting ###
+        
         if data_path is None:
             data_path = get_default_data_path()
 
@@ -336,157 +430,6 @@ class Overlay:
         to_logger().info("Exit.")
         
         return exit_code
-
-    def main(self, argv : list[str]) -> int:
-        """
-        Returns
-            Exit code.
-        Exceptions
-            ValueError
-                When any given option in argument list is incorrect
-        """
-        ### parses command line options ###
-        is_run                                          = True
-        is_debug                                        = False
-        font_data           : FontData | None           = None
-        raw_custom_pos_data : str | None                = None
-        data_path           : str | None                = None
-        time_max_unit       : str | None                = None
-
-        info_board_x                    : int | None    = None
-        info_board_bottom               : int | None    = None
-
-        control_region_x                     : int | None    = None
-        control_region_y                     : int | None    = None
-        control_region_width                 : int | None    = None
-        control_region_height                : int | None    = None
-
-        in_game_exp_bar_x               : int | None    = None
-        in_game_exp_bar_y               : int | None    = None
-        in_game_exp_bar_width           : int | None    = None
-        in_game_exp_bar_height          : int | None    = None
-
-        in_game_exp_tooltip_x_offset    : int | None    = None
-        in_game_exp_tooltip_y           : int | None    = None
-        in_game_exp_tooltip_width       : int | None    = None
-        in_game_exp_tooltip_height      : int | None    = None
-
-        is_overwrite_default_format                     = False
-
-
-        for argument in argv[1:]:
-            option_name, *value = argument.split("=", 1)
-
-            match (option_name, *value):
-                ### correct ###
-
-                case ["--help" | "-h"]:
-                    print(_HELP_TEXT)
-                    is_run = False
-
-                case ["--settings-help"]:
-                    print(_SETTINGS_HELP_TEXT)
-                    is_run = False
-
-                case ["--debug"]:
-                    is_debug = True
-
-                case ["--data-path", data_path]:
-                    data_path = data_path.lstrip("/").lstrip("\\").lstrip("\\")
-
-                case ["--time-max-unit", time_max_unit]:
-                    if time_max_unit not in ["second", "minute", "hour", "day", "week"]:
-                        raise ValueError(f"Incorrect command line argument. Option \"{option_name}\" have unknown value.")
-
-                case ["--font", font_data_text]:
-                    name_format = r"(|[^,]+)"
-                    size_format = r"(|0|[1-9][0-9]*)"
-                    style_format = r"(|normal|bold)"
-                    match_ = _re.search(fr"^{name_format},{size_format},{style_format}$", font_data_text)
-                    if match_:
-                        font_data = FontData(
-                            name               = match_.group(1) if match_.group(1) else None,
-                            size               = int(match_.group(2)),
-                            is_bold            = match_.group(3) == "bold",
-                        )
-                    else:
-                        raise ValueError(f"Incorrect command line argument. Option \"{option_name}\" have wrong format.")
-
-                case ["--custom", raw_custom_pos_data]:
-                    n = r"(|0|[1-9][0-9]*)"
-                    match_ = _re.search(fr"^{n},{n};{n},{n},{n},{n};{n},{n},{n},{n};{n},{n},{n},{n}$", raw_custom_pos_data)
-                    if match_:
-                        index = 1
-                        def next_group():
-                            nonlocal index
-                            group = match_.group(index)
-                            index += 1
-                            return int(group) if group else None
-                        
-                        info_board_x                    = next_group()
-                        info_board_bottom               = next_group()
-
-                        control_region_x                     = next_group()
-                        control_region_y                     = next_group()
-                        control_region_width                 = next_group()
-                        control_region_height                = next_group()
-
-                        in_game_exp_bar_x               = next_group()
-                        in_game_exp_bar_y               = next_group()
-                        in_game_exp_bar_width           = next_group()
-                        in_game_exp_bar_height          = next_group()
-
-                        in_game_exp_tooltip_x_offset    = next_group()
-                        in_game_exp_tooltip_y           = next_group()
-                        in_game_exp_tooltip_width       = next_group()
-                        in_game_exp_tooltip_height      = next_group()
-                        
-
-                    else:
-                        raise ValueError(f"Incorrect command line argument. Option \"{option_name}\" have wrong format.")
-                
-                case ["--overwrite-default-format"]:
-                    is_overwrite_default_format = True
-
-                ### incorrect ###
-
-                case ["--help" | "-h" | "--debug" | "--settings-help" | "--overwrite-default-format", _]:
-                    raise ValueError(f"Incorrect command line argument. Option \"{option_name}\" can't have a value.")
-                
-                case ["--data-path" | "--custom" | "--font" | "--time-max-unit"]:
-                    raise ValueError(f"Incorrect command line argument. Option \"{option_name}\" need to have a value.")
-
-                case [option_name, *_]:
-                    raise ValueError(f"Incorrect command line argument. Unknown option \"{option_name}\".")
-        
-        if is_run:
-            return self.run(
-                is_debug                        = is_debug,
-                font_data                       = font_data,
-                data_path                       = data_path,
-                time_max_unit                   = time_max_unit,
-
-                info_board_x                    = info_board_x,
-                info_board_bottom               = info_board_bottom,
-
-                control_region_x                     = control_region_x,
-                control_region_y                     = control_region_y,
-                control_region_width                 = control_region_width,
-                control_region_height                = control_region_height,
-
-                in_game_exp_bar_x               = in_game_exp_bar_x,
-                in_game_exp_bar_y               = in_game_exp_bar_y,
-                in_game_exp_bar_width           = in_game_exp_bar_width,
-                in_game_exp_bar_height          = in_game_exp_bar_height,
-
-                in_game_exp_tooltip_x_offset    = in_game_exp_tooltip_x_offset,
-                in_game_exp_tooltip_y           = in_game_exp_tooltip_y,
-                in_game_exp_tooltip_width       = in_game_exp_tooltip_width,
-                in_game_exp_tooltip_height      = in_game_exp_tooltip_height,
-
-                is_overwrite_default_format     = is_overwrite_default_format
-            )
-        return EXIT_SUCCESS
 
 
 def _get_font_info(settings : Settings) -> str:
