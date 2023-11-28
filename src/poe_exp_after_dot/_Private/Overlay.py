@@ -163,6 +163,7 @@ class Overlay:
         raw_custom_pos_data             : str | None        = None
         data_path                       : str | None        = None
         time_max_unit                   : str | None        = None
+        is_just_weeks_if_cap            : bool | None       = None
 
         info_board_x                    : int | None        = None
         info_board_bottom               : int | None        = None
@@ -254,9 +255,17 @@ class Overlay:
                 case ["--overwrite-default-format"]:
                     is_overwrite_default_format = True
 
+                case ["--just-weeks-if-cap", cap_status]:
+                    if cap_status == "on":
+                        is_just_weeks_if_cap = True
+                    elif cap_status == "off":
+                        is_just_weeks_if_cap = False
+                    else:
+                        raise ValueError(f"Incorrect command line argument. Option \"{option_name}\" have wrong format.")
+
                 ### incorrect ###
 
-                case ["--help" | "-h" | "--debug" | "--settings-help" | "--overwrite-default-format", _]:
+                case ["--help" | "-h" | "--debug" | "--settings-help" | "--overwrite-default-format" | "--just-weeks-if-cap", _]:
                     raise ValueError(f"Incorrect command line argument. Option \"{option_name}\" can't have a value.")
                 
                 case ["--data-path" | "--custom" | "--font" | "--time-max-unit"]:
@@ -294,6 +303,7 @@ class Overlay:
             },
             "character_name" : "",
             "time_max_unit" : "hour",
+            "is_just_weeks_if_cap" : True,
             "selected_pos_data_name" : "1920x1080",
             "pos_data" : {
                 "1920x1080" : {
@@ -337,6 +347,9 @@ class Overlay:
 
         if time_max_unit is not None:
             settings.set_tmp_val("font.time_max_unit", time_max_unit, int)
+
+        if is_just_weeks_if_cap is not None:
+            settings.set_tmp_val("is_just_weeks_if_cap", is_just_weeks_if_cap, bool)
 
         selected_pos_data_name = settings.get_val("selected_pos_data_name", str)
 
