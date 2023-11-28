@@ -54,7 +54,7 @@ class InfoBoard(QWidget):
         to_logger().info("Formats has been loaded.")
 
         for name, value in template_loader.to_variables().items():
-            logic.to_settings().set_tmp_val("fmt_var." + name, value, str)
+            logic.to_settings().set_tmp_val("_fmt_var." + name, value, str)
 
         self._text_generator = TextGenerator(template_loader.to_templates(), self._logic.get_info_board_text_parameters, self.set_text)
         self._text_generator.start()

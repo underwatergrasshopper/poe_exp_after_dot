@@ -102,10 +102,7 @@ class Logic:
         self._resolution_name = "1920x1080"
 
         def get_val(data_name : str) -> int:
-            value = settings.try_get_val(f"pos_data._command_line_custom.{data_name}", int)
-            if value is not None:
-                return value
-            return settings.get_val(f"pos_data.{self._resolution_name}.{data_name}", int) 
+            return settings.get_val(f"_solved_pos_data.{data_name}", int) 
 
         self._pos_data = PosData(
             info_board_x                    = get_val("info_board_x"),       

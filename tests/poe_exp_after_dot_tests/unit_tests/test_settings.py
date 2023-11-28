@@ -81,7 +81,7 @@ def test_settings_no_default_no_file_no_temporal(tmpdir):
     assert settings.try_get_val("bbb.ccc", int) == 23
     assert settings.try_get_val("bbb.eee", int) == 67
     assert settings.try_get_val("bbb.eee", str) == "67"
-    assert settings.try_get_val("bbb.ddd", int, is_temporal = True) == 45
+    assert settings.try_get_val("bbb.ddd", int, is_from_temporal = True) == 45
 
     ### save ###
 
@@ -342,6 +342,47 @@ def test_settings_all_with_merge(tmpdir):
     settings.save(file_name)
 
     assert _load_settings(file_name) == {"aaa" : 12, "nnn" : 15, "bbb" : {"ccc" : 23, "eee" : "67"}}
+
+
+def test_settings_copy():
+    settings = Settings()
+
+    settings.set_val("aaa", 15, int)
+    settings.set_val("bbb.ccc", 1, int)
+
+    assert settings.to_temporal()   == {"aaa" : 15, "bbb" : { "ccc" : 1}}
+    assert settings.to_persistent() == settings.to_temporal() 
+
+    settings.copy_val("aaa", "ddd")
+
+    assert settings.to_temporal()   == {"aaa" : 15, "ddd" : 15, "bbb" : { "ccc" : 1}}
+    assert settings.to_persistent() == settings.to_temporal() 
+
+    settings.copy_val("bbb.ccc", "xxx.mmm")
+
+    assert settings.to_temporal()   == {"aaa" : 15, "ddd" : 15, "bbb" : { "ccc" : 1}, "xxx" : { "mmm" : 1}}
+    assert settings.to_persistent() == settings.to_temporal() 
+
+    settings.copy_tmp_val("bbb.ccc", "aaa")
+
+    assert settings.to_temporal()   == {"aaa" : 1, "ddd" : 15, "bbb" : { "ccc" : 1}, "xxx" : { "mmm" : 1}}
+    assert settings.to_persistent() == {"aaa" : 15, "ddd" : 15, "bbb" : { "ccc" : 1}, "xxx" : { "mmm" : 1}}
+
+    settings.copy_val("bbb", "aaa", is_into_temporal_only = True)
+
+    assert settings.to_temporal()   == {"aaa" : { "ccc" : 1}, "ddd" : 15, "bbb" : { "ccc" : 1}, "xxx" : { "mmm" : 1}}
+    assert settings.to_persistent() == {"aaa" : 15, "ddd" : 15, "bbb" : { "ccc" : 1}, "xxx" : { "mmm" : 1}}
+
+    settings.copy_val("aaa", "aaa", is_from_temporal = False, is_into_temporal_only = True)
+
+    assert settings.to_temporal()   == {"aaa" : 15, "ddd" : 15, "bbb" : { "ccc" : 1}, "xxx" : { "mmm" : 1}}
+    assert settings.to_persistent() == {"aaa" : 15, "ddd" : 15, "bbb" : { "ccc" : 1}, "xxx" : { "mmm" : 1}}
+
+    settings.copy_val("xxx", "aaa", is_from_temporal = False, is_into_temporal_only = False)
+
+    assert settings.to_temporal()   == {"aaa" : { "mmm" : 1}, "ddd" : 15, "bbb" : { "ccc" : 1}, "xxx" : { "mmm" : 1}}
+    assert settings.to_persistent() == {"aaa" : { "mmm" : 1}, "ddd" : 15, "bbb" : { "ccc" : 1}, "xxx" : { "mmm" : 1}}
+
 
 def _make_settings(file_name : str, settings : dict[str, Any]):
     with open(file_name, "w") as file:

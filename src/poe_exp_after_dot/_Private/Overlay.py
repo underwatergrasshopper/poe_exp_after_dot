@@ -3,7 +3,7 @@ import sys      as _sys
 import re       as _re
 import shutil   as _shutil
 
-from typing         import Any
+from typing         import Any, Type
 from dataclasses    import dataclass
 
 from PySide6.QtWidgets  import QApplication
@@ -80,23 +80,47 @@ _SETTINGS_HELP_TEXT = """
 font.name 
     <text>
 font.size
-    <natural>                       # in pixels
+    <natural> # in pixels
 font.is_bold
     <boolean>
+character_name
+    <text>
 time_max_unit
     "second"
     "minute"
     "hour"
     "day"
     "week"
-pos_data.<resolution>.*_x
-pos_data.<resolution>.*_x_offset
-pos_data.<resolution>.*_y
-pos_data.<resolution>.*_bottom
-    <integer>                       # in pixels
-pos_data.<resolution>.*_width
-pos_data.<resolution>.*_height
-    <natural>                       # in pixels
+selected_pos_data_name
+    <text>
+pos_data.<resolution>.info_board_x
+    <integer> # in pixels
+pos_data.<resolution>.info_board_bottom
+    <integer> # in pixels
+pos_data.<resolution>.control_region_x
+    <integer> # in pixels
+pos_data.<resolution>.control_region_y
+    <integer> # in pixels
+pos_data.<resolution>.control_region_width
+    <natural> # in pixels
+pos_data.<resolution>.control_region_height
+    <natural> # in pixels
+pos_data.<resolution>.in_game_exp_bar_x
+    <integer> # in pixels
+pos_data.<resolution>.in_game_exp_bar_y
+    <integer> # in pixels
+pos_data.<resolution>.in_game_exp_bar_width
+    <natural> # in pixels
+pos_data.<resolution>.in_game_exp_bar_height
+    <natural> # in pixels
+pos_data.<resolution>.in_game_exp_tooltip_x_offset
+    <integer> # in pixels
+pos_data.<resolution>.in_game_exp_tooltip_y
+    <integer> # in pixels
+pos_data.<resolution>.in_game_exp_tooltip_width
+    <natural> # in pixels
+pos_data.<resolution>.in_game_exp_tooltip_height
+    <natural> # in pixels
 
 <boolean>
     true
@@ -105,6 +129,7 @@ pos_data.<resolution>.*_height
 
 # path to top level package
 _base_path = _os.path.abspath(_os.path.dirname(__file__) + "/..")
+
 
 class _ExceptionStash:
     exception : BaseException | None
@@ -173,7 +198,7 @@ class Overlay:
         ### default settings ###
 
         settings.merge_with({
-            "_comment" : "Type 'py -3-64 poe_exp_after_dot.py --settings-help' in console to see possible values.",
+            "_comment_help" : ["Type 'py -3-64 poe_exp_after_dot.py --settings-help' in console to see this info.", ""] + _SETTINGS_HELP_TEXT.split("\n"),
             "font" : {
                 "name" : "Consolas",
                 "size" : 16,
@@ -181,6 +206,7 @@ class Overlay:
             },
             "character_name" : "",
             "time_max_unit" : "hour",
+            "selected_pos_data_name" : "1920x1080",
             "pos_data" : {
                 "1920x1080" : {
                     "info_board_x"      : 551,
@@ -223,25 +249,32 @@ class Overlay:
         if time_max_unit is not None:
             settings.set_tmp_val("font.time_max_unit", time_max_unit, int)
 
-        namespace = "pos_data._command_line_custom."
-        if info_board_x:                    settings.set_tmp_val(namespace + "info_board_x",                    info_board_x, int)
-        if info_board_bottom:               settings.set_tmp_val(namespace + "info_board_bottom",               info_board_bottom, int)
+        selected_pos_data_name = settings.get_val("selected_pos_data_name", str)
 
-        if control_region_x:                settings.set_tmp_val(namespace + "control_region_x",                control_region_x, int)
-        if control_region_y:                settings.set_tmp_val(namespace + "control_region_y",                control_region_y, int)
-        if control_region_width:            settings.set_tmp_val(namespace + "control_region_width",            control_region_width, int)
-        if control_region_height:           settings.set_tmp_val(namespace + "control_region_height",           control_region_height, int)
+        def solve_pos_data(parameter : Any, name : str, value_type : Type):
+            if parameter is not None: 
+                settings.set_tmp_val(f"_solved_pos_data.{name}", parameter, value_type) 
+            else:
+                settings.copy_tmp_val(f"pos_data.{selected_pos_data_name}.{name}", f"_solved_pos_data.{name}") 
 
-        if in_game_exp_bar_x:               settings.set_tmp_val(namespace + "in_game_exp_bar_x",               in_game_exp_bar_x, int)
-        if in_game_exp_bar_y:               settings.set_tmp_val(namespace + "in_game_exp_bar_y",               in_game_exp_bar_y, int)
-        if in_game_exp_bar_width:           settings.set_tmp_val(namespace + "in_game_exp_bar_width",           in_game_exp_bar_width, int)
-        if in_game_exp_bar_height:          settings.set_tmp_val(namespace + "in_game_exp_bar_height",          in_game_exp_bar_height, int)
+        solve_pos_data(info_board_x,                    "info_board_x", int)
+        solve_pos_data(info_board_bottom,               "info_board_bottom", int)
 
-        if in_game_exp_tooltip_x_offset:    settings.set_tmp_val(namespace + "in_game_exp_tooltip_x_offset",    in_game_exp_tooltip_x_offset, int)
-        if in_game_exp_tooltip_y:           settings.set_tmp_val(namespace + "in_game_exp_tooltip_y",           in_game_exp_tooltip_y, int)
-        if in_game_exp_tooltip_width:       settings.set_tmp_val(namespace + "in_game_exp_tooltip_width",       in_game_exp_tooltip_width, int)
-        if in_game_exp_tooltip_height:      settings.set_tmp_val(namespace + "in_game_exp_tooltip_height",      in_game_exp_tooltip_height, int)
+        solve_pos_data(control_region_x,                "control_region_x", int)
+        solve_pos_data(control_region_y,                "control_region_y", int)
+        solve_pos_data(control_region_width,            "control_region_width", int)
+        solve_pos_data(control_region_height,           "control_region_height", int)
 
+        solve_pos_data(in_game_exp_bar_x,               "in_game_exp_bar_x", int)
+        solve_pos_data(in_game_exp_bar_y,               "in_game_exp_bar_y", int)
+        solve_pos_data(in_game_exp_bar_width,           "in_game_exp_bar_width", int)
+        solve_pos_data(in_game_exp_bar_height,          "in_game_exp_bar_height", int)
+
+        solve_pos_data(in_game_exp_tooltip_x_offset,    "in_game_exp_tooltip_x_offset", int)
+        solve_pos_data(in_game_exp_tooltip_y,           "in_game_exp_tooltip_y", int)
+        solve_pos_data(in_game_exp_tooltip_width,       "in_game_exp_tooltip_width", int)
+        solve_pos_data(in_game_exp_tooltip_height,      "in_game_exp_tooltip_height", int)
+    
         def_format_file_name = data_path + "/formats/Default.format"
         settings.set_tmp_val("def_format_file_name", def_format_file_name, str)
 
