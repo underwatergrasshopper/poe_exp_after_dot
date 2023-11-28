@@ -64,10 +64,17 @@ def test_settings_no_default_no_file_no_temporal(tmpdir):
     ### get ###
     try:
         settings.get_val("xxx", int)
-    except Exception as exception:
-        assert str(exception) == "Can not get value from temporal settings with full name \"xxx\"."
+    except KeyError as exception:
+        assert str(exception) == "'xxx'"
     else:
-        assert False, "Expected exception."
+        assert False, "Expected KeyError exception."
+
+    try:
+        settings.get_val("xxx.kkk.lll", int)
+    except KeyError as exception:
+        assert str(exception) == "'xxx.kkk.lll'"
+    else:
+        assert False, "Expected KeyError exception."
 
     assert settings.get_val("aaa", int) == 12
     assert settings.get_val("bbb.ccc", int) == 23
@@ -132,10 +139,17 @@ def test_settings_no_file_no_temporal(tmpdir):
 
     try:
         settings.get_val("xxx", int)
-    except Exception as exception:
-        assert str(exception) == "Can not get value from temporal settings with full name \"xxx\"."
+    except KeyError as exception:
+        assert str(exception) == "'xxx'"
     else:
-        assert False, "Expected exception."
+        assert False, "Expected KeyError exception."
+
+    try:
+        settings.get_val("xxx.kkk.lll", int)
+    except KeyError as exception:
+        assert str(exception) == "'xxx.kkk.lll'"
+    else:
+        assert False, "Expected KeyError exception."
 
     assert settings.get_val("aaa", int) == 12
     assert settings.get_val("bbb.ccc", int) == 23
@@ -192,10 +206,17 @@ def test_settings_no_temporal(tmpdir):
 
     try:
         settings.get_val("xxx", int)
-    except Exception as exception:
-        assert str(exception) == "Can not get value from temporal settings with full name \"xxx\"."
+    except KeyError as exception:
+        assert str(exception) == "'xxx'"
     else:
-        assert False, "Expected exception."
+        assert False, "Expected KeyError exception."
+
+    try:
+        settings.get_val("xxx.kkk.lll", int)
+    except KeyError as exception:
+        assert str(exception) == "'xxx.kkk.lll'"
+    else:
+        assert False, "Expected KeyError exception."
 
     assert settings.get_val("aaa", int) == 12
     assert settings.get_val("bbb.ccc", int) == 23
@@ -255,10 +276,17 @@ def test_settings_all(tmpdir):
 
     try:
         settings.get_val("xxx", int)
-    except Exception as exception:
-        assert str(exception) == "Can not get value from temporal settings with full name \"xxx\"."
+    except KeyError as exception:
+        assert str(exception) == "'xxx'"
     else:
-        assert False, "Expected exception."
+        assert False, "Expected KeyError exception."
+
+    try:
+        settings.get_val("xxx.kkk.lll", int)
+    except KeyError as exception:
+        assert str(exception) == "'xxx.kkk.lll'"
+    else:
+        assert False, "Expected KeyError exception."
 
     assert settings.get_val("aaa", int) == 12
     assert settings.get_val("bbb.ccc", int) == 23
@@ -281,7 +309,7 @@ def test_settings_all_with_merge(tmpdir):
 
     ### default and temporal ###
 
-    settings.merge_with({
+    settings.merge({
         "nnn" : 15,
         "bbb" : {
             "ccc" : 1
@@ -290,7 +318,7 @@ def test_settings_all_with_merge(tmpdir):
 
     settings.load(file_name)
 
-    settings.merge_with({
+    settings.merge({
         "nnn" : -15,
         "zzz" : {
             "qqq" : 67
@@ -326,10 +354,17 @@ def test_settings_all_with_merge(tmpdir):
 
     try:
         settings.get_val("xxx", int)
-    except Exception as exception:
-        assert str(exception) == "Can not get value from temporal settings with full name \"xxx\"."
+    except KeyError as exception:
+        assert str(exception) == "'xxx'"
     else:
-        assert False, "Expected exception."
+        assert False, "Expected KeyError exception."
+
+    try:
+        settings.get_val("xxx.kkk.lll", int)
+    except KeyError as exception:
+        assert str(exception) == "'xxx.kkk.lll'"
+    else:
+        assert False, "Expected KeyError exception."
 
     assert settings.get_val("aaa", int) == 12
     assert settings.get_val("bbb.ccc", int) == 23
@@ -389,6 +424,27 @@ def test_settings_copy():
 
     assert settings.to_temporal()   == {"aaa" : { "mmm" : 1}, "ddd" : 15, "bbb" : { "ccc" : 1}, "xxx" : { "mmm" : 1}}
     assert settings.to_persistent() == {"aaa" : { "mmm" : 1}, "ddd" : 15, "bbb" : { "ccc" : 1}, "xxx" : { "mmm" : 1}}
+
+def test_settings_set_dict():
+
+    settings = Settings()
+
+    settings.set_val("aaa", {"bbb" : 12, "ccc" : 14})
+
+    assert settings.to_temporal()   == {"aaa" : {"bbb" : 12, "ccc" : 14}}
+    assert settings.to_persistent() == settings.to_temporal() 
+
+    settings.set_val("aaa.bbb", {"xxx" : 23, "yyy" : 34})
+
+    assert settings.to_temporal()   == {"aaa" : {"bbb" : {"xxx" : 23, "yyy" : 34}, "ccc" : 14}}
+    assert settings.to_persistent() == settings.to_temporal() 
+
+    assert settings.get_val("aaa.bbb.xxx") == 23
+    assert settings.get_val("aaa.bbb.yyy") == 34
+    assert settings.get_val("aaa.ccc") == 14
+
+    assert settings.get_val("aaa.bbb") == {"xxx" : 23, "yyy" : 34}
+
 
 
 def _make_settings(file_name : str, settings : dict[str, Any]):

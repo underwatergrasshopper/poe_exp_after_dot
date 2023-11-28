@@ -197,7 +197,7 @@ class Overlay:
 
         ### default settings ###
 
-        settings.merge_with({
+        settings.merge({
             "_comment_help" : ["Type 'py -3-64 poe_exp_after_dot.py --settings-help' in console to see this info.", ""] + _SETTINGS_HELP_TEXT.split("\n"),
             "font" : {
                 "name" : "Consolas",
@@ -242,9 +242,9 @@ class Overlay:
         settings.set_tmp_val("is_debug", is_debug, bool)
 
         if font_data is not None:
-            settings.set_tmp_val("font.name", font_data.name, str)
-            settings.set_tmp_val("font.size", font_data.size, int)
-            settings.set_tmp_val("font.is_bold", font_data.is_bold, bool)
+            if font_data.name is not None:      settings.set_tmp_val("font.name", font_data.name, str)
+            if font_data.size is not None:      settings.set_tmp_val("font.size", font_data.size, int)
+            if font_data.is_bold is not None:   settings.set_tmp_val("font.is_bold", font_data.is_bold, bool)
 
         if time_max_unit is not None:
             settings.set_tmp_val("font.time_max_unit", time_max_unit, int)
