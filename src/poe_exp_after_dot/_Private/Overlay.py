@@ -2,7 +2,6 @@ import os       as _os
 import sys      as _sys
 import re       as _re
 import shutil   as _shutil
-import ctypes   as _ctypes
 
 from typing         import Any, Type
 from dataclasses    import dataclass
@@ -120,36 +119,36 @@ is_ms_if_below_1s
 info_board_format
     "Default"
     <text> # Name without extension of file located in 'formats' directory.
-selected_pos_data_name
+selected_layout_name
     "auto" # detects resolution and sets layout to "<width>x<height>"
     <text>
-pos_data.<resolution>.info_board_x
+layout.<resolution>.info_board_x
     <integer> # in pixels
-pos_data.<resolution>.info_board_bottom
+layout.<resolution>.info_board_bottom
     <integer> # in pixels
-pos_data.<resolution>.control_region_x
+layout.<resolution>.control_region_x
     <integer> # in pixels
-pos_data.<resolution>.control_region_y
+layout.<resolution>.control_region_y
     <integer> # in pixels
-pos_data.<resolution>.control_region_width
+layout.<resolution>.control_region_width
     <natural> # in pixels
-pos_data.<resolution>.control_region_height
+layout.<resolution>.control_region_height
     <natural> # in pixels
-pos_data.<resolution>.in_game_exp_bar_x
+layout.<resolution>.in_game_exp_bar_x
     <integer> # in pixels
-pos_data.<resolution>.in_game_exp_bar_y
+layout.<resolution>.in_game_exp_bar_y
     <integer> # in pixels
-pos_data.<resolution>.in_game_exp_bar_width
+layout.<resolution>.in_game_exp_bar_width
     <natural> # in pixels
-pos_data.<resolution>.in_game_exp_bar_height
+layout.<resolution>.in_game_exp_bar_height
     <natural> # in pixels
-pos_data.<resolution>.in_game_exp_tooltip_x_offset
+layout.<resolution>.in_game_exp_tooltip_x_offset
     <integer> # in pixels
-pos_data.<resolution>.in_game_exp_tooltip_y
+layout.<resolution>.in_game_exp_tooltip_y
     <integer> # in pixels
-pos_data.<resolution>.in_game_exp_tooltip_width
+layout.<resolution>.in_game_exp_tooltip_width
     <natural> # in pixels
-pos_data.<resolution>.in_game_exp_tooltip_height
+layout.<resolution>.in_game_exp_tooltip_height
     <natural> # in pixels
 
 <boolean>
@@ -190,7 +189,7 @@ class Overlay:
         font_size                       : int | None        = None
         is_font_bold                    : bool | None       = None
 
-        raw_custom_pos_data             : str | None        = None
+        raw_custom_layout             : str | None        = None
         data_path                       : str | None        = None
         time_max_unit                   : str | None        = None
         is_just_weeks_if_cap            : bool | None       = None
@@ -253,9 +252,9 @@ class Overlay:
                     else:
                         raise ValueError(f"Incorrect command line argument. Option \"{option_name}\" have wrong format.")
 
-                case ["--custom", raw_custom_pos_data]:
+                case ["--custom", raw_custom_layout]:
                     n = r"(|0|[1-9][0-9]*)"
-                    match_ = _re.search(fr"^{n},{n};{n},{n},{n},{n};{n},{n},{n},{n};{n},{n},{n},{n}$", raw_custom_pos_data)
+                    match_ = _re.search(fr"^{n},{n};{n},{n},{n},{n};{n},{n},{n},{n};{n},{n},{n},{n}$", raw_custom_layout)
                     if match_:
                         index = 1
                         def next_group():
@@ -349,8 +348,8 @@ class Overlay:
             "is_just_weeks_if_cap" : True,
             "is_ms_if_below_1s" : False,
             "info_board_format" : "Default",
-            "selected_pos_data_name" : "1920x1080",
-            "pos_data" : {
+            "selected_layout_name" : "1920x1080",
+            "layouts" : {
                 "1920x1080" : {
                     "info_board_x"                  : 551,
                     "info_board_bottom"             : 1056,
@@ -422,37 +421,37 @@ class Overlay:
         if info_board_format is not None:
             settings.set_tmp_val("info_board_format", info_board_format, str)
 
-        selected_pos_data_name = settings.get_val("selected_pos_data_name", str)
+        selected_layout_name = settings.get_val("selected_layout_name", str)
 
-        if selected_pos_data_name == "auto":
+        if selected_layout_name == "auto":
             size = to_app().primaryScreen().size()
-            selected_pos_data_name = f"{size.width()}x{size.height()}"
+            selected_layout_name = f"{size.width()}x{size.height()}"
 
-        def solve_pos_data(parameter : Any, name : str, value_type : Type):
+        def solve_layout(parameter : Any, name : str, value_type : Type):
             if parameter is not None: 
-                settings.set_tmp_val(f"_solved_pos_data.{name}", parameter, value_type) 
+                settings.set_tmp_val(f"_solved_layout.{name}", parameter, value_type) 
             else:
-                settings.copy_tmp_val(f"pos_data.{selected_pos_data_name}.{name}", f"_solved_pos_data.{name}") 
+                settings.copy_tmp_val(f"layouts.{selected_layout_name}.{name}", f"_solved_layout.{name}") 
 
-        solve_pos_data(info_board_x,                    "info_board_x", int)
-        solve_pos_data(info_board_bottom,               "info_board_bottom", int)
+        solve_layout(info_board_x,                    "info_board_x", int)
+        solve_layout(info_board_bottom,               "info_board_bottom", int)
 
-        solve_pos_data(control_region_x,                "control_region_x", int)
-        solve_pos_data(control_region_y,                "control_region_y", int)
-        solve_pos_data(control_region_width,            "control_region_width", int)
-        solve_pos_data(control_region_height,           "control_region_height", int)
+        solve_layout(control_region_x,                "control_region_x", int)
+        solve_layout(control_region_y,                "control_region_y", int)
+        solve_layout(control_region_width,            "control_region_width", int)
+        solve_layout(control_region_height,           "control_region_height", int)
 
-        solve_pos_data(in_game_exp_bar_x,               "in_game_exp_bar_x", int)
-        solve_pos_data(in_game_exp_bar_y,               "in_game_exp_bar_y", int)
-        solve_pos_data(in_game_exp_bar_width,           "in_game_exp_bar_width", int)
-        solve_pos_data(in_game_exp_bar_height,          "in_game_exp_bar_height", int)
+        solve_layout(in_game_exp_bar_x,               "in_game_exp_bar_x", int)
+        solve_layout(in_game_exp_bar_y,               "in_game_exp_bar_y", int)
+        solve_layout(in_game_exp_bar_width,           "in_game_exp_bar_width", int)
+        solve_layout(in_game_exp_bar_height,          "in_game_exp_bar_height", int)
 
-        solve_pos_data(in_game_exp_tooltip_x_offset,    "in_game_exp_tooltip_x_offset", int)
-        solve_pos_data(in_game_exp_tooltip_y,           "in_game_exp_tooltip_y", int)
-        solve_pos_data(in_game_exp_tooltip_width,       "in_game_exp_tooltip_width", int)
-        solve_pos_data(in_game_exp_tooltip_height,      "in_game_exp_tooltip_height", int)
+        solve_layout(in_game_exp_tooltip_x_offset,    "in_game_exp_tooltip_x_offset", int)
+        solve_layout(in_game_exp_tooltip_y,           "in_game_exp_tooltip_y", int)
+        solve_layout(in_game_exp_tooltip_width,       "in_game_exp_tooltip_width", int)
+        solve_layout(in_game_exp_tooltip_height,      "in_game_exp_tooltip_height", int)
 
-        to_logger().info(f"Layout: " + selected_pos_data_name)
+        to_logger().info(f"Layout: " + selected_layout_name)
     
         def_format_file_name = data_path + "/formats/Default.format"
         settings.set_tmp_val("_def_format_file_name", def_format_file_name, str)

@@ -190,10 +190,10 @@ class Logic:
         for widget in widgets_to_hide:
             widget.show()
 
-        left    = cursor_x_in_screen + self._settings.get_val("_solved_pos_data.in_game_exp_tooltip_x_offset", int)
-        right   = self._settings.get_val("_solved_pos_data.in_game_exp_tooltip_y", int)
-        width   = self._settings.get_val("_solved_pos_data.in_game_exp_tooltip_width", int)
-        height  = self._settings.get_val("_solved_pos_data.in_game_exp_tooltip_height", int)
+        left    = cursor_x_in_screen + self._settings.get_val("_solved_layout.in_game_exp_tooltip_x_offset", int)
+        right   = self._settings.get_val("_solved_layout.in_game_exp_tooltip_y", int)
+        width   = self._settings.get_val("_solved_layout.in_game_exp_tooltip_width", int)
+        height  = self._settings.get_val("_solved_layout.in_game_exp_tooltip_height", int)
 
         in_game_exp_tooltip_image = screenshot.crop((
             left,
