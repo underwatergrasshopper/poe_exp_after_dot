@@ -92,7 +92,7 @@ poe_exp_after_dot.py [<option> ...]
             <text> # Name without extension of file located in 'formats' directory.
 
         Sets info board format.
-        
+
         Examples
             --format=Default
 """.strip("\n")
@@ -350,21 +350,41 @@ class Overlay:
             "selected_pos_data_name" : "1920x1080",
             "pos_data" : {
                 "1920x1080" : {
-                    "info_board_x"      : 551,
-                    "info_board_bottom" : 1056,
+                    "info_board_x"                  : 551,
+                    "info_board_bottom"             : 1056,
 
-                    "control_region_x"       : 551,
-                    "control_region_y"       : 1059,
-                    "control_region_width"   : 820,
-                    "control_region_height"  : 21,
+                    "control_region_x"              : 551,
+                    "control_region_y"              : 1059,
+                    "control_region_width"          : 820,
+                    "control_region_height"         : 21,
 
-                    "in_game_exp_bar_x"         : 551,
-                    "in_game_exp_bar_y"         : 1069,
-                    "in_game_exp_bar_width"     : 820,
-                    "in_game_exp_bar_height"    : 5,
+                    "in_game_exp_bar_x"             : 551,
+                    "in_game_exp_bar_y"             : 1069,
+                    "in_game_exp_bar_width"         : 820,
+                    "in_game_exp_bar_height"        : 5,
 
                     "in_game_exp_tooltip_x_offset"  : 64,
                     "in_game_exp_tooltip_y"         : 1007,
+                    "in_game_exp_tooltip_width"     : 446,
+                    "in_game_exp_tooltip_height"    : 73,
+                },
+                "2560x1440" : {
+                    "info_board_x"                  : 734,
+                    "info_board_bottom"             : 1409,
+
+                    "control_region_x"              : 734,
+                    "control_region_y"              : 1412,
+                    "control_region_width"          : 1092,
+                    "control_region_height"         : 28,
+
+                    "in_game_exp_bar_x"             : 734,
+                    "in_game_exp_bar_y"             : 1422,
+                    "in_game_exp_bar_width"         : 1092,
+                    "in_game_exp_bar_height"        : 8,
+
+                    # tooltip might differ
+                    "in_game_exp_tooltip_x_offset"  : 64,
+                    "in_game_exp_tooltip_y"         : 1367,
                     "in_game_exp_tooltip_width"     : 446,
                     "in_game_exp_tooltip_height"    : 73,
                 }
