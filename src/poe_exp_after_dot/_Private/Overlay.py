@@ -2,6 +2,7 @@ import os       as _os
 import sys      as _sys
 import re       as _re
 import shutil   as _shutil
+import ctypes   as _ctypes
 
 from typing         import Any, Type
 from dataclasses    import dataclass
@@ -120,6 +121,7 @@ info_board_format
     "Default"
     <text> # Name without extension of file located in 'formats' directory.
 selected_pos_data_name
+    "auto" # detects resolution and sets layout to "<width>x<height>"
     <text>
 pos_data.<resolution>.info_board_x
     <integer> # in pixels
@@ -422,6 +424,10 @@ class Overlay:
 
         selected_pos_data_name = settings.get_val("selected_pos_data_name", str)
 
+        if selected_pos_data_name == "auto":
+            size = to_app().primaryScreen().size()
+            selected_pos_data_name = f"{size.width()}x{size.height()}"
+
         def solve_pos_data(parameter : Any, name : str, value_type : Type):
             if parameter is not None: 
                 settings.set_tmp_val(f"_solved_pos_data.{name}", parameter, value_type) 
@@ -445,6 +451,8 @@ class Overlay:
         solve_pos_data(in_game_exp_tooltip_y,           "in_game_exp_tooltip_y", int)
         solve_pos_data(in_game_exp_tooltip_width,       "in_game_exp_tooltip_width", int)
         solve_pos_data(in_game_exp_tooltip_height,      "in_game_exp_tooltip_height", int)
+
+        to_logger().info(f"Layout: " + selected_pos_data_name)
     
         def_format_file_name = data_path + "/formats/Default.format"
         settings.set_tmp_val("_def_format_file_name", def_format_file_name, str)
@@ -457,7 +465,7 @@ class Overlay:
 
         logic.scan_and_load_character()
 
-        app = to_app() # initializes global QApplication object
+        app = to_app()
 
         to_logger().info(_get_font_info(settings))
 
