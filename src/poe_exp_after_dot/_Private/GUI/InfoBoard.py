@@ -45,7 +45,8 @@ class InfoBoard(QWidget):
         # text
         self._label = QLabel("", self)
         self._label.setStyleSheet(f"font-weight: {font_wight}; font-size: {font_size}px; font-family: {font_name}; color: white;")
-
+        self._label.setWordWrap(False) 
+        
         ### info board text templates ###
         
         self._text_generator = TextGenerator(None, self._logic.get_info_board_text_parameters, self.set_text)
@@ -87,15 +88,17 @@ class InfoBoard(QWidget):
         return self._is_dismissed
 
     def set_text(self, text : str):
-        x = self._logic.to_settings().get_val("_solved_layout.info_board_x", int)
-        bottom = self._logic.to_settings().get_val("_solved_layout.info_board_bottom", int)
-
-        self._label.setWordWrap(False)  
         self._label.setText(text)
 
         self._label.adjustSize()
         self.resize(self._label.size())
         
+        self.reposition_and_resize()
+
+    def reposition_and_resize(self):
+        x       = self._logic.to_settings().get_val("_solved_layout.info_board_x", int)
+        bottom  = self._logic.to_settings().get_val("_solved_layout.info_board_bottom", int)
+
         pos = self.pos()
         pos.setX(x)
         pos.setY(bottom - self._label.height())

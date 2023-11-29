@@ -13,6 +13,7 @@ from .Commons               import EXIT_FAILURE, EXIT_SUCCESS, to_app, merge_on_
 from .Logic                 import Logic
 from .LogManager            import to_log_manager, to_logger
 from .Settings              import Settings
+from .OverlaySupport        import solve_layout as _solve_layout
 
 from .GUI.ControlRegion     import ControlRegion
 from .GUI.TrayMenu          import TrayMenu
@@ -189,7 +190,7 @@ class Overlay:
         font_size                       : int | None        = None
         is_font_bold                    : bool | None       = None
 
-        raw_custom_layout             : str | None        = None
+        raw_custom_layout               : str | None        = None
         data_path                       : str | None        = None
         time_max_unit                   : str | None        = None
         is_just_weeks_if_cap            : bool | None       = None
@@ -348,8 +349,28 @@ class Overlay:
             "is_just_weeks_if_cap" : True,
             "is_ms_if_below_1s" : False,
             "info_board_format" : "Default",
+            "is_detect_layout" : True,
             "selected_layout_name" : "1920x1080",
             "layouts" : {
+                "1280x720" : {
+                    "info_board_x"                  : 367,
+                    "info_board_bottom"             : 704,
+
+                    "control_region_x"              : 367,
+                    "control_region_y"              : 706,
+                    "control_region_width"          : 546,
+                    "control_region_height"         : 14,
+
+                    "in_game_exp_bar_x"             : 367,
+                    "in_game_exp_bar_y"             : 712,
+                    "in_game_exp_bar_width"         : 546,
+                    "in_game_exp_bar_height"        : 4,
+
+                    "in_game_exp_tooltip_x_offset"  : 64,
+                    "in_game_exp_tooltip_y"         : 674,
+                    "in_game_exp_tooltip_width"     : 286,
+                    "in_game_exp_tooltip_height"    : 46,
+                },
                 "1920x1080" : {
                     "info_board_x"                  : 551,
                     "info_board_bottom"             : 1056,
@@ -387,6 +408,25 @@ class Overlay:
                     "in_game_exp_tooltip_y"         : 1343,
                     "in_game_exp_tooltip_width"     : 587,
                     "in_game_exp_tooltip_height"    : 97,
+                },
+                "3840x2160" : {
+                    "info_board_x"                  : 1102,
+                    "info_board_bottom"             : 2113,
+
+                    "control_region_x"              : 1102,
+                    "control_region_y"              : 2117,
+                    "control_region_width"          : 1638,
+                    "control_region_height"         : 43,
+
+                    "in_game_exp_bar_x"             : 1102,
+                    "in_game_exp_bar_y"             : 2138,
+                    "in_game_exp_bar_width"         : 1638,
+                    "in_game_exp_bar_height"        : 11,
+
+                    "in_game_exp_tooltip_x_offset"  : 64,
+                    "in_game_exp_tooltip_y"         : 2013,
+                    "in_game_exp_tooltip_width"     : 893,
+                    "in_game_exp_tooltip_height"    : 147,
                 }
             }
         })
@@ -420,36 +460,39 @@ class Overlay:
         if info_board_format is not None:
             settings.set_tmp_val("info_board_format", info_board_format, str)
 
-        selected_layout_name = settings.get_val("selected_layout_name", str)
+        def solve_command_line_layout():
+            settings.set_tmp_val(f"_command_line_layout", {}) 
 
-        if selected_layout_name == "auto":
+            def solve(parameter : Any, name : str, value_type : Type):
+                if parameter is not None: 
+                    settings.set_tmp_val(f"_command_line_layout.{name}", parameter, value_type) 
+
+            solve(info_board_x,                    "info_board_x", int)
+            solve(info_board_bottom,               "info_board_bottom", int)
+
+            solve(control_region_x,                "control_region_x", int)
+            solve(control_region_y,                "control_region_y", int)
+            solve(control_region_width,            "control_region_width", int)
+            solve(control_region_height,           "control_region_height", int)
+
+            solve(in_game_exp_bar_x,               "in_game_exp_bar_x", int)
+            solve(in_game_exp_bar_y,               "in_game_exp_bar_y", int)
+            solve(in_game_exp_bar_width,           "in_game_exp_bar_width", int)
+            solve(in_game_exp_bar_height,          "in_game_exp_bar_height", int)
+
+            solve(in_game_exp_tooltip_x_offset,    "in_game_exp_tooltip_x_offset", int)
+            solve(in_game_exp_tooltip_y,           "in_game_exp_tooltip_y", int)
+            solve(in_game_exp_tooltip_width,       "in_game_exp_tooltip_width", int)
+            solve(in_game_exp_tooltip_height,      "in_game_exp_tooltip_height", int)
+
+        solve_command_line_layout()
+
+        if settings.get_val("is_detect_layout", bool):
             size = to_app().primaryScreen().size()
-            selected_layout_name = f"{size.width()}x{size.height()}"
+            settings.set_tmp_val("selected_layout_name", f"{size.width()}x{size.height()}", str)
 
-        def solve_layout(parameter : Any, name : str, value_type : Type):
-            if parameter is not None: 
-                settings.set_tmp_val(f"_solved_layout.{name}", parameter, value_type) 
-            else:
-                settings.copy_tmp_val(f"layouts.{selected_layout_name}.{name}", f"_solved_layout.{name}") 
-
-        solve_layout(info_board_x,                    "info_board_x", int)
-        solve_layout(info_board_bottom,               "info_board_bottom", int)
-
-        solve_layout(control_region_x,                "control_region_x", int)
-        solve_layout(control_region_y,                "control_region_y", int)
-        solve_layout(control_region_width,            "control_region_width", int)
-        solve_layout(control_region_height,           "control_region_height", int)
-
-        solve_layout(in_game_exp_bar_x,               "in_game_exp_bar_x", int)
-        solve_layout(in_game_exp_bar_y,               "in_game_exp_bar_y", int)
-        solve_layout(in_game_exp_bar_width,           "in_game_exp_bar_width", int)
-        solve_layout(in_game_exp_bar_height,          "in_game_exp_bar_height", int)
-
-        solve_layout(in_game_exp_tooltip_x_offset,    "in_game_exp_tooltip_x_offset", int)
-        solve_layout(in_game_exp_tooltip_y,           "in_game_exp_tooltip_y", int)
-        solve_layout(in_game_exp_tooltip_width,       "in_game_exp_tooltip_width", int)
-        solve_layout(in_game_exp_tooltip_height,      "in_game_exp_tooltip_height", int)
-
+        selected_layout_name = settings.get_val("selected_layout_name", str)
+        _solve_layout(settings, selected_layout_name)
         to_logger().info(f"Layout: " + selected_layout_name)
     
         def_format_file_name = data_path + "/formats/Default.format"

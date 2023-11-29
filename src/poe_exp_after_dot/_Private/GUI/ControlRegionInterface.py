@@ -1,4 +1,7 @@
 class ControlRegionInterface:
+    def reposition_and_resize_all(self):
+        raise RuntimeError("This method need to be overridden.")
+                
     def change_info_board_format(self, format_name : str):
         raise RuntimeError("This method need to be overridden.")
 

@@ -4,9 +4,10 @@ from PySide6.QtWidgets  import QWidget, QMenu, QWidgetAction, QLineEdit
 from PySide6.QtCore     import Qt
 from PySide6.QtGui      import QMouseEvent, QAction, QActionGroup
 
-from ..Commons           import to_app
-from ..Logic             import Logic
-from ..LogManager        import to_log_manager, to_logger
+from ..Commons          import to_app
+from ..Logic            import Logic
+from ..LogManager       import to_log_manager, to_logger
+from ..OverlaySupport   import solve_layout as _solve_layout
 
 from .ControlRegionInterface import ControlRegionInterface
 
@@ -120,6 +121,59 @@ class FormatMenu(QMenu):
                 name, *extension = file_name.split(".", 1)
                 if extension and extension[0] == "format":
                     self._formats[name] = full_file_name
+
+
+class LayoutMenu(QMenu):
+    _logic              : Logic
+    _control_region     : ControlRegionInterface
+
+    def __init__(self, parent : "Menu", logic : Logic, control_region : ControlRegionInterface):
+        super().__init__("Layout", parent)
+
+        self._logic = logic
+        self._control_region = control_region
+
+        layouts = logic.to_settings().get_val("layouts")
+        if isinstance(layouts, dict):
+            layouts_names = [name for name in layouts.keys()]
+        else:
+            layouts_names = []
+
+        current_layout_name = self._logic.to_settings().get_val("selected_layout_name", str)
+
+        action = QAction("detect on start", self, checkable = True)
+        action.setChecked(self._logic.to_settings().get_val("is_detect_layout", bool))
+        def set_is_detect_layout(is_enable):
+            if is_enable:
+                self._logic.to_settings().set_val("is_detect_layout", True, bool)
+            else:
+                self._logic.to_settings().set_val("is_detect_layout", False, bool)
+        action.triggered.connect(set_is_detect_layout)
+        self.addAction(action)
+
+        self.addSeparator()
+
+        self._action_group = QActionGroup(self)
+
+        for name in layouts_names:
+            if name == current_layout_name:
+                action = QAction(name, self, checkable = True, checked = True)
+                self.setTitle("Layout: " + name)
+            else:
+                action = QAction(name, self, checkable = True, checked = False)
+            self.addAction(action)
+            action.triggered.connect(self._switch_layout)
+            self._action_group.addAction(action)
+
+    def _switch_layout(self):
+        sender : QAction = self.sender()
+        layout_name = sender.text()
+
+        _solve_layout(self._logic.to_settings(), layout_name)
+        self._control_region.reposition_and_resize_all()
+        self.setTitle("Layout: " + layout_name)
+
+        self._logic.to_settings().set_val("selected_layout_name", layout_name, str)
 
 
 class ExpDataSubMenu(PersistentMenu):
@@ -262,6 +316,12 @@ class Menu(QMenu):
         self._title.setEnabled(False)
         self.addSeparator()
 
+        self.addMenu(ExpDataSubMenu(self, logic, control_region))
+        self.addMenu(FormatMenu(self, logic, control_region))
+        self.addMenu(LayoutMenu(self, logic, control_region))
+
+        self.addSeparator()
+
         self._flags_backup = self.windowFlags()
         
         self._clear_log_file_action = QAction("Clear Log File", self)
@@ -309,9 +369,6 @@ class Menu(QMenu):
         self._enable_debug_action.triggered.connect(enable_debug)
         self.addAction(self._enable_debug_action)
 
-        self.addMenu(ExpDataSubMenu(self, logic, control_region))
-        self.addMenu(FormatMenu(self, logic, control_region))
-    
         self.addSeparator()
 
         self._close_menu_action = QAction("Close Menu", self)

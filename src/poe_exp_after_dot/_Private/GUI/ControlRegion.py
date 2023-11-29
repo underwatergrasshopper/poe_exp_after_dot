@@ -53,14 +53,9 @@ class ControlRegion(QMainWindow, ControlRegionInterface):
 
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
-        self.setGeometry(QRect(
-            logic.to_settings().get_val("_solved_layout.control_region_x", int),
-            logic.to_settings().get_val("_solved_layout.control_region_y", int),
-            logic.to_settings().get_val("_solved_layout.control_region_width", int),
-            logic.to_settings().get_val("_solved_layout.control_region_height", int),
-        ))
+        self._logic = logic
 
-        self._logic         = logic
+        self.reposition_and_resize()
 
         self._info_board    = InfoBoard(logic, self)
         self._frac_exp_bar  = FracExpBar(logic)
@@ -83,6 +78,20 @@ class ControlRegion(QMainWindow, ControlRegionInterface):
 
     def to_menu(self) -> Menu:
         return self._menu
+    
+    def reposition_and_resize(self):
+        self.setGeometry(QRect(
+            self._logic.to_settings().get_val("_solved_layout.control_region_x", int),
+            self._logic.to_settings().get_val("_solved_layout.control_region_y", int),
+            self._logic.to_settings().get_val("_solved_layout.control_region_width", int),
+            self._logic.to_settings().get_val("_solved_layout.control_region_height", int),
+        ))
+
+    def reposition_and_resize_all(self):
+        self.reposition_and_resize()
+        self._info_board.reposition_and_resize()
+        self._frac_exp_bar.reposition_and_resize()
+        self._frac_exp_bar.repaint()
  
     def refresh(self):
         self._info_board.dismiss()

@@ -29,16 +29,19 @@ class FracExpBar(QWidget):
             Qt.WindowType.WindowTransparentForInput
         )
 
-        self.setGeometry(QRect(
-            logic.to_settings().get_val("_solved_layout.in_game_exp_bar_x", int),
-            logic.to_settings().get_val("_solved_layout.in_game_exp_bar_y", int),
-            logic.to_settings().get_val("_solved_layout.in_game_exp_bar_width", int),
-            logic.to_settings().get_val("_solved_layout.in_game_exp_bar_height", int),
-        ))
+        self.reposition_and_resize()
 
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         
         self.update_bar_manually(0.0, 0.0, is_try_show = False)
+
+    def reposition_and_resize(self):
+        self.setGeometry(QRect(
+            self._logic.to_settings().get_val("_solved_layout.in_game_exp_bar_x", int),
+            self._logic.to_settings().get_val("_solved_layout.in_game_exp_bar_y", int),
+            self._logic.to_settings().get_val("_solved_layout.in_game_exp_bar_width", int),
+            self._logic.to_settings().get_val("_solved_layout.in_game_exp_bar_height", int),
+        ))
 
     def paintEvent(self, event):
         painter = QPainter(self)
