@@ -3,6 +3,9 @@ import setuptools
 with open("README.md", "r", encoding="utf-8") as file:
     long_description = file.read()
 
+with open('requirements.txt', "r") as file:
+    requirements = file.readlines()
+
 setuptools.setup(
     name                            = "poe_exp_after_dot",
     version                         = "0.1.0",
@@ -25,12 +28,7 @@ setuptools.setup(
     packages                        = setuptools.find_packages(where = "src"),
     include_package_data            = True,
     package_data                    = {"poe_exp_after_dot" : ["assets/icon.png", "assets/Default.format"]},
-    install_requires                = [
-        "numpy>=1.26.0",
-        "opencv-python-headless>=4.8.0",
-        "easyocr>=1.7.1",
-        "PySide6>=6.5.2",
-    ],
+    install_requires                = requirements,
     license                         = "MIT",
     python_requires                 = "~=3.11",
 )
