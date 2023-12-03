@@ -1,5 +1,5 @@
 """
-run.py [arg [...]]
+run.py [arg...]
 """
 
 if __name__ == "__main__":
