@@ -8,15 +8,6 @@ from ..Exceptions import TemplateLoadFail
 
 @dataclass
 class Template:
-    """
-    <template>
-        --- <name> (\\| <name>)* (, <condition> \\-\\> <next_name>)? ---        # head
-        <text_format>                                                           # body
-
-    <condition>
-        done
-        <delay>s        # in seconds
-    """
     text_format : str
 
     delay       : float         # in seconds
@@ -25,43 +16,6 @@ class Template:
 class TemplateLoader:
     """
     Loads templates from format file for info board.
-
-    format file         - File with '.format' extension. Contains multiple templates.
-    template            - Contains format of text and optionally conditions to switch to other format.
-
-    Grammar:
-    <file>
-        <comment_1>
-        ...
-        <comment_N>
-        <variable_1>
-        ...
-        <variable_N>
-        <template_1>
-        ...
-        <template_N>
-
-    <comment>
-        #[^\\n]*
-
-    <variable>
-        <name> = <value>
-        
-    <template>
-        --- <name> (\\| <name>)* (, <condition> \\-\\> <next_name>)? ---        # head
-        <text_format>                                                           # body    
-
-    <condition>
-        <delay>
-
-    <name>
-        [^= \\t]+
-    
-    <value>
-        [^ \\t]+
-
-    <delay> # in seconds
-        (0|[1-9][0-9]*)s
     """
     _templates      : dict[str, Template]
     _variables      : dict[str, str]
@@ -121,14 +75,11 @@ class TemplateLoader:
 
                     condition = condition.strip()
 
-                    if condition == "done":
-                        self._delay  = 0.0
+                    match_ = _re.search(fr"^(0|[1-9][0-9]*)s$", condition)
+                    if match_:
+                        self._delay  = float(match_.group(1))
                     else:
-                        match_ = _re.search(fr"^(0|[1-9][0-9]*)s$", condition)
-                        if match_:
-                            self._delay  = float(match_.group(1))
-                        else:
-                            raise TemplateLoadFail(f"Delay is not a valid number. Should be a natural number. Line: {line_id}.")
+                        raise TemplateLoadFail(f"Delay is not a valid number. Should be a natural number. Line: {line_id}.")
 
                     next_name = next_name.strip()
 
