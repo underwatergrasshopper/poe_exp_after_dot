@@ -26,6 +26,9 @@ This program doesn't read any character data from GGG server.
 | System | Windows 10 |
 | Python | 3.11 64bit (or above) |
 | py launcher | Yes |
+| Supported Resolutions* | 1280x720, 1920x1080, 2560x1440, 4K |
+
+*) Overlay layout for custom resolutions can be added manually in `settings.json` file. And then loaded through `Menu > Layout > <custom_resolution>`. Meanings for coordinates names are in `docs/images/GUI_Layout.png` file or in [Overlay Positioning](#overlay-positioning) section.
 
 # How to install
 
@@ -128,6 +131,10 @@ Run `./Run64.bat` in command window to run `poe_exp_after_dot` locally without i
 Run `./Build64.bat` in command window to build the distribution.
 
 Run `./Clean.bat` in command window to clean temporal data.
+
+# Overlay Positioning 
+
+![Overlay Positioning](./docs/images/InGameGUI_Positions.png)
 
 
 
