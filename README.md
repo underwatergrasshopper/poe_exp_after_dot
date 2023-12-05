@@ -115,7 +115,7 @@ Data folder is located by default in `%APPDATA%/../Local`.
 
 `character/` if folder where measure entries are stored for specific characters.
 
-# Hot to run tests
+# How to run tests
 
 All following actions are taken from project folder.
 
