@@ -115,7 +115,6 @@ Data folder is located by default in `%APPDATA%/../Local`.
 
 `character/` if folder where measure entries are stored for specific characters.
 
-
 # Hot to run tests
 
 All following actions are taken from project folder.
@@ -125,6 +124,10 @@ Run `py -3-64 -m pip install -r tests_and_examples_requirements.txt` in command 
 Run `./RunUnitTests64.bat` in command window to run unit tests.
 
 Run `./Run64.bat` in command window to run `poe_exp_after_dot` locally without install.
+
+Run `./Build64.bat` in command window to build the distribution.
+
+Run `./Clean.bat` in command window to clean temporal data.
 
 
 
