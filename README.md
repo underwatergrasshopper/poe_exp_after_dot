@@ -114,9 +114,9 @@ Data folder is located by default in `%APPDATA%/../Local`.
 
 `Default.format` is file where format of InfoBoard text is stored.
 
-`exp_data.json` if file where measure entries are stored.
+`exp_data.json` is file where measure entries are stored.
 
-`character/` if folder where measure entries are stored for specific characters.
+`character/` is folder where measure entries are stored for specific characters.
 
 # How to run tests
 
