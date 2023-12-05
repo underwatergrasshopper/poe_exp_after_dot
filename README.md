@@ -31,16 +31,16 @@ This program doesn't read any character data from GGG server.
 
 ## From `PyPi` database (recommended)
 
-Run `py 3-64 -m pip install poe_exp_after_dot` in console window.
+Run `py -3-64 -m pip install poe_exp_after_dot` in console window.
 
 ## From `.whl` file
 
 Go to `Releases` in github side panel. Download `poe_exp_after_dot-<version>-py3-none-win_amd64.whl` from latest release.
-Run `py 3-64 -m pip install poe_exp_after_dot-<version>-py3-none-win_amd64.whl` in console window.
+Run `py -3-64 -m pip install poe_exp_after_dot-<version>-py3-none-win_amd64.whl` in console window.
 
 # How to uninstall
 
-Run `py 3-64 -m pip uninstall poe_exp_after_dot` in console window.
+Run `py -3-64 -m pip uninstall poe_exp_after_dot` in console window.
 
 # How to run
 
@@ -48,11 +48,11 @@ Run `poe_exp_after_dot.bat` from desktop.
 
 ... or ...
 
-Run `start pyw 3-64 -m poe_exp_after_dot` in console window.
+Run `start pyw -3-64 -m poe_exp_after_dot` in console window.
 
 # Command Line
 
-Run `py 3-64 -m poe_exp_after_dot --help` to see available options.
+Run `py -3-64 -m poe_exp_after_dot --help` to see available options.
 
 # Controls and Navigation
 
