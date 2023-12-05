@@ -50,6 +50,10 @@ Run `poe_exp_after_dot.bat` from desktop.
 
 Run `start pyw 3-64 -m poe_exp_after_dot` in console window.
 
+# Command Line
+
+Run `py 3-64 -m poe_exp_after_dot --help` to see available options.
+
 # Controls and Navigation
 
 Actions which can be performed on In-Game Experience Bar area (also known as ControlRegion):
@@ -84,6 +88,44 @@ Glossary:
 # GUI Layout
 
 ![GUI Layout](./docs/images/GUI_Layout.png)
+
+# Hierarchy of Data Folder
+
+```
+<data_folder_name>
+    settings.json
+    exp_data.json
+    runtime.log
+    cache/
+    formats/
+        Default.format
+        *.format
+    characters/
+        <character_name>
+            exp_data.json
+```
+
+`<data_folder_name>` by default is `poe_exp_after_dot`.
+
+Data folder is located by default in `%APPDATA%/../Local`.
+
+`Default.format` is file where format of InfoBoard text is stored.
+
+`exp_data.json` if file where measure entries are stored.
+
+`character/` if folder where measure entries are stored for specific characters.
+
+
+# Hot to run tests
+
+All following actions are taken from project folder.
+
+Run `py -3-64 -m pip install -r tests_and_examples_requirements.txt` in command window to install test dependencies.
+
+Run `./RunUnitTests64.bat` in command window to run unit tests.
+
+Run `./Run64.bat` in command window to run `poe_exp_after_dot` locally without install.
+
 
 
 

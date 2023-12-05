@@ -1,6 +1,6 @@
 ################################################################################
 # format file         - File with '.format' extension. Contains multiple templates.
-# template            - Contains format of text and optionally conditions to switch to other format.
+# template            - Contains format of InfoBoard text and optionally conditions to switch to other format.
 #
 # Grammar:
 #     <file>
@@ -103,7 +103,7 @@ RMB                         - Menu<br>
 </p>
 </pre>
 
---- Result no Notice ---
+--- Result without Notice ---
 {level} {progress}<br>
 {progress_step} in {progress_step_time}<br>
 {exp_per_hour}<br>
@@ -113,7 +113,7 @@ next in {time_to_next_level}<br>
 {Just Hint}
 
 --- Result ---
-LVL {Result no Notice}
+LVL {Result without Notice}
 
 --- Page Header no Date ---
 {page}/{number}
@@ -123,7 +123,7 @@ LVL {Result no Notice}
 
 --- Result with Page Header ---
 {Page Header}<br>
-LVL {Result no Notice}
+LVL {Result without Notice}
 
 --- No Entry ---
 No Entry <br>
@@ -149,22 +149,22 @@ No Entry <br>
 
 --- On Previous, 1s -> Result ---
 {Page Header no Date}<br>
-&lt;&lt;&lt; {Result no Notice}
+&lt;&lt;&lt; {Result without Notice}
 
 --- On First, 1s -> Result ---
 {Page Header no Date}<br>
-[0] {Result no Notice}
+[0] {Result without Notice}
 
 --- On Next, 1s -> Result ---
 {Page Header no Date}<br>
-&gt;&gt;&gt; {Result no Notice}
+&gt;&gt;&gt; {Result without Notice}
 
 --- On Last, 1s -> Result ---
 {Page Header no Date}<br>
-END {Result no Notice}
+END {Result without Notice}
 
 --- Error ---
-<font color="{h}FF0000">ERR</font> {Result no Notice}
+<font color="{h}FF0000">ERR</font> {Result without Notice}
 
 --- While Processing ---
-... {Result no Notice}
+... {Result without Notice}
