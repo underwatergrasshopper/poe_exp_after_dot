@@ -10,20 +10,14 @@ Displays time needed to gain next level and time needed to gain next 10% of expe
 
 Requires the "Path of Exile" window to be in "Windowed Fullscreen" mode.
 
-This program takes a screenshot of the "Path of Exile" window and scans the part of the screenshot, where the in game exp tooltip is, to fetch current exp value. It's considered as a measure. Calculates experience gain between last and current measure.
+This program takes a screenshot of the "Path of Exile" window and scans the part of the screenshot, where the in game exp tooltip is, to fetch current exp value. It's considered as a measure. Calculates an experience gain between last and current measure.
 
 This program brings "Path of Exile" window back to foreground every time any overlay element is clicked.
 
 It also checks if "Path of Exile" window is on foreground. Then hides overlay if it isn't on foreground, and shows overlay if it is on foreground.
 
-This program doesn't modify any Path of Exile files.
+This program doesn't modify any "Path of Exile" files.
 This program doesn't read any character data from GGG server.
-
-Interactions:
-```
-Measure - LMB on in game exp bar.
-Help    - Hold Shift + RMB on in game exp bar.
-```
 
 # Requirements
 
@@ -55,6 +49,47 @@ Run `poe_exp_after_dot.bat` from desktop.
 ... or ...
 
 Run `start pyw 3-64 -m poe_exp_after_dot` in console window.
+
+# Controls and Navigation
+
+Actions which can be performed on In-Game Experience Bar area (also known as ControlRegion):
+
+```
+LMB                         - Measure (removes following entries nad creates new entry)
+Ctrl + LMB                  - Next Entry
+Ctrl + Shift + LMB          - Last Entry
+Ctrl + RMB                  - Previous Entry
+Ctrl + Shift + RMB          - Before First Entry
+Hold MMB                    - Show Entry with Page and Date
+Scroll Wheel                - Next/Previous Entry
+Ctrl + Shift + Alt + LMB    - Remove current Entry with all following Entries
+RMB                         - Menu
+Hover                       - Show InfoBoard
+Hold Shift + RMB            - Show Help
+```
+
+Each successful Measure is stored as an Entry. 
+
+Unsuccessful Measures are not stored. They can be recognized by having `ERR` in InfoBoard at very beginning.
+
+*Note: Why unsuccessful measures appear? Current experience value is scanned by AI from in-game experience toolbar. Sometimes scan might not recognize text correctly or be incomplete. Usually when the toolbar does not appear at all.*
+
+Menu can be accessed from tray icon bar. There should be icon `poe dot exp`. Right Click on that icon opens menu.
+
+Glossary:
+* `LMB` - Left Mouse Button
+* `RMB` - Right Mouse Button
+* `MMB` - Middle Mouse Button
+
+# GUI Layout
+
+![GUI Layout](./docs/images/GUI_Layout.png)
+
+
+
+
+
+
 
 
 
