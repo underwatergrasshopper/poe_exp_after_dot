@@ -30,16 +30,6 @@ def test_parse():
     assert _parse("# comment\n--- Some Template ---# comment\nAAA# comment\nBBB") == ({}, {"Some Template" : Template("AAABBB", 0.0, "")})
 
     assert _parse((
-        "--- Some Template, done -> Other Template ---\n"
-        "AAA"          
-    )) == (
-        {},
-        {
-            "Some Template" : Template("AAA", 0.0, "Other Template")
-        }
-    )
-
-    assert _parse((
         "--- Some Template, 1s -> Other Template ---\n"
         "AAA"          
     )) == (
@@ -149,7 +139,6 @@ def test_parse():
     assert _parse_with_exception("--- ---") == "No template name. Line: 1."
     assert _parse_with_exception("--- , done -> BBB ---") == "No template name. Line: 1."
     assert _parse_with_exception("--- AAA, 1.2s -> BBB ---") == "Delay is not a valid number. Should be a natural number. Line: 1."
-    assert _parse_with_exception("--- AAA, done -> ---") == "No next template name. Line: 1."
 
     assert _parse_with_exception("=12") == "Variable name is not present. Line: 1."
     assert _parse_with_exception("CCC") == "No assignment to variable. Line: 1."

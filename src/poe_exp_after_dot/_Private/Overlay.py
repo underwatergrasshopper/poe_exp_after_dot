@@ -437,31 +437,31 @@ class Overlay:
         settings.load(settings_path)
         to_logger().info("Loaded settings.")
 
-        settings.set_val("_comment_help", ["Type 'py -3-64 poe_exp_after_dot.py --settings-help' in console to see this info.", ""] + _SETTINGS_HELP_TEXT.split("\n"),)
+        settings.set_list("_comment_help", ["Type 'py -3-64 poe_exp_after_dot.py --settings-help' in console to see this info.", ""] + _SETTINGS_HELP_TEXT.split("\n"),)
 
         ### temporal settings ###
 
-        settings.set_tmp_val("_data_path", data_path, str)
-        settings.set_tmp_val("_is_debug", is_debug, bool)
+        settings.set_tmp_str("_data_path", data_path)
+        settings.set_tmp_bool("_is_debug", is_debug)
 
-        if font_name is not None:       settings.set_tmp_val("font.name", font_name, str)
-        if font_size is not None:       settings.set_tmp_val("font.size", font_size, int)
-        if is_font_bold is not None:    settings.set_tmp_val("font.is_bold", is_font_bold, bool)
+        if font_name is not None:       settings.set_tmp_str("font.name", font_name)
+        if font_size is not None:       settings.set_tmp_int("font.size", font_size)
+        if is_font_bold is not None:    settings.set_tmp_bool("font.is_bold", is_font_bold)
 
         if time_max_unit is not None:
-            settings.set_tmp_val("font.time_max_unit", time_max_unit, int)
+            settings.set_tmp_str("font.time_max_unit", time_max_unit)
 
         if is_just_weeks_if_cap is not None:
-            settings.set_tmp_val("is_just_weeks_if_cap", is_just_weeks_if_cap, bool)
+            settings.set_tmp_bool("is_just_weeks_if_cap", is_just_weeks_if_cap)
 
         if is_ms_if_below_1s is not None:
-            settings.set_tmp_val("is_ms_if_below_1s", is_ms_if_below_1s, bool)
+            settings.set_tmp_bool("is_ms_if_below_1s", is_ms_if_below_1s)
 
         if info_board_format is not None:
-            settings.set_tmp_val("info_board_format", info_board_format, str)
+            settings.set_tmp_str("info_board_format", info_board_format)
 
         def solve_command_line_layout():
-            settings.set_tmp_val(f"_command_line_layout", {}) 
+            settings.set_tmp_dict(f"_command_line_layout", {}) 
 
             def solve(parameter : Any, name : str, value_type : Type):
                 if parameter is not None: 
@@ -487,16 +487,16 @@ class Overlay:
 
         solve_command_line_layout()
 
-        if settings.get_val("is_detect_layout", bool):
+        if settings.get_bool("is_detect_layout"):
             size = to_app().primaryScreen().size()
-            settings.set_tmp_val("selected_layout_name", f"{size.width()}x{size.height()}", str)
+            settings.set_tmp_str("selected_layout_name", f"{size.width()}x{size.height()}")
 
-        selected_layout_name = settings.get_val("selected_layout_name", str)
+        selected_layout_name = settings.get_str("selected_layout_name")
         _solve_layout(settings, selected_layout_name)
         to_logger().info(f"Layout: " + selected_layout_name)
     
         def_format_file_name = data_path + "/formats/Default.format"
-        settings.set_tmp_val("_def_format_file_name", def_format_file_name, str)
+        settings.set_tmp_str("_def_format_file_name", def_format_file_name)
 
         to_logger().debug(f"temporal_settings={settings.to_temporal()}")
 
@@ -557,9 +557,9 @@ class Overlay:
 
 
 def _get_font_info(settings : Settings) -> str:
-    name = settings.get_val("font.name", str)
-    size = settings.get_val("font.size", int)
-    is_bold = settings.get_val("font.is_bold", bool)
+    name = settings.get_str("font.name")
+    size = settings.get_int("font.size")
+    is_bold = settings.get_bool("font.is_bold")
  
     style = "bold" if is_bold else "normal"
 

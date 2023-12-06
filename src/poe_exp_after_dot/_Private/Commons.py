@@ -2,6 +2,8 @@ import re       as _re
 import os       as _os
 import typing   as _typing
 
+from typing import Any
+
 from PySide6.QtWidgets import QApplication
 
 

@@ -78,7 +78,7 @@ class Logic:
 
         self._reader = _easyocr.Reader(['en'], gpu = True, verbose = False)
 
-        self._character_register = CharacterRegister(settings.get_val("_data_path", str))
+        self._character_register = CharacterRegister(settings.get_str("_data_path"))
 
         self._is_fetch_failed = False
 
@@ -101,7 +101,7 @@ class Logic:
     def switch_character(self, character_name : str):
         current_character_name = self.get_character_name()
         self._save_character()
-        self._settings.set_val("character_name", character_name, str)
+        self._settings.set_str("character_name", character_name)
         self._load_character()
 
         to_logger().info(f"Switched character data from {character_name_to_log_name(current_character_name)} to {character_name_to_log_name(self.get_character_name())}. (Switch = Save Current & Load Existing/New)")
@@ -116,23 +116,23 @@ class Logic:
         Returns
             Name of currently selected character.
         """
-        return self._settings.get_val("character_name", str)
+        return self._settings.get_str("character_name")
     
     def to_character(self) -> Character:
         return self._character_register.to_character(self.get_character_name())
 
     def get_info_board_text_parameters(self) -> dict[str, Any]:
-        max_unit = time_unit_to_short(self._settings.get_val("time_max_unit", str))
-        is_just_weeks_if_cap = self._settings.get_val("is_just_weeks_if_cap", bool)
-        is_ms_if_below_1s = self._settings.get_val("is_ms_if_below_1s", bool)
+        max_unit = time_unit_to_short(self._settings.get_str("time_max_unit"))
+        is_just_weeks_if_cap = self._settings.get_bool("is_just_weeks_if_cap")
+        is_ms_if_below_1s = self._settings.get_bool("is_ms_if_below_1s")
 
         return {
             "page"                  : self._measurer.get_current_entry_page(),
             "number"                : self._measurer.get_number_of_entries(),
             "date"                  : self._measurer.get_date_str(is_empty_str_when_epoch = True),
 
-            "font_name"             : self._settings.get_val("font.name", str),
-            "font_size"             : self._settings.get_val("font.size", int),
+            "font_name"             : self._settings.get_str("font.name"),
+            "font_size"             : self._settings.get_int("font.size"),
 
             "level"                 : FineBareLevel(self._measurer.get_level()),
             "progress"              : FinePercent(self._measurer.get_progress(), integer_color = "#F8CD82", two_dig_after_dot_color = "#7F7FFF"),
@@ -190,18 +190,19 @@ class Logic:
         for widget in widgets_to_hide:
             widget.show()
 
-        left    = cursor_x_in_screen + self._settings.get_val("_solved_layout.in_game_exp_tooltip_x_offset", int)
-        right   = self._settings.get_val("_solved_layout.in_game_exp_tooltip_y", int)
-        width   = self._settings.get_val("_solved_layout.in_game_exp_tooltip_width", int)
-        height  = self._settings.get_val("_solved_layout.in_game_exp_tooltip_height", int)
+        left    = cursor_x_in_screen + self._settings.get_int("_solved_layout.in_game_exp_tooltip_x_offset")
+        right   = self._settings.get_int("_solved_layout.in_game_exp_tooltip_y")
+        width   = self._settings.get_int("_solved_layout.in_game_exp_tooltip_width")
+        height  = self._settings.get_int("_solved_layout.in_game_exp_tooltip_height")
 
-        in_game_exp_tooltip_image = screenshot.crop((
+        in_game_exp_tooltip_image_tmp = screenshot.crop((
             left,
             right,
             left + width,
             right + height,
         ))
-        in_game_exp_tooltip_image = _cv2.cvtColor(_numpy.array(in_game_exp_tooltip_image), _cv2.COLOR_RGB2BGR) # converts image from Pillow format to OpenCV format
+        
+        in_game_exp_tooltip_image = _cv2.cvtColor(_numpy.array(in_game_exp_tooltip_image_tmp), _cv2.COLOR_RGB2BGR) # converts image from Pillow format to OpenCV format
 
         text_fragments = [TextFragment(text_fragment) for text_fragment in self._reader.readtext(in_game_exp_tooltip_image)]
 
@@ -211,7 +212,7 @@ class Logic:
         for text_fragment in text_fragments:
             min_text_height = min(text_fragment.polygon.lt.y - text_fragment.polygon.lb.y, min_text_height)
 
-        width = in_game_exp_tooltip_image.shape[1] # type: ignore
+        width = in_game_exp_tooltip_image.shape[1]
 
         def extract_comparison_key(text_fragment : TextFragment):
             p = text_fragment.polygon.lb # position of left bottom corner

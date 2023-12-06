@@ -37,9 +37,9 @@ class InfoBoard(QWidget):
         # transparency
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
-        font_name = logic.to_settings().get_val("font.name", str)
-        font_size = logic.to_settings().get_val("font.size", int) # in pixels
-        is_bold = logic.to_settings().get_val("font.is_bold", bool)
+        font_name = logic.to_settings().get_str("font.name")
+        font_size = logic.to_settings().get_int("font.size") # in pixels
+        is_bold = logic.to_settings().get_bool("font.is_bold")
         font_wight = "bold" if is_bold else "normal"
 
         # text
@@ -51,7 +51,7 @@ class InfoBoard(QWidget):
         
         self._text_generator = TextGenerator(None, self._logic.get_info_board_text_parameters, self.set_text)
 
-        format_name = self._logic.to_settings().get_val("info_board_format", str)
+        format_name = self._logic.to_settings().get_str("info_board_format")
         self.load_format(format_name)
 
         self._text_generator.start()
@@ -59,7 +59,7 @@ class InfoBoard(QWidget):
 
     def load_format(self, format_name : str):
         template_loader = TemplateLoader()
-        data_path = self._logic.to_settings().get_val("_data_path", str)
+        data_path = self._logic.to_settings().get_str("_data_path")
 
         format_file_name = data_path + "/formats/" + format_name + ".format"
 
@@ -67,9 +67,9 @@ class InfoBoard(QWidget):
         template_loader.load_and_parse(format_file_name)
         to_logger().info("Formats has been loaded.")
 
-        self._logic.to_settings().set_tmp_val("_fmt_var", {}) # clears previous format variables
+        self._logic.to_settings().set_tmp_dict("_fmt_var", {}) # clears previous format variables
         for name, value in template_loader.to_variables().items():
-            self._logic.to_settings().set_tmp_val("_fmt_var." + name, value, str)
+            self._logic.to_settings().set_tmp_str("_fmt_var." + name, value)
 
         self._text_generator.set_templates(template_loader.to_templates())
 
@@ -96,8 +96,8 @@ class InfoBoard(QWidget):
         self.reposition_and_resize()
 
     def reposition_and_resize(self):
-        x       = self._logic.to_settings().get_val("_solved_layout.info_board_x", int)
-        bottom  = self._logic.to_settings().get_val("_solved_layout.info_board_bottom", int)
+        x       = self._logic.to_settings().get_int("_solved_layout.info_board_x")
+        bottom  = self._logic.to_settings().get_int("_solved_layout.info_board_bottom")
 
         pos = self.pos()
         pos.setX(x)

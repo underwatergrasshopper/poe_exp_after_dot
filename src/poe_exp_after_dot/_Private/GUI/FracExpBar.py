@@ -37,10 +37,10 @@ class FracExpBar(QWidget):
 
     def reposition_and_resize(self):
         self.setGeometry(QRect(
-            self._logic.to_settings().get_val("_solved_layout.in_game_exp_bar_x", int),
-            self._logic.to_settings().get_val("_solved_layout.in_game_exp_bar_y", int),
-            self._logic.to_settings().get_val("_solved_layout.in_game_exp_bar_width", int),
-            self._logic.to_settings().get_val("_solved_layout.in_game_exp_bar_height", int),
+            self._logic.to_settings().get_int("_solved_layout.in_game_exp_bar_x"),
+            self._logic.to_settings().get_int("_solved_layout.in_game_exp_bar_y"),
+            self._logic.to_settings().get_int("_solved_layout.in_game_exp_bar_width"),
+            self._logic.to_settings().get_int("_solved_layout.in_game_exp_bar_height"),
         ))
 
     def paintEvent(self, event):
@@ -67,15 +67,15 @@ class FracExpBar(QWidget):
         gain = frac_progress_base + progress_step
 
         if gain < 1.0:
-            self._base_width = frac_progress_base
-            self._step_width = progress_step
+            base_width = frac_progress_base
+            step_width = progress_step
         else:
-            self._base_width = 0.0
-            self._step_width = gain % 1
+            base_width = 0.0
+            step_width = gain % 1
 
-        width = self._logic.to_settings().get_val("_solved_layout.in_game_exp_bar_width", int)
-        self._base_width = int((self._base_width * width) // 1)
-        self._step_width = int((self._step_width * width) // 1)
+        width = self._logic.to_settings().get_int("_solved_layout.in_game_exp_bar_width")
+        self._base_width = int((base_width * width) // 1)
+        self._step_width = int((step_width * width) // 1)
 
         self._frac_progress_width = self._base_width + self._step_width
 

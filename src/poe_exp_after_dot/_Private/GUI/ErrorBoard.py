@@ -80,9 +80,11 @@ def _run(
             self._short_message = short_message
 
             self._x = x
-            self._bottom = bottom
-            if self._bottom is None:
+            
+            if bottom is None:
                 self._bottom = to_app().primaryScreen().size().height() 
+            else:
+                self._bottom = bottom
 
             self._screen_width  = screen_width
             self._screen_height = screen_height

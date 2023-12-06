@@ -59,7 +59,7 @@ class Settings:
             self, 
             full_name               : str, 
             value                   : ValueType, 
-            value_type              : Type          = Any, 
+            value_type              : Type | None   = None, 
             *, 
             is_into_temporal_only   : bool          = False
                 ):
@@ -69,8 +69,9 @@ class Settings:
             For Example: "ui.box.size".
             If value do not exist, then will be created.
         value_type
-            One of following types: bool, int, float, str, Any 
-            If Any, then does not convert value type to value_type.
+            One of following types: bool, int, float, str, dict, list, None  
+            If None, then does not convert value to value_type.
+            Also makes sure that value is deep copied if mutable.
         is_into_temporal_only
             True  - Sets value in temporal space only.
             False - Sets value in both temporal space and persistent space.
@@ -84,12 +85,29 @@ class Settings:
         if not is_into_temporal_only:
             _set_val(self._persistent, names, value, value_type)
 
+    def set_int(self, full_name : str, value : int, *, is_into_temporal_only: bool = False):
+        self.set_val(full_name, value, int, is_into_temporal_only = is_into_temporal_only) 
+
+    def set_float(self, full_name : str, value : float, *, is_into_temporal_only: bool = False):
+        self.set_val(full_name, value, float, is_into_temporal_only = is_into_temporal_only)
+
+    def set_bool(self, full_name : str, value : bool, *, is_into_temporal_only: bool = False):
+        self.set_val(full_name, value, bool, is_into_temporal_only = is_into_temporal_only)
+
+    def set_str(self, full_name : str, value : str, *, is_into_temporal_only: bool = False):
+        self.set_val(full_name, value, str, is_into_temporal_only = is_into_temporal_only)
+
+    def set_dict(self, full_name : str, value : dict, *, is_into_temporal_only: bool = False):
+        self.set_val(full_name, value, dict, is_into_temporal_only = is_into_temporal_only)
+
+    def set_list(self, full_name : str, value : list, *, is_into_temporal_only: bool = False):
+        self.set_val(full_name, value, list, is_into_temporal_only = is_into_temporal_only)
             
     def set_tmp_val(
             self, 
             full_name   : str, 
             value       : ValueType, 
-            value_type  : Type          = Any
+            value_type  : Type | None   = None, 
                 ):
         """
         Sets value in temporal space only.
@@ -99,28 +117,48 @@ class Settings:
             For Example: "ui.box.size".
             If value do not exist, then will be created.
         value_type
-            One of following types: bool, int, float, str, Any  
-            If Any, then does not convert value type to value_type.
+            One of following types: bool, int, float, str, dict, list, None  
+            If None, then does not convert value to value_type.
+            Also makes sure that value is deep copied if mutable.
 
         Raises
             TypeError - When value have unexpected type.
         """
         self.set_val(full_name, value, value_type, is_into_temporal_only = True)
 
+    def set_tmp_int(self, full_name : str, value : int):
+        self.set_tmp_val(full_name, value, int)
+
+    def set_tmp_float(self, full_name : str, value : float):
+        self.set_tmp_val(full_name, value, float)
+
+    def set_tmp_bool(self, full_name : str, value : bool):
+        self.set_tmp_val(full_name, value, bool)
+
+    def set_tmp_str(self, full_name : str, value : str):
+        self.set_tmp_val(full_name, value, str)
+
+    def set_tmp_dict(self, full_name : str, value : dict):
+        self.set_tmp_val(full_name, value, dict)
+
+    def set_tmp_list(self, full_name : str, value : list):
+        self.set_tmp_val(full_name, value, list)
+
     def get_val(
             self, 
             full_name           : str, 
-            value_type          : Type      = Any, 
+            value_type          : Type | None   = None, 
             *, 
-            is_from_temporal    : bool      = True
+            is_from_temporal    : bool          = True
                 ) -> ValueType:
         """
         full_name
             Name of namespaced value.
             For Example: "ui.box.size".
         value_type
-            One of following types: bool, int, float, str, Any  
-            If Any, then does not convert value type to value_type.
+            One of following types: bool, int, float, str, dict, list, None  
+            If None, then does not convert value to value_type.
+            Also makes sure that value is deep copied if mutable.
         is_from_temporal
             True    - Gets value from temporal space.
             False   - Gets value from persistent space.
@@ -144,20 +182,39 @@ class Settings:
             except KeyError as exception:
                 raise KeyError(full_name) from exception  
             
+    def get_int(self, full_name : str, *, is_from_temporal : bool = True) -> int:
+        return self.get_val(full_name, int, is_from_temporal = is_from_temporal) # type: ignore[return-value]
+    
+    def get_float(self, full_name : str, *, is_from_temporal : bool = True) -> float:
+        return self.get_val(full_name, float, is_from_temporal = is_from_temporal) # type: ignore[return-value]
+    
+    def get_bool(self, full_name : str, *, is_from_temporal : bool = True) -> bool:
+        return self.get_val(full_name, bool, is_from_temporal = is_from_temporal) # type: ignore[return-value]
+    
+    def get_str(self, full_name : str, *, is_from_temporal : bool = True) -> str:
+        return self.get_val(full_name, str, is_from_temporal = is_from_temporal) # type: ignore[return-value]
+    
+    def get_dict(self, full_name : str, *, is_from_temporal : bool = True) -> dict:
+        return self.get_val(full_name, dict, is_from_temporal = is_from_temporal) # type: ignore[return-value]
+    
+    def get_list(self, full_name : str, *, is_from_temporal : bool = True) -> list:
+        return self.get_val(full_name, list, is_from_temporal = is_from_temporal) # type: ignore[return-value]
+            
     def try_get_val(
             self, 
             full_name           : str, 
-            value_type          : Type      = Any, 
+            value_type          : Type | None   = None, 
             *, 
-            is_from_temporal    : bool      = True
+            is_from_temporal    : bool          = True
                 ) -> ValueType | None:
         """
         full_name
             Name of namespaced value.
             For Example: "ui.box.size".
         value_type
-            One of following types: bool, int, float, str, Any  
-            If Any, then does not convert value type to value_type.
+            One of following types: bool, int, float, str, dict, list, None  
+            If None, then does not convert value to value_type.
+            Also makes sure that value is deep copied if mutable.
         is_from_temporal
             True    - Gets value from temporal space.
             False   - Gets value from persistent space.
@@ -169,6 +226,24 @@ class Settings:
             return self.get_val(full_name, value_type, is_from_temporal = is_from_temporal)
         except KeyError:
             return None
+        
+    def try_get_int(self, full_name : str, *, is_from_temporal : bool = True) -> int:
+        return self.try_get_val(full_name, int, is_from_temporal = is_from_temporal) # type: ignore[return-value]
+    
+    def try_get_float(self, full_name : str, *, is_from_temporal : bool = True) -> float:
+        return self.try_get_val(full_name, float, is_from_temporal = is_from_temporal) # type: ignore[return-value]
+    
+    def try_get_bool(self, full_name : str, *, is_from_temporal : bool = True) -> bool:
+        return self.try_get_val(full_name, bool, is_from_temporal = is_from_temporal) # type: ignore[return-value]
+    
+    def try_get_str(self, full_name : str, *, is_from_temporal : bool = True) -> str:
+        return self.try_get_val(full_name, str, is_from_temporal = is_from_temporal) # type: ignore[return-value]
+    
+    def try_get_dict(self, full_name : str, *, is_from_temporal : bool = True) -> dict:
+        return self.try_get_val(full_name, dict, is_from_temporal = is_from_temporal) # type: ignore[return-value]
+    
+    def try_get_list(self, full_name : str, *, is_from_temporal : bool = True) -> list:
+        return self.try_get_val(full_name, list, is_from_temporal = is_from_temporal) # type: ignore[return-value]
         
     def copy_val(
             self, 
@@ -228,7 +303,7 @@ def _set_val(
         settings    : dict[str, ValueType], 
         names       : list[str], 
         value       : ValueType, 
-        value_type  : Type
+        value_type  : Type | None               = None
             ):
     if not isinstance(value, (bool, int, float, str, list, dict)): # assumes that dictionaries are ValueType on all levels
         raise TypeError("Parameter 'value' have unexpected type.")
@@ -237,12 +312,12 @@ def _set_val(
     for name in names[:-1]:
         if name not in level:
             level[name] = {}
-        level = level[name]
+        level = level[name] # type: ignore[assignment] 
 
     if isinstance(value, (dict, list)):
         value = _deepcopy(value)
 
-    if value_type == Any:
+    if value_type is None or isinstance(value, value_type):
         level[names[-1]] = value
     else:
         level[names[-1]] = value_type(value)
@@ -251,16 +326,16 @@ def _set_val(
 def _get_val(
         settings    : dict[str, ValueType], 
         names       : list[str], 
-        value_type  : Type
+        value_type  : Type | None               = None
             ) -> ValueType:
     level = settings
     for name in names[:-1]:
-        level = level[name]
+        level = level[name] # type: ignore[assignment] 
 
     value = level[names[-1]]
     if isinstance(value, (dict, list)):
         value = _deepcopy(value)
 
-    if value_type == Any:
+    if value_type is None or isinstance(value, value_type):
         return value
     return value_type(value)

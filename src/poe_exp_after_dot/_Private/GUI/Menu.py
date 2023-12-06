@@ -88,29 +88,29 @@ class FormatMenu(QMenu):
 
         self._scan_for_formats()
 
-        current_name = self._logic.to_settings().get_val("info_board_format", str)
+        current_name = self._logic.to_settings().get_str("info_board_format")
 
         self._action_group = QActionGroup(self)
 
         for name in self._formats.keys():
             if name == current_name:
-                action = QAction(name, self, checkable = True, checked = True)
+                action = QAction(name, self, checkable = True, checked = True) # type: ignore[call-overload]
                 self.setTitle("Format: " + name)
             else:
-                action = QAction(name, self, checkable = True, checked = False)
+                action = QAction(name, self, checkable = True, checked = False) # type: ignore[call-overload]
             self.addAction(action)
             action.triggered.connect(self._switch_format)
             self._action_group.addAction(action)
 
     def _switch_format(self):
-        sender : QAction = self.sender()
+        sender : QAction = self.sender() # type: ignore[annotation-unchecked]
         name = sender.text()
 
         self._control_region.change_info_board_format(name)
         self.setTitle("Format: " + name)
             
     def _scan_for_formats(self):
-        data_path = self._logic.to_settings().get_val("_data_path", str)
+        data_path = self._logic.to_settings().get_str("_data_path")
         format_folder_path = data_path + "/formats"
 
         self._formats = {}
@@ -133,21 +133,18 @@ class LayoutMenu(QMenu):
         self._logic = logic
         self._control_region = control_region
 
-        layouts = logic.to_settings().get_val("layouts")
-        if isinstance(layouts, dict):
-            layouts_names = [name for name in layouts.keys()]
-        else:
-            layouts_names = []
+        layouts = logic.to_settings().get_dict("layouts")
+        layouts_names = [name for name in layouts.keys()]
 
-        current_layout_name = self._logic.to_settings().get_val("selected_layout_name", str)
+        current_layout_name = self._logic.to_settings().get_str("selected_layout_name")
 
-        action = QAction("detect on start", self, checkable = True)
-        action.setChecked(self._logic.to_settings().get_val("is_detect_layout", bool))
+        action = QAction("detect on start", self, checkable = True) # type: ignore[call-overload]
+        action.setChecked(self._logic.to_settings().get_bool("is_detect_layout"))
         def set_is_detect_layout(is_enable):
             if is_enable:
-                self._logic.to_settings().set_val("is_detect_layout", True, bool)
+                self._logic.to_settings().set_bool("is_detect_layout", True)
             else:
-                self._logic.to_settings().set_val("is_detect_layout", False, bool)
+                self._logic.to_settings().set_bool("is_detect_layout", False)
         action.triggered.connect(set_is_detect_layout)
         self.addAction(action)
 
@@ -157,23 +154,23 @@ class LayoutMenu(QMenu):
 
         for name in layouts_names:
             if name == current_layout_name:
-                action = QAction(name, self, checkable = True, checked = True)
+                action = QAction(name, self, checkable = True, checked = True) # type: ignore[call-overload]
                 self.setTitle("Layout: " + name)
             else:
-                action = QAction(name, self, checkable = True, checked = False)
+                action = QAction(name, self, checkable = True, checked = False) # type: ignore[call-overload]
             self.addAction(action)
             action.triggered.connect(self._switch_layout)
             self._action_group.addAction(action)
 
     def _switch_layout(self):
-        sender : QAction = self.sender()
+        sender : QAction = self.sender() # type: ignore[annotation-unchecked]
         layout_name = sender.text()
 
         _solve_layout(self._logic.to_settings(), layout_name)
         self._control_region.reposition_and_resize_all()
         self.setTitle("Layout: " + layout_name)
 
-        self._logic.to_settings().set_val("selected_layout_name", layout_name, str)
+        self._logic.to_settings().set_str("selected_layout_name", layout_name)
 
 
 class ExpDataSubMenu(PersistentMenu):
@@ -254,7 +251,7 @@ class ExpDataSubMenu(PersistentMenu):
             self._remove_character_by_character_name(character_name)
 
     def _remove_character(self):
-        sender : QAction = self.sender()
+        sender : QAction = self.sender() # type: ignore[annotation-unchecked]
         description_name = sender.text()
         self._remove_character_by_character_name(_to_character_name(description_name), sender)
 
@@ -281,7 +278,7 @@ class ExpDataSubMenu(PersistentMenu):
                 self._logic.to_character_register().destroy_character(character_name)
 
     def _switch_character(self):
-        action : QAction = self.sender()
+        action : QAction = self.sender() # type: ignore[annotation-unchecked]
         character_name = _to_character_name(action.text())
         self._switch_character_by_character_name(character_name)
 
@@ -335,7 +332,7 @@ class Menu(QMenu):
 
         self._open_data_folder_action = QAction("Open Data Folder", self)
         def open_data_folder():
-            _os.startfile(_os.path.abspath(self._logic.to_settings().get_val("_data_path", str)))
+            _os.startfile(_os.path.abspath(self._logic.to_settings().get_str("_data_path")))
             self.setWindowFlags(self._flags_backup)
 
         self._open_data_folder_action.triggered.connect(open_data_folder)
@@ -353,13 +350,13 @@ class Menu(QMenu):
         self.addAction(self._hide_action)
 
         self._enable_debug_action = QAction("Enable Debug", self, checkable = True) # type: ignore
-        self._enable_debug_action.setChecked(self._logic.to_settings().get_val("_is_debug", bool))
+        self._enable_debug_action.setChecked(self._logic.to_settings().get_bool("_is_debug"))
         def enable_debug(is_enable):
             if is_enable:
-                self._logic.to_settings().set_val("_is_debug", True, bool)
+                self._logic.to_settings().set_str("_is_debug", True)
                 to_log_manager().set_is_debug(True)
             else:
-                self._logic.to_settings().set_val("_is_debug", False, bool)
+                self._logic.to_settings().set_str("_is_debug", False)
                 to_log_manager().set_is_debug(False)
 
             self._control_region.repaint()

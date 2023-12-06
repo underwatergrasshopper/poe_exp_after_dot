@@ -45,9 +45,11 @@ def _main(argv : list[str]) -> int:
         # Workaround!!!
         # When inside except, some pyqt widgets from overlay still exists. 
         # To prevent displaying them with error board, os.system is used for running error board in separate window.
-        data_path = _get_argument_value("--data-path", argv[1:]).lstrip("/").lstrip("\\").lstrip("\\")
+        data_path = _get_argument_value("--data-path", argv[1:])
         if data_path is None:
             data_path = _get_default_data_path()
+        else:
+            data_path = data_path.lstrip("/").lstrip("\\").lstrip("\\")
 
         error_board_launch_error_code = _run_error_board(
             data_path,

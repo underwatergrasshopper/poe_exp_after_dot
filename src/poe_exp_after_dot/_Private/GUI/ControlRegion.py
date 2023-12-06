@@ -34,7 +34,7 @@ def _move_window_to_foreground(window_name : str):
 
 
 class ControlRegion(QMainWindow, ControlRegionInterface):
-    _logic                  : Logic         # reference
+    _logic                  : Logic # reference
     _info_board             : InfoBoard
     _frac_exp_bar           : FracExpBar
     _menu                   : Menu
@@ -81,10 +81,10 @@ class ControlRegion(QMainWindow, ControlRegionInterface):
     
     def reposition_and_resize(self):
         self.setGeometry(QRect(
-            self._logic.to_settings().get_val("_solved_layout.control_region_x", int),
-            self._logic.to_settings().get_val("_solved_layout.control_region_y", int),
-            self._logic.to_settings().get_val("_solved_layout.control_region_width", int),
-            self._logic.to_settings().get_val("_solved_layout.control_region_height", int),
+            self._logic.to_settings().get_int("_solved_layout.control_region_x"),
+            self._logic.to_settings().get_int("_solved_layout.control_region_y"),
+            self._logic.to_settings().get_int("_solved_layout.control_region_width"),
+            self._logic.to_settings().get_int("_solved_layout.control_region_height"),
         ))
 
     def reposition_and_resize_all(self):
@@ -118,7 +118,7 @@ class ControlRegion(QMainWindow, ControlRegionInterface):
         painter = QPainter(self)
         painter.fillRect(self.rect(), QColor(0, 0, 0, 1))
 
-        if self._logic.to_settings().get_val("_is_debug", bool):
+        if self._logic.to_settings().get_bool("_is_debug"):
             painter.setPen(QColor(0, 255, 0))
             painter.drawRect(0, 0, self.width() - 1, self.height() - 1)
         
