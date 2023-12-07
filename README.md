@@ -60,6 +60,19 @@ Run `start pyw -3-64 -m poe_exp_after_dot` in console window.
 
 Run `py -3-64 -m poe_exp_after_dot --help` to see available options.
 
+# Hot to Quit
+
+On task bar should be visible tray icon of overlay while is running.
+<p align="center"><img src="./docs/images/TaskBar.png"></p>
+Right click on tray icon should show menu. Quit option can be selected from there.
+<p align="center"><img src="./docs/images/TaskBarQuit.png"></p>
+
+Or...
+
+Right click on in-game experience bar area should show menu. Quit option can be selected from there.
+<p align="center"><img src="./docs/images/QuitFromGame.png"></p>
+
+
 # Controls and Navigation
 
 Actions which can be performed on In-Game Experience Bar area (also known as ControlRegion):
@@ -84,7 +97,7 @@ Unsuccessful Measures are not stored. They can be recognized by having `ERR` in 
 
 *Note: Why unsuccessful measures appear? Current experience value is scanned by AI from in-game experience toolbar. Sometimes scan might not recognize text correctly or be incomplete. Usually when the toolbar does not appear at all.*
 
-Menu can be accessed from tray icon bar. There should be icon `poe dot exp`. Right Click on that icon opens menu.
+Menu can be accessed from tray icon bar. There should be icon `poe exp a. d.`. Right Click on that icon opens menu.
 
 Glossary:
 * `LMB` - Left Mouse Button

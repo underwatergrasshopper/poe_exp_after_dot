@@ -78,14 +78,14 @@
 ################################################################################
 --- Default | First Help ---
 {hint_begin}
-<b>Click</b> on Exp Bar Area to show Details.<br>
-<b>Click</b> on This to dismiss this message.
+<b>Left Click</b> on Exp Bar Area to show Details.<br>
+<b>Left Click</b> on This to dismiss this message.
 {hint_end}
 
 --- Just Hint ---
 {hint_begin}
-Hold <b>Shift + RMB</b> to show Help.<br>
-<b>Click</b> to Update.
+Hold <b>Shift</b> + <b>RMB</b> on Exp Bar Area to show Help.<br>
+<b>Left Click</b> on Exp Bar Area to Update.
 {hint_end}
 
 --- Help ---

@@ -5,10 +5,10 @@ An overlay for "Path of Exile", which displays the 2 digits after the dot from t
 Works only when "Path of Exile" is in windowed full screen.
 
 poe_exp_after_dot.py --help
-poe_exp_after_dot.py [<option> ...]
+poe_exp_after_dot.py [<option>...]
 """
 __author__  = "underwatergrasshopper"
-__version__ = "0.1.0"
+__version__ = "0.1.0rc1"
 
 
 import os           as _os
@@ -91,6 +91,7 @@ def main(argv : list[str] | None = None) -> int:
         raise TypeError("Unexpected type of 'argv' parameter.")
     
     return _main(argv if argv else [])
+
 
 if __name__ == "__main__":
     _sys.exit(_main(_sys.argv))
