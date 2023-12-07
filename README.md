@@ -35,6 +35,8 @@ This program doesn't read any character data from GGG server.
 
 # How to install
 
+*Note: In addition to `poe_exp_after_dot` itself, following external packages are automatically installed: `numpy`, `opencv-python-headless`, `easyocr`, `PySide6`.*
+
 ## From `PyPi` database (recommended)
 
 Run `py -3-64 -m pip install poe_exp_after_dot` in console window.
