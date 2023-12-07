@@ -3,7 +3,7 @@
 
 # Description
 
-An overlay for the "Path of Exile" game. Displays additional experience bar, which represent experience progress in fractional part of percent (two digits after dot). 
+An overlay for the "Path of Exile" game. Displays additional experience bar, which represents experience progress in fractional part of percent (two digits after dot). 
 
 In addition to that, displays other statistics.
 Displays average experience gain since last measure, both in exp/h and in percent. 
