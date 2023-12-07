@@ -15,12 +15,12 @@ Requires the "Path of Exile" window to be in "Windowed Fullscreen" mode.
 
 This program takes a screenshot of the "Path of Exile" window and scans the part of the screenshot, where the in game exp tooltip is, to fetch current exp value. It's considered as a measure. Calculates an experience gain between last and current measure.
 
-This program brings "Path of Exile" window back to foreground every time any overlay element is clicked.
+This program brings the "Path of Exile" window back to foreground every time any overlay element is clicked.
 
 It also checks if "Path of Exile" window is on foreground. Then hides overlay if it isn't on foreground, and shows overlay if it is on foreground.
 
 This program doesn't modify any "Path of Exile" files.
-This program doesn't read any character data from GGG server.
+This program doesn't read any character data from GGG servers.
 
 # Requirements
 
