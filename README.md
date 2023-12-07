@@ -72,10 +72,9 @@ Or...
 Right click on in-game experience bar area should show menu. Quit option can be selected from there.
 <p align="center"><img src="./docs/images/QuitFromGame.png"></p>
 
-
 # Controls and Navigation
 
-Actions which can be performed on In-Game Experience Bar area (also known as ControlRegion):
+Actions which can be performed on In-Game Experience Bar Area (also known as ControlRegion):
 
 ```
 LMB                         - Measure (removes following entries nad creates new entry)
