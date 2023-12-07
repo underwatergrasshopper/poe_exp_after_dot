@@ -1,3 +1,6 @@
+<p align="center"><img src="./docs/images/ExampleBar1.png"></p>
+<p align="center"><img src="./docs/images/ExampleBar2.png"></p>
+
 # Description
 
 An overlay for the "Path of Exile" game. Displays additional experience bar, which represent experience progress in fractional part of percent (two digits after dot). 
