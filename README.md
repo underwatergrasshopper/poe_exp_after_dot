@@ -60,16 +60,16 @@ Run `start pyw -3-64 -m poe_exp_after_dot` in console window.
 
 Run `py -3-64 -m poe_exp_after_dot --help` to see available options.
 
-# Hot to Quit
+# Hot to quit
 
-On task bar should be visible tray icon of overlay while is running.
+`poe exp a. d.` tray icon should be visible on task bar while overlay is running.
 <p align="center"><img src="./docs/images/TaskBar.png"></p>
-Right click on tray icon should show menu. Quit option can be selected from there.
+Right click on the tray icon should show a menu. Quit option can be selected from there.
 <p align="center"><img src="./docs/images/TaskBarQuit.png"></p>
 
 Or...
 
-Right click on in-game experience bar area should show menu. Quit option can be selected from there.
+Right click on in-game experience bar area should show a menu. Quit option can be selected from there.
 <p align="center"><img src="./docs/images/QuitFromGame.png"></p>
 
 # Controls and Navigation
