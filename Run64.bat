@@ -1,3 +1,3 @@
 @echo off
-set PATH=src;%PATH%
-py -3-64 .\\tests\\run.py --data-path="./out/data" --font="Consolas,16," --overwrite-default-format %*
+set PYTHONPATH=%CD%\\src;%PYTHONPATH%
+py -3-64 -m poe_exp_after_dot --data-path="./out/data" --font="Consolas,16," --overwrite-default-format %*
