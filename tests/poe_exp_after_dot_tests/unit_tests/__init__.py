@@ -37,6 +37,7 @@ def _run(
         pytest_arguments    : list[str],
             ) -> int:
     base_path = _os.path.abspath(_os.path.dirname(__file__))
+    print(f"Warning!!! 'pytest' is running from '{base_path}' directory.")
 
     options = "--no-header -v -x".split(" ")
     if is_stdout_enabled:   options += ["-s"]
