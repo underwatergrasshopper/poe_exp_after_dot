@@ -91,7 +91,3 @@ def main(argv : list[str] | None = None) -> int:
         raise TypeError("Unexpected type of 'argv' parameter.")
     
     return _main(argv if argv else [])
-
-
-if __name__ == "__main__":
-    _sys.exit(_main(_sys.argv))
