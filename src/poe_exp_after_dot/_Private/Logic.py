@@ -137,7 +137,7 @@ class Logic:
             "level"                 : FineBareLevel(self._measurer.get_level()),
             "progress"              : FinePercent(self._measurer.get_progress(), integer_color = "#F8CD82", two_dig_after_dot_color = "#7F7FFF"),
             "exp"                   : FineExp(self._measurer.get_total_exp(), unit_color = "#9F9F9F"),
-            "progress_step"         : FinePercent(self._measurer.get_progress_step(), is_sign = True, integer_color = "#7FFFFF", two_dig_after_dot_color = "#7FFFFF"),
+            "progress_step"         : FinePercent(self._measurer.get_progress_step(), is_sign = True, integer_color = "#F8CD82", two_dig_after_dot_color = "#7FFFFF"),
             "progress_step_time"    : FineTime(self._measurer.get_progress_step_time(), max_unit = max_unit, unit_color = "#8F8F8F", never_color = "#FF4F1F", is_just_weeks_if_cap = is_just_weeks_if_cap, is_show_ms_if_below_1s = is_ms_if_below_1s),
             "exp_per_hour"          : FineExpPerHour(self._measurer.get_exp_per_hour(), value_color = "#6FFF6F", unit_color = "#9F9F9F"),
 
