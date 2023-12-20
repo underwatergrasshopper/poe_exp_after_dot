@@ -20,17 +20,18 @@ _SHIFT   = Qt.KeyboardModifier.ShiftModifier
 _ALT     = Qt.KeyboardModifier.AltModifier
 
 
+_user32 = _ctypes.windll.user32
+
+
 def _get_key_modifiers():
     mask = _CTRL | _SHIFT | _ALT
     return to_app().keyboardModifiers() & mask
 
 
 def _move_window_to_foreground(window_name : str):
-    user32 = _ctypes.windll.user32
-
-    window_handle = user32.FindWindowW(None, window_name)
+    window_handle = _user32.FindWindowW(None, window_name)
     if window_handle:
-        user32.SetForegroundWindow(window_handle)
+        _user32.SetForegroundWindow(window_handle)
 
 
 class ControlRegion(QMainWindow, ControlRegionInterface):
