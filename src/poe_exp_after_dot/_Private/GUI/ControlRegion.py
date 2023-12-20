@@ -30,7 +30,7 @@ def _get_key_modifiers():
 
 def _move_window_to_foreground(window_name : str):
     window_handle = _user32.FindWindowW(None, window_name)
-    if window_handle:
+    if window_handle and _user32.GetForegroundWindow() != window_handle:
         _user32.SetForegroundWindow(window_handle)
 
 
