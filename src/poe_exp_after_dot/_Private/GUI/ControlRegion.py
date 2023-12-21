@@ -49,7 +49,8 @@ class ControlRegion(QMainWindow, ControlRegionInterface):
         self.setWindowFlags(
             Qt.WindowType.WindowStaysOnTopHint | 
             Qt.WindowType.FramelessWindowHint |
-            Qt.WindowType.Tool
+            Qt.WindowType.Tool |
+            Qt.WindowType.WindowDoesNotAcceptFocus
         )
 
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
@@ -200,8 +201,6 @@ class ControlRegion(QMainWindow, ControlRegionInterface):
                 self._logic.to_measurer().remove_current_entry_and_all_entries_above()
                 self.refresh()
             else:
-                _move_window_to_foreground("Path of Exile")
-
                 pos_in_screen = self.mapToGlobal(QPoint(event.x(), event.y()))
 
                 self._info_board.dismiss()
@@ -217,8 +216,6 @@ class ControlRegion(QMainWindow, ControlRegionInterface):
             else:
                 self._info_board.set_text_by_template("Result")
             self._info_board.show()
-        
-        _move_window_to_foreground("Path of Exile")
 
     def wheelEvent(self, event : QWheelEvent):
         if not self._info_board.is_dismissed():
