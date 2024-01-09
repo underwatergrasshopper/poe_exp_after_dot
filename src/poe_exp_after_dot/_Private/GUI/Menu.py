@@ -8,6 +8,7 @@ from ..Commons          import to_app
 from ..Logic            import Logic
 from ..LogManager       import to_log_manager, to_logger
 from ..OverlaySupport   import solve_layout as _solve_layout
+from ..Version          import get_version as _get_version
 
 from .ControlRegionInterface import ControlRegionInterface
 
@@ -309,7 +310,8 @@ class Menu(QMenu):
         self._logic = logic
         self._control_region = control_region
 
-        self._title = self.addAction("poe exp after dot")
+        version = _get_version()
+        self._title = self.addAction(f"poe exp after dot v{version}")
         self._title.setEnabled(False)
         self.addSeparator()
 

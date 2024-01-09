@@ -1,4 +1,5 @@
 # 0.1.1 (2024-01-09)
+* Added displaying version information.
 * Updated date in LICENSE.
 * Removed information from README.mf, about installing through pip database, since it is not there yet.
 # 0.1.0

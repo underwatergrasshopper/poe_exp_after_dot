@@ -24,6 +24,7 @@ from ._Private.Commons      import (
     get_argument_value      as _get_argument_value,
     get_default_data_path   as _get_default_data_path
 )
+from ._Private.Version      import set_version as _set_version
 
 
 def _main(argv : list[str]) -> int:
@@ -36,6 +37,7 @@ def _main(argv : list[str]) -> int:
             When any given option in argument list is incorrect
         ...
     """
+    _set_version(__version__)
     try:
         overlay = _Overlay()
         exit_code = overlay.main(argv)

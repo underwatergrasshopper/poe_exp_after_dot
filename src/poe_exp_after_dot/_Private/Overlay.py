@@ -14,6 +14,7 @@ from .Logic                 import Logic
 from .LogManager            import to_log_manager, to_logger
 from .Settings              import Settings
 from .OverlaySupport        import solve_layout as _solve_layout
+from .Version               import get_version as _get_version
 
 from .GUI.ControlRegion     import ControlRegion
 from .GUI.TrayMenu          import TrayMenu
@@ -27,6 +28,9 @@ poe_exp_after_dot.py [<option> ...]
         Application won't run.
     --settings-help
         Display information about possible values in settings.json. 
+        Application won't run.
+    --version | -v
+        Displays version.
         Application won't run.
     --data-path=<path>
         Relative or absolute path to data folder. 
@@ -223,6 +227,10 @@ class Overlay:
             match (option_name, *value):
                 ### correct ###
 
+                case ["--version" | "-v"]:
+                    print(_get_version())
+                    is_run = False
+
                 case ["--help" | "-h"]:
                     print(_HELP_TEXT)
                     is_run = False
@@ -308,7 +316,7 @@ class Overlay:
 
                 ### incorrect ###
 
-                case ["--help" | "-h" | "--debug" | "--settings-help" | "--overwrite-default-format", _]:
+                case ["--version" | "-v" | "--help" | "-h" | "--debug" | "--settings-help" | "--overwrite-default-format", _]:
                     raise ValueError(f"Incorrect command line argument. Option \"{option_name}\" can't have a value.")
                 
                 case ["--data-path" | "--custom" | "--font" | "--time-max-unit" | "--just-weeks-if-cap" | "--ms-if-below-1s", "--format"]:
@@ -331,6 +339,8 @@ class Overlay:
         to_log_manager().setup_logger(data_path + "/runtime.log", is_debug = is_debug, is_stdout = True)
         
         to_logger().info("====== NEW RUN ======")
+        version = _get_version()
+        to_logger().info(f"Version: {version}")
         to_logger().debug(f"data_path={data_path}")
 
         settings = Settings()
