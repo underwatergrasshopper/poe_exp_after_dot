@@ -69,9 +69,7 @@ class FineExp:
     
     def __str__(self) -> str:
         return self._text_representation
-    
-    def __repr__(self) -> str:
-        return self._text_representation
+
 
 class FineBareLevel:
     MAX_LENGTH_AFTER_FORMAT : int   = 4
@@ -106,9 +104,7 @@ class FineBareLevel:
 
     def __str__(self) -> str:
         return self._text_representation
-    
-    def __repr__(self) -> str:
-        return self._text_representation
+
 
 class FineTime:
     MAX_LENGTH_AFTER_FORMAT  : int   = 15
@@ -282,9 +278,7 @@ class FineTime:
 
     def __str__(self) -> str:
         return self._text_representation
-    
-    def __repr__(self) -> str:
-        return self._text_representation
+
 
 class FineExpPerHour:
     MAX_LENGTH_AFTER_FORMAT  : int   = 12
@@ -367,9 +361,7 @@ class FineExpPerHour:
 
     def __str__(self) -> str:
         return self._text_representation
-    
-    def __repr__(self) -> str:
-        return self._text_representation
+
     
 class FinePercent:
     MAX_LENGTH_AFTER_FORMAT : int       = 9
@@ -444,7 +436,4 @@ class FinePercent:
         return self._2_dig_after_dot
     
     def __str__(self) -> str:
-        return self._text_representation
-    
-    def __repr__(self) -> str:
         return self._text_representation

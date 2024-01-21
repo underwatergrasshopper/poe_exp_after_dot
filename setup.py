@@ -40,7 +40,7 @@ class InstallWithPostInstall(install):
 
 setuptools.setup(
     name                            = "poe_exp_after_dot",
-    version                         = "0.1.1",
+    version                         = "0.1.2",
     author                          = "underwatergrasshopper",
     description                     = "An overlay for the \"Path of Exile\" game. Displays additional experience bar, which represent experience progress in fractional part of percent (two digits after dot). ",
     long_description                = long_description,

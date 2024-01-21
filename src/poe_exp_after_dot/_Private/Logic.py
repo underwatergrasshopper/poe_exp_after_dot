@@ -58,9 +58,6 @@ class TextFragment:
 
     def __str__(self):
         return f"TextFragment(text=\"{self.text}\", polygon={self.polygon})" 
-    
-    def __repr__(self):
-        return self.__str__()
 
 
 class Logic:
