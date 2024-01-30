@@ -497,9 +497,11 @@ class Overlay:
 
         solve_command_line_layout()
 
+        primary_screen_size = to_app().primaryScreen().size()
+        to_logger().info(f"Resolution: {primary_screen_size.width()}x{primary_screen_size.height()}")
+
         if settings.get_bool("is_detect_layout"):
-            size = to_app().primaryScreen().size()
-            settings.set_tmp_str("selected_layout_name", f"{size.width()}x{size.height()}")
+            settings.set_tmp_str("selected_layout_name", f"{primary_screen_size.width()}x{primary_screen_size.height()}")
 
         selected_layout_name = settings.get_str("selected_layout_name")
         _solve_layout(settings, selected_layout_name)
