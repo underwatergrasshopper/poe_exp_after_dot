@@ -13,7 +13,7 @@ Displays time needed to gain next level and time needed to gain next 10% of expe
 
 Requires the "Path of Exile" window to be in "Windowed Fullscreen" mode.
 
-This program takes a screenshot of the "Path of Exile" window and scans the part of the screenshot, where the in game exp tooltip is, to fetch current exp value. It's considered as a measure. Calculates an experience gain between last and current measure.
+When you left click on in-game exp bar, then this program takes a screenshot of the "Path of Exile" window and scans the part of the screenshot, where the in game exp tooltip is, to fetch current exp value. It's considered as a measure. Calculates an experience gain between last and current measure.
 
 This program brings the "Path of Exile" window back to foreground every time any overlay element is clicked.
 
@@ -75,7 +75,7 @@ Right click on in-game experience bar area should show a menu. Quit option can b
 Actions which can be performed on In-Game Experience Bar Area (also known as ControlRegion):
 
 ```
-LMB                         - Measure (removes following entries nad creates new entry)
+LMB                         - Measure (removes following entries and creates new entry)
 Ctrl + LMB                  - Next Entry
 Ctrl + Shift + LMB          - Last Entry
 Ctrl + RMB                  - Previous Entry
@@ -92,7 +92,7 @@ Each successful Measure is stored as an Entry.
 
 Unsuccessful Measures are not stored. They can be recognized by having `ERR` in InfoBoard at very beginning.
 
-*Note: Why unsuccessful measures appear? Current experience value is scanned by AI from in-game experience toolbar. Sometimes scan might not recognize text correctly or be incomplete. Usually when the toolbar does not appear at all.*
+*Note: Why unsuccessful measures appear? Current experience value is scanned by AI from in-game experience toolbar. Sometimes scan might not recognize text correctly or be incomplete. Usually when the toolbar does not appear at all. Try measure again if that happens.*
 
 Menu can be accessed from tray icon bar. There should be icon `poe exp a. d.`. Right Click on that icon opens menu.
 

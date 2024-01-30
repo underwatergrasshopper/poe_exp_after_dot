@@ -1,3 +1,5 @@
+# 0.1.3
+* Updated README.md.
 # 0.1.2 (2024-01-21)
 * Removed wrongly defined `__repr__` implementations.
 # 0.1.1 (2024-01-09)
