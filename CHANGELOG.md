@@ -1,4 +1,4 @@
-# 0.1.3
+# 0.1.3 (2024-01-31)
 * Added logging monitor resolution to `runtime.log`.
 * Added highlighting of in-game exp tooltip region for debug mode.
 * Updated README.md.
