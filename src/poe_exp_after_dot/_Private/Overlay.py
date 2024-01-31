@@ -347,6 +347,12 @@ class Overlay:
 
         ### default settings ###
 
+        # offset between mouse cursor and in-game exp tooltip
+        SMALL_X_OFFSET  = 24    # small mouse cursor, (only this one is used)
+        MEDIUM_X_OFFSET = 32    # medium mouse cursor
+        LARGE_X_OFFSET  = 64    # big mouse cursor
+        WIDTH_EXT = LARGE_X_OFFSET - SMALL_X_OFFSET # extends in-game exp tooltip width area, to cover area for all cursor variants
+
         settings.merge({
             "_comment_help" : "", # to reserve place
             "font" : {
@@ -361,84 +367,8 @@ class Overlay:
             "info_board_format" : "Default",
             "is_detect_layout" : True,
             "selected_layout_name" : "1920x1080",
-            "layouts" : {
-                "1280x720" : {
-                    "info_board_x"                  : 367,
-                    "info_board_bottom"             : 704,
-
-                    "control_region_x"              : 367,
-                    "control_region_y"              : 706,
-                    "control_region_width"          : 546,
-                    "control_region_height"         : 14,
-
-                    "in_game_exp_bar_x"             : 367,
-                    "in_game_exp_bar_y"             : 712,
-                    "in_game_exp_bar_width"         : 546,
-                    "in_game_exp_bar_height"        : 4,
-
-                    "in_game_exp_tooltip_x_offset"  : 64,
-                    "in_game_exp_tooltip_y"         : 674,
-                    "in_game_exp_tooltip_width"     : 286,
-                    "in_game_exp_tooltip_height"    : 46,
-                },
-                "1920x1080" : {
-                    "info_board_x"                  : 551,
-                    "info_board_bottom"             : 1056,
-
-                    "control_region_x"              : 551,
-                    "control_region_y"              : 1059,
-                    "control_region_width"          : 820,
-                    "control_region_height"         : 21,
-
-                    "in_game_exp_bar_x"             : 551,
-                    "in_game_exp_bar_y"             : 1069,
-                    "in_game_exp_bar_width"         : 820,
-                    "in_game_exp_bar_height"        : 5,
-
-                    "in_game_exp_tooltip_x_offset"  : 64,
-                    "in_game_exp_tooltip_y"         : 1007,
-                    "in_game_exp_tooltip_width"     : 446,
-                    "in_game_exp_tooltip_height"    : 73,
-                },
-                "2560x1440" : {
-                    "info_board_x"                  : 734,
-                    "info_board_bottom"             : 1409,
-
-                    "control_region_x"              : 734,
-                    "control_region_y"              : 1412,
-                    "control_region_width"          : 1092,
-                    "control_region_height"         : 28,
-
-                    "in_game_exp_bar_x"             : 734,
-                    "in_game_exp_bar_y"             : 1422,
-                    "in_game_exp_bar_width"         : 1092,
-                    "in_game_exp_bar_height"        : 8,
-
-                    "in_game_exp_tooltip_x_offset"  : 64,
-                    "in_game_exp_tooltip_y"         : 1343,
-                    "in_game_exp_tooltip_width"     : 587,
-                    "in_game_exp_tooltip_height"    : 97,
-                },
-                "3840x2160" : {
-                    "info_board_x"                  : 1102,
-                    "info_board_bottom"             : 2113,
-
-                    "control_region_x"              : 1102,
-                    "control_region_y"              : 2117,
-                    "control_region_width"          : 1638,
-                    "control_region_height"         : 43,
-
-                    "in_game_exp_bar_x"             : 1102,
-                    "in_game_exp_bar_y"             : 2138,
-                    "in_game_exp_bar_width"         : 1638,
-                    "in_game_exp_bar_height"        : 11,
-
-                    "in_game_exp_tooltip_x_offset"  : 64,
-                    "in_game_exp_tooltip_y"         : 2013,
-                    "in_game_exp_tooltip_width"     : 893,
-                    "in_game_exp_tooltip_height"    : 147,
-                }
-            }
+            "_comment_layouts_help" : "", # to reserve place
+            "layouts" : {}
         })
 
         ### load settings ###
@@ -448,6 +378,90 @@ class Overlay:
         to_logger().info("Loaded settings.")
 
         settings.set_list("_comment_help", ["Type 'py -3-64 poe_exp_after_dot.py --settings-help' in console to see this info.", ""] + _SETTINGS_HELP_TEXT.split("\n"),)
+        settings.set_list("_comment_layouts_help", [
+            "Custom layouts can be added to layouts."
+            "Default layouts can not be changed, but can be used as templates for custom layouts."
+            "Default layouts: 1280x720, 1920x1080, 2560x1440, 3840x2160."
+        ])
+        settings.set_dict("layouts.1280x720", {
+            "info_board_x"                  : 367,
+            "info_board_bottom"             : 704,
+
+            "control_region_x"              : 367,
+            "control_region_y"              : 706,
+            "control_region_width"          : 546,
+            "control_region_height"         : 14,
+
+            "in_game_exp_bar_x"             : 367,
+            "in_game_exp_bar_y"             : 712,
+            "in_game_exp_bar_width"         : 546,
+            "in_game_exp_bar_height"        : 4,
+
+            "in_game_exp_tooltip_x_offset"  : SMALL_X_OFFSET,
+            "in_game_exp_tooltip_y"         : 674,
+            "in_game_exp_tooltip_width"     : 286 + WIDTH_EXT,
+            "in_game_exp_tooltip_height"    : 46,
+        })
+
+        settings.set_dict("layouts.1920x1080", {
+            "info_board_x"                  : 551,
+            "info_board_bottom"             : 1056,
+
+            "control_region_x"              : 551,
+            "control_region_y"              : 1059,
+            "control_region_width"          : 820,
+            "control_region_height"         : 21,
+
+            "in_game_exp_bar_x"             : 551,
+            "in_game_exp_bar_y"             : 1069,
+            "in_game_exp_bar_width"         : 820,
+            "in_game_exp_bar_height"        : 5,
+
+            "in_game_exp_tooltip_x_offset"  : SMALL_X_OFFSET,
+            "in_game_exp_tooltip_y"         : 1007,
+            "in_game_exp_tooltip_width"     : 446 + WIDTH_EXT,
+            "in_game_exp_tooltip_height"    : 73,
+        })
+
+        settings.set_dict("layouts.2560x1440", {
+            "info_board_x"                  : 734,
+            "info_board_bottom"             : 1409,
+
+            "control_region_x"              : 734,
+            "control_region_y"              : 1412,
+            "control_region_width"          : 1092,
+            "control_region_height"         : 28,
+
+            "in_game_exp_bar_x"             : 734,
+            "in_game_exp_bar_y"             : 1422,
+            "in_game_exp_bar_width"         : 1092,
+            "in_game_exp_bar_height"        : 8,
+
+            "in_game_exp_tooltip_x_offset"  : SMALL_X_OFFSET,
+            "in_game_exp_tooltip_y"         : 1343,
+            "in_game_exp_tooltip_width"     : 587 + WIDTH_EXT,
+            "in_game_exp_tooltip_height"    : 97,
+        })
+
+        settings.set_dict("layouts.3840x2160", {
+            "info_board_x"                  : 1102,
+            "info_board_bottom"             : 2113,
+
+            "control_region_x"              : 1102,
+            "control_region_y"              : 2117,
+            "control_region_width"          : 1638,
+            "control_region_height"         : 43,
+
+            "in_game_exp_bar_x"             : 1102,
+            "in_game_exp_bar_y"             : 2138,
+            "in_game_exp_bar_width"         : 1638,
+            "in_game_exp_bar_height"        : 11,
+
+            "in_game_exp_tooltip_x_offset"  : SMALL_X_OFFSET,
+            "in_game_exp_tooltip_y"         : 2013,
+            "in_game_exp_tooltip_width"     : 893 + WIDTH_EXT,
+            "in_game_exp_tooltip_height"    : 147,
+        })
 
         ### temporal settings ###
 
