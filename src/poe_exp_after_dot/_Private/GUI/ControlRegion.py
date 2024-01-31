@@ -1,7 +1,7 @@
 import ctypes as _ctypes
 
-from PySide6.QtWidgets  import QMainWindow
-from PySide6.QtCore     import Qt, QPoint, QRect, QEvent, QTimer
+from PySide6.QtWidgets  import QMainWindow, QWidget
+from PySide6.QtCore     import Qt, QPoint, QRect, QEvent, QTimer, QSize
 from PySide6.QtGui      import QColor, QMouseEvent, QEnterEvent, QPainter, QWheelEvent
 
 from ..Commons               import to_app
@@ -34,6 +34,37 @@ def _move_window_to_foreground(window_name : str):
         _user32.SetForegroundWindow(window_handle)
 
 
+class _DebugRegion(QWidget):
+    _x_offset : int
+
+    def __init__(self, x_offset : int, y : int, width : int, height : int):
+        super().__init__()
+
+        self.setWindowFlags(
+            Qt.WindowType.WindowStaysOnTopHint | 
+            Qt.WindowType.FramelessWindowHint |
+            Qt.WindowType.Tool |
+            Qt.WindowType.WindowDoesNotAcceptFocus |
+            Qt.WindowType.WindowTransparentForInput
+        )
+
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.setGeometry(QRect(0, y, width, height))
+
+        self._x_offset = x_offset
+
+
+    def move_with_offset(self, x : int):
+        self.move(QPoint(x + self._x_offset, self.y()))
+
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.fillRect(self.rect(), QColor(0, 0, 0, 1))
+        painter.setPen(QColor(0, 255, 0))
+        painter.drawRect(0, 0, self.width() - 1, self.height() - 1)
+
+
 class ControlRegion(QMainWindow, ControlRegionInterface):
     _logic                  : Logic # reference
     _info_board             : InfoBoard
@@ -42,6 +73,9 @@ class ControlRegion(QMainWindow, ControlRegionInterface):
 
     _flags_backup           : Qt.WindowType
     _foreground_guardian    : ForegroundGuardian
+
+    _is_debug               : bool
+    _debug_in_game_exp_tooltip_region : _DebugRegion
 
     def __init__(self, logic : Logic):
         super().__init__()
@@ -73,6 +107,24 @@ class ControlRegion(QMainWindow, ControlRegionInterface):
             self._frac_exp_bar.update_bar(is_try_show = False)
         else:
             self._info_board.set_text_by_template("First Help")
+
+        self._debug_in_game_exp_tooltip_region = _DebugRegion(
+            self._logic.to_settings().get_int("_solved_layout.in_game_exp_tooltip_x_offset"),
+            self._logic.to_settings().get_int("_solved_layout.in_game_exp_tooltip_y"),
+            self._logic.to_settings().get_int("_solved_layout.in_game_exp_tooltip_width"),
+            self._logic.to_settings().get_int("_solved_layout.in_game_exp_tooltip_height"),
+        )
+
+        self._is_debug = False
+
+    def enable_debug(self, is_enable : bool = True):
+        if is_enable:
+            self.setMouseTracking(True)
+        else:
+            self.setMouseTracking(False)
+            self._debug_in_game_exp_tooltip_region.hide()
+
+        self._is_debug = is_enable
         
     def change_info_board_format(self, format_name : str):
         self._info_board.load_format(format_name)
@@ -226,11 +278,18 @@ class ControlRegion(QMainWindow, ControlRegionInterface):
         else:
             self._previous_entry()
 
+    def mouseMoveEvent(self, event : QMouseEvent):
+        if self._is_debug:
+            self._debug_in_game_exp_tooltip_region.move_with_offset(event.globalX())
+
     def showEvent(self, event):
         if not self._info_board.is_dismissed():
             self._info_board.show()
 
         self._frac_exp_bar.try_show()
+
+        if self._is_debug:
+            self._debug_in_game_exp_tooltip_region.show()
 
     def hideEvent(self, event):
         self._frac_exp_bar.hide()
@@ -238,13 +297,22 @@ class ControlRegion(QMainWindow, ControlRegionInterface):
         if not self._info_board.is_dismissed():
             self._info_board.hide()
 
+        if self._is_debug:
+            self._debug_in_game_exp_tooltip_region.hide()
+
     def enterEvent(self, event: QEnterEvent):
         if self._info_board.is_dismissed():
             self._info_board.show()
 
+        if self._is_debug and not self._debug_in_game_exp_tooltip_region.isVisible():
+            self._debug_in_game_exp_tooltip_region.show()
+
     def leaveEvent(self, event: QEvent):
         if self._info_board.is_dismissed():
             self._info_board.hide()
+
+        if self._is_debug and self._debug_in_game_exp_tooltip_region.isVisible():
+            self._debug_in_game_exp_tooltip_region.hide()
 
     def _measure(self, cursor_x_in_screen : int, cursor_y_in_screen : int):
         self._foreground_guardian.pause()

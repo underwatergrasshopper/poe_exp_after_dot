@@ -383,6 +383,7 @@ class Overlay:
             "Default layouts can not be changed, but can be used as templates for custom layouts.",
             "Default layouts: 1280x720, 1920x1080, 2560x1440, 3840x2160.",
         ])
+        
         settings.set_dict("layouts.1280x720", {
             "info_board_x"                  : 367,
             "info_board_bottom"             : 704,

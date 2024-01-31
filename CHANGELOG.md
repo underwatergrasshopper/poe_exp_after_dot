@@ -1,8 +1,9 @@
 # 0.1.3
+* Added logging monitor resolution to `runtime.log`.
+* Added highlighting of in-game exp tooltip region for debug mode.
 * Updated README.md.
-* Updated logging to `runtime.log`.
 * Fixed incorrect offset between mouse cursor and in-game exp tooltip.
-* Fixed bug where can not turn off debug.
+* Fixed bug where debug mode can not be fully disabled.
 # 0.1.2 (2024-01-21)
 * Removed wrongly defined `__repr__` implementations.
 # 0.1.1 (2024-01-09)

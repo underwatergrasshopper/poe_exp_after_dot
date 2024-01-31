@@ -357,9 +357,11 @@ class Menu(QMenu):
             if is_enable:
                 self._logic.to_settings().set_bool("_is_debug", True)
                 to_log_manager().set_is_debug(True)
+                self._control_region.enable_debug(True)
             else:
                 self._logic.to_settings().set_bool("_is_debug", False)
                 to_log_manager().set_is_debug(False)
+                self._control_region.enable_debug(False)
 
             self._control_region.repaint()
 
