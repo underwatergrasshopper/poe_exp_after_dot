@@ -1,6 +1,7 @@
 # 0.1.3 (2024-01-31)
 * Added logging monitor resolution to `runtime.log`.
 * Added highlighting of in-game exp tooltip region for debug mode.
+* Added ability to create run script on desktop by using option `--make-run-file`.
 * Updated README.md.
 * Fixed incorrect offset between mouse cursor and in-game exp tooltip.
 * Fixed bug where debug mode can not be fully disabled.

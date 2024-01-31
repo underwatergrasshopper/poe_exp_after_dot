@@ -15,6 +15,7 @@ from .LogManager            import to_log_manager, to_logger
 from .Settings              import Settings
 from .OverlaySupport        import solve_layout as _solve_layout
 from .Version               import get_version as _get_version
+from .ExecuteSupport        import make_run_file as _make_run_file
 
 from .GUI.ControlRegion     import ControlRegion
 from .GUI.TrayMenu          import TrayMenu
@@ -29,6 +30,9 @@ poe_exp_after_dot.py [<option> ...]
     --settings-help
         Display information about possible values in settings.json. 
         Application won't run.
+    --make-run-file
+        Creates \"poe_exp_after_dot.bat\" on desktop.
+        This script starts overlay.
     --version | -v
         Displays version.
         Application won't run.
@@ -239,6 +243,10 @@ class Overlay:
                     print(_SETTINGS_HELP_TEXT)
                     is_run = False
 
+                case ["--make-run-file"]:
+                    _make_run_file()
+                    is_run = False
+
                 case ["--debug"]:
                     is_debug = True
 
@@ -316,7 +324,7 @@ class Overlay:
 
                 ### incorrect ###
 
-                case ["--version" | "-v" | "--help" | "-h" | "--debug" | "--settings-help" | "--overwrite-default-format", _]:
+                case ["--version" | "-v" | "--help" | "-h" | "--debug" | "--settings-help" | "--overwrite-default-format", "--make-run-file", _]:
                     raise ValueError(f"Incorrect command line argument. Option \"{option_name}\" can't have a value.")
                 
                 case ["--data-path" | "--custom" | "--font" | "--time-max-unit" | "--just-weeks-if-cap" | "--ms-if-below-1s", "--format"]:
@@ -383,7 +391,7 @@ class Overlay:
             "Default layouts can not be changed, but can be used as templates for custom layouts.",
             "Default layouts: 1280x720, 1920x1080, 2560x1440, 3840x2160.",
         ])
-        
+
         settings.set_dict("layouts.1280x720", {
             "info_board_x"                  : 367,
             "info_board_bottom"             : 704,

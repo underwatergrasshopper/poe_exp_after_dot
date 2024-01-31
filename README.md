@@ -48,11 +48,13 @@ Run `py -3-64 -m pip uninstall poe_exp_after_dot` in console window.
 
 # How to run
 
-Run `poe_exp_after_dot.bat` from desktop.
+Run `start pyw -3-64 -m poe_exp_after_dot` in console window.
 
 ... or ...
 
-Run `start pyw -3-64 -m poe_exp_after_dot` in console window.
+Run `py -3-64 -m poe_exp_after_dot --make-run-file` in console window once after install.
+
+It will create `poe_exp_after_dot.bat` on desktop to run overlay.
 
 # Command Line
 
