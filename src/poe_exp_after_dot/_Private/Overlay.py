@@ -379,9 +379,9 @@ class Overlay:
 
         settings.set_list("_comment_help", ["Type 'py -3-64 poe_exp_after_dot.py --settings-help' in console to see this info.", ""] + _SETTINGS_HELP_TEXT.split("\n"),)
         settings.set_list("_comment_layouts_help", [
-            "Custom layouts can be added to layouts."
-            "Default layouts can not be changed, but can be used as templates for custom layouts."
-            "Default layouts: 1280x720, 1920x1080, 2560x1440, 3840x2160."
+            "Custom layouts can be added to layouts.",
+            "Default layouts can not be changed, but can be used as templates for custom layouts.",
+            "Default layouts: 1280x720, 1920x1080, 2560x1440, 3840x2160.",
         ])
         settings.set_dict("layouts.1280x720", {
             "info_board_x"                  : 367,
