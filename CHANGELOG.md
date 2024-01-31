@@ -3,6 +3,7 @@
 * Added highlighting of in-game exp tooltip region for debug mode.
 * Added ability to create run script on desktop by using option `--make-run-file`.
 * Updated README.md.
+* Removed creating run script at installation.
 * Fixed incorrect offset between mouse cursor and in-game exp tooltip.
 * Fixed bug where debug mode can not be fully disabled.
 # 0.1.2 (2024-01-21)
