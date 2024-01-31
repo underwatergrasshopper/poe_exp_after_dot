@@ -1,6 +1,7 @@
 # 0.1.3
 * Updated README.md.
 * Updated logging to `runtime.log`.
+* Fixed incorrect offset between mouse cursor and in-game exp tooltip.
 # 0.1.2 (2024-01-21)
 * Removed wrongly defined `__repr__` implementations.
 # 0.1.1 (2024-01-09)
