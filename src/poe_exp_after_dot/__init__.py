@@ -44,9 +44,9 @@ def _main(argv : list[str], *, is_pass_all_exceptions_through : bool = False) ->
         overlay = _Overlay()
         exit_code = overlay.main(argv)
     except CommandArgumentError as error:
-        print(str(error))
         if is_pass_all_exceptions_through:
             raise
+        print(str(error))
         return _EXIT_FAILURE
     except Exception as exception:
         # Displays exception message in ErrorBoard.
