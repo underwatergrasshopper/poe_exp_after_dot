@@ -26,7 +26,12 @@ from ._Private.Commons      import (
 )
 from ._Private.Version      import set_version as _set_version
 
-from .Exceptions import CommandArgumentError
+from .Exceptions import (
+    Error, 
+    CommandArgumentError, 
+    TemplateLoadFail, 
+    TextGenFail
+)
 
 
 def _main(argv : list[str], *, is_pass_all_exceptions_through : bool = False) -> int:
@@ -54,16 +59,22 @@ def _main(argv : list[str], *, is_pass_all_exceptions_through : bool = False) ->
         # Workaround!!!
         # When inside except, some pyqt widgets from overlay still exists. 
         # To prevent displaying them with error board, os.system is used for running error board in separate window.
+
         data_path = _get_argument_value("--data-path", argv[1:])
         if data_path is None:
             data_path = _get_default_data_path()
         else:
             data_path = data_path.lstrip("/").lstrip("\\").lstrip("\\")
 
+        if isinstance(exception, Error):
+            short_message = str(exception)
+        else:
+            short_message = "Inner error. Check 'runtime.log' in Data Folder."
+
         error_board_launch_error_code = _run_error_board(
             data_path,
             _hide_abs_paths(_traceback.format_exc()),
-            str(exception)
+            short_message
         )
 
         # All internal exceptions are handled here, if logger managed to setup correctly.

@@ -109,7 +109,7 @@ def _run(
             hint_section = (
                 "{hint_begin}"
                 "Left Click on This to Exit.<br>"
-                "Hold Ctrl + RMB on This to show Message (may contain sensitive data).<br>"
+                "Right Click on This to show Message.<br>"
                 "Hold Ctrl + Shift + RMB on This to show Details (may contain sensitive data)."
                 "{hint_end}"
             )
@@ -179,12 +179,12 @@ def _run(
         def mousePressEvent(self, event: QMouseEvent):
             # raise RuntimeError("Some error inside.") # debug
             if event.button() == Qt.MouseButton.RightButton:
-                if to_app().keyboardModifiers() == Qt.KeyboardModifier.ControlModifier:
+                if to_app().keyboardModifiers() == Qt.KeyboardModifier.NoModifier:
                     self._set_text_from_format(self._short_message_text_format)
 
-                if to_app().keyboardModifiers() == Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.ShiftModifier:
+                elif to_app().keyboardModifiers() == Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.ShiftModifier:
                     self._set_text_from_format(self._message_text_format)
-                    
+
 
         def mouseReleaseEvent(self, event : QMouseEvent):
             if event.button() == Qt.MouseButton.LeftButton:

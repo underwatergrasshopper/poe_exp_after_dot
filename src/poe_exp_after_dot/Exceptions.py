@@ -1,8 +1,11 @@
-class TemplateLoadFail(Exception):
+class Error(Exception):
     pass
 
-class TextGenFail(Exception):
+class TemplateLoadFail(Error):
     pass
 
-class CommandArgumentError(Exception):
+class TextGenFail(Error):
+    pass
+
+class CommandArgumentError(Error):
     pass

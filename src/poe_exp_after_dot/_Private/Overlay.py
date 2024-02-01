@@ -20,7 +20,7 @@ from .ExecuteSupport        import make_run_file as _make_run_file
 from .GUI.ControlRegion     import ControlRegion
 from .GUI.TrayMenu          import TrayMenu
 
-from ..Exceptions           import CommandArgumentError
+from ..Exceptions           import Error, CommandArgumentError
 
 _HELP_TEXT = """
 poe_exp_after_dot.py [<option> ...]
@@ -555,7 +555,8 @@ class Overlay:
         tray_menu.show()
         control_region.start_foreground_guardian()
         
-        # raise RuntimeError("Some error.") # debug
+        # raise Error("Some error.") # debug
+        raise RuntimeError("Some error.") # debug
 
         def excepthook(exception_type, exception : BaseException, traceback_type):
             _exception_stash.exception = exception
