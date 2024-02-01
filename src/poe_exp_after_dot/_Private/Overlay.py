@@ -178,6 +178,10 @@ class _ExceptionStash:
 _exception_stash = _ExceptionStash()
 
 
+class CommandArgumentError(Exception):
+    pass
+
+
 class Overlay:
     def __init__(self):
         pass
@@ -255,7 +259,7 @@ class Overlay:
 
                 case ["--time-max-unit", time_max_unit]:
                     if time_max_unit not in ["second", "minute", "hour", "day", "week"]:
-                        raise ValueError(f"Incorrect command line argument. Option \"{option_name}\" have unknown value.")
+                        raise CommandArgumentError(f"Incorrect command line argument. Option \"{option_name}\" have unknown value.")
 
                 case ["--font", font_data_text]:
                     name_format = r"(|[^,]+)"
@@ -267,7 +271,7 @@ class Overlay:
                         font_size       = int(match_.group(2))      if match_.group(2) else None
                         is_font_bold    = match_.group(3) == "bold" if match_.group(3) else None
                     else:
-                        raise ValueError(f"Incorrect command line argument. Option \"{option_name}\" have wrong format.")
+                        raise CommandArgumentError(f"Incorrect command line argument. Option \"{option_name}\" have wrong format.")
 
                 case ["--custom", raw_custom_layout]:
                     n = r"(|0|[1-9][0-9]*)"
@@ -298,7 +302,7 @@ class Overlay:
                         in_game_exp_tooltip_width       = next_group()
                         in_game_exp_tooltip_height      = next_group()
                     else:
-                        raise ValueError(f"Incorrect command line argument. Option \"{option_name}\" have wrong format.")
+                        raise CommandArgumentError(f"Incorrect command line argument. Option \"{option_name}\" have wrong format.")
                 
                 case ["--overwrite-default-format"]:
                     is_overwrite_default_format = True
@@ -309,7 +313,7 @@ class Overlay:
                     elif state == "off":
                         is_just_weeks_if_cap = False
                     else:
-                        raise ValueError(f"Incorrect command line argument. Option \"{option_name}\" have wrong format.")
+                        raise CommandArgumentError(f"Incorrect command line argument. Option \"{option_name}\" have wrong format.")
                     
                 case ["--ms-if-below-1s", state]:
                     if state == "on":
@@ -317,7 +321,7 @@ class Overlay:
                     elif state == "off":
                         is_ms_if_below_1s = False
                     else:
-                        raise ValueError(f"Incorrect command line argument. Option \"{option_name}\" have wrong format.")
+                        raise CommandArgumentError(f"Incorrect command line argument. Option \"{option_name}\" have wrong format.")
                     
                 case ["--format", info_board_format]:
                     pass
@@ -325,13 +329,13 @@ class Overlay:
                 ### incorrect ###
 
                 case ["--version" | "-v" | "--help" | "-h" | "--debug" | "--settings-help" | "--overwrite-default-format", "--make-run-file", _]:
-                    raise ValueError(f"Incorrect command line argument. Option \"{option_name}\" can't have a value.")
+                    raise CommandArgumentError(f"Incorrect command line argument. Option \"{option_name}\" can't have a value.")
                 
                 case ["--data-path" | "--custom" | "--font" | "--time-max-unit" | "--just-weeks-if-cap" | "--ms-if-below-1s", "--format"]:
-                    raise ValueError(f"Incorrect command line argument. Option \"{option_name}\" need to have a value.")
+                    raise CommandArgumentError(f"Incorrect command line argument. Option \"{option_name}\" need to have a value.")
 
                 case [option_name, *_]:
-                    raise ValueError(f"Incorrect command line argument. Unknown option \"{option_name}\".")
+                    raise CommandArgumentError(f"Incorrect command line argument. Unknown option \"{option_name}\".")
         
         # Cuts here in case of just printing out help.
         if not is_run:
@@ -553,7 +557,7 @@ class Overlay:
         tray_menu.show()
         control_region.start_foreground_guardian()
         
-        raise RuntimeError("Some error.") # debug
+        # raise RuntimeError("Some error.") # debug
 
         def excepthook(exception_type, exception : BaseException, traceback_type):
             _exception_stash.exception = exception

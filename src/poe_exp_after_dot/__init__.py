@@ -8,14 +8,14 @@ poe_exp_after_dot.py --help
 poe_exp_after_dot.py [<option>...]
 """
 __author__  = "underwatergrasshopper"
-__version__ = "0.1.3"
+__version__ = "0.1.4"
 
 
 import os           as _os
 import sys          as _sys
 import traceback    as _traceback
 
-from ._Private.Overlay      import Overlay as _Overlay
+from ._Private.Overlay      import Overlay as _Overlay, CommandArgumentError as _CommandArgumentError
 from ._Private.LogManager   import to_logger as _to_logger
 from ._Private.Commons      import (
     EXIT_FAILURE            as _EXIT_FAILURE,
@@ -41,6 +41,9 @@ def _main(argv : list[str]) -> int:
     try:
         overlay = _Overlay()
         exit_code = overlay.main(argv)
+    except _CommandArgumentError as error:
+        print(str(error))
+        return _EXIT_FAILURE
     except Exception as exception:
         # Displays exception message in ErrorBoard.
         
