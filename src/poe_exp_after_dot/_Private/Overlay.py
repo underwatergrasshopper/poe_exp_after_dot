@@ -20,6 +20,8 @@ from .ExecuteSupport        import make_run_file as _make_run_file
 from .GUI.ControlRegion     import ControlRegion
 from .GUI.TrayMenu          import TrayMenu
 
+from ..Exceptions           import CommandArgumentError
+
 _HELP_TEXT = """
 poe_exp_after_dot.py [<option> ...]
 
@@ -176,10 +178,6 @@ class _ExceptionStash:
         self.exception = None
 
 _exception_stash = _ExceptionStash()
-
-
-class CommandArgumentError(Exception):
-    pass
 
 
 class Overlay:

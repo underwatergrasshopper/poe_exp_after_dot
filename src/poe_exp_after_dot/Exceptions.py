@@ -3,3 +3,6 @@ class TemplateLoadFail(Exception):
 
 class TextGenFail(Exception):
     pass
+
+class CommandArgumentError(Exception):
+    pass

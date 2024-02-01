@@ -15,7 +15,7 @@ import os           as _os
 import sys          as _sys
 import traceback    as _traceback
 
-from ._Private.Overlay      import Overlay as _Overlay, CommandArgumentError as _CommandArgumentError
+from ._Private.Overlay      import Overlay as _Overlay
 from ._Private.LogManager   import to_logger as _to_logger
 from ._Private.Commons      import (
     EXIT_FAILURE            as _EXIT_FAILURE,
@@ -26,8 +26,10 @@ from ._Private.Commons      import (
 )
 from ._Private.Version      import set_version as _set_version
 
+from .Exceptions import CommandArgumentError
 
-def _main(argv : list[str]) -> int:
+
+def _main(argv : list[str], *, is_pass_all_exceptions_through : bool = False) -> int:
     """
     Returns
         Exit code.
@@ -41,8 +43,10 @@ def _main(argv : list[str]) -> int:
     try:
         overlay = _Overlay()
         exit_code = overlay.main(argv)
-    except _CommandArgumentError as error:
+    except CommandArgumentError as error:
         print(str(error))
+        if is_pass_all_exceptions_through:
+            raise
         return _EXIT_FAILURE
     except Exception as exception:
         # Displays exception message in ErrorBoard.
@@ -73,12 +77,12 @@ def _main(argv : list[str]) -> int:
 
             return _EXIT_FAILURE
         else:
-            raise exception
+            raise
     else:
         return exit_code
 
 
-def main(argv : list[str] | None = None) -> int:
+def main(argv : list[str] | None = None, *, is_pass_all_exceptions_through : bool = False) -> int:
     """
     argv
         Command line argument list.
@@ -94,5 +98,7 @@ def main(argv : list[str] | None = None) -> int:
     """
     if argv is not None and not (isinstance(argv, list) and all([isinstance(option, str) for option in argv])):
         raise TypeError("Unexpected type of 'argv' parameter.")
+    if not isinstance(is_pass_all_exceptions_through, bool):
+        raise TypeError("Unexpected type of 'is_pass_all_exceptions_through' parameter.")
     
-    return _main(argv if argv else [])
+    return _main(argv if argv else [], is_pass_all_exceptions_through = is_pass_all_exceptions_through)
