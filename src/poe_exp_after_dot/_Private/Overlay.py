@@ -555,7 +555,7 @@ class Overlay:
         tray_menu.show()
         control_region.start_foreground_guardian()
         
-        raise RuntimeError("Some error.") # debug
+        # raise RuntimeError("Some error.") # debug
 
         def excepthook(exception_type, exception : BaseException, traceback_type):
             _exception_stash.exception = exception
