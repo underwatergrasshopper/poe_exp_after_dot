@@ -1,3 +1,5 @@
+# 0.1.4
+* Changed Error Board hints to be more informative.
 # 0.1.3 (2024-01-31)
 * Added logging monitor resolution to `runtime.log`.
 * Added highlighting of in-game exp tooltip region for debug mode.
