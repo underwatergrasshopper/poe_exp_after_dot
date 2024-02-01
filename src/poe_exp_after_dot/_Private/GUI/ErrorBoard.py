@@ -102,33 +102,34 @@ def _run(
             self._label.setStyleSheet(f"font: 12px Consolas; color: #BFBFBF;")
             self._label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents) 
 
-            self._notice_text_format = (
-                "{title_begin}FATAL ERROR{title_end}<br>"
+
+            title_section = (
+                "{title_begin}FATAL ERROR{title_end}"
+            )
+
+            hint_section = (
                 "{hint_begin}"
-                "Hold RMB on This to show Message.<br>"
-                "Hold Ctrl + RMB on This to show Details.<br>"
+                "Hold RMB on This to show Message (might have sensitive data).<br>"
+                "Hold Ctrl + RMB on This to show Details (might have sensitive data).<br>"
                 "Click on This to Exit."
                 "{hint_end}"
+            )
+
+            self._notice_text_format = (
+                f"{title_section}<br>"
+                f"{hint_section}"
             )
 
             self._short_message_text_format = (
-                "{title_begin}FATAL ERROR{title_end}<br>"
+                f"{title_section}<br>"
                 "{short_message}<br>"
-                "{hint_begin}"
-                "Hold RMB on This to show Message.<br>"
-                "Hold Ctrl + RMB on This to show Details.<br>"
-                "Click on This to Exit."
-                "{hint_end}"
+                f"{hint_section}"
             )
 
             self._message_text_format = (
-                "{title_begin}FATAL ERROR{title_end}<br>"
+                f"{title_section}<br>"
                 "{message}<br>"
-                "{hint_begin}"
-                "Hold RMB on This to show Message.<br>"
-                "Hold Ctrl + RMB on This to show Details.<br>"
-                "Click on This to Exit."
-                "{hint_end}"
+                f"{hint_section}"
             )
 
             self._set_text_from_format(self._notice_text_format, is_overexpand_safe = True)
