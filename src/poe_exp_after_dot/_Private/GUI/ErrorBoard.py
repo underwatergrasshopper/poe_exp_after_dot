@@ -102,16 +102,15 @@ def _run(
             self._label.setStyleSheet(f"font: 12px Consolas; color: #BFBFBF;")
             self._label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents) 
 
-
             title_section = (
                 "{title_begin}FATAL ERROR{title_end}"
             )
 
             hint_section = (
                 "{hint_begin}"
-                "Hold RMB on This to show Message (might have sensitive data).<br>"
-                "Hold Ctrl + RMB on This to show Details (might have sensitive data).<br>"
-                "Left Click on This to Exit."
+                "Left Click on This to Exit.<br>"
+                "Hold Ctrl + RMB on This to show Message (may contain sensitive data).<br>"
+                "Hold Ctrl + Shift + RMB on This to show Details (may contain sensitive data)."
                 "{hint_end}"
             )
 
@@ -180,26 +179,19 @@ def _run(
         def mousePressEvent(self, event: QMouseEvent):
             # raise RuntimeError("Some error inside.") # debug
             if event.button() == Qt.MouseButton.RightButton:
-                if to_app().keyboardModifiers() & Qt.KeyboardModifier.ControlModifier:
-                    self._set_text_from_format(self._message_text_format)
-                else:
+                if to_app().keyboardModifiers() == Qt.KeyboardModifier.ControlModifier:
                     self._set_text_from_format(self._short_message_text_format)
+
+                if to_app().keyboardModifiers() == Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.ShiftModifier:
+                    self._set_text_from_format(self._message_text_format)
+                    
 
         def mouseReleaseEvent(self, event : QMouseEvent):
             if event.button() == Qt.MouseButton.LeftButton:
                 to_app().quit()
+
             elif event.button() == Qt.MouseButton.RightButton:
                 self._set_text_from_format(self._notice_text_format)
-
-        def keyPressEvent(self, event: QKeyEvent):
-            if event.key() == Qt.Key.Key_Control:
-                if to_app().mouseButtons() & Qt.MouseButton.RightButton:
-                    self._set_text_from_format(self._message_text_format)
-
-        def keyReleaseEvent(self, event: QKeyEvent):
-            if event.key() == Qt.Key.Key_Control:
-                if to_app().mouseButtons() & Qt.MouseButton.RightButton:
-                    self._set_text_from_format(self._short_message_text_format)
 
         def paintEvent(self, event : QPaintEvent):
             painter = QPainter(self)
