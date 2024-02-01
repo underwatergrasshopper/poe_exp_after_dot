@@ -1,4 +1,6 @@
 # 0.1.4
+* Added debug for text reading.
+* Added more debug logging for fetching current exp value.
 * Changed Error Board hints to be more informative.
 * Changed key controls for Error Board.
 * Changed error message format, when incorrect command option is put, to be more strict.

@@ -114,7 +114,6 @@ class ControlRegion(QMainWindow, ControlRegionInterface):
             self._logic.to_settings().get_int("_solved_layout.in_game_exp_tooltip_width"),
             self._logic.to_settings().get_int("_solved_layout.in_game_exp_tooltip_height"),
         )
-        #self._debug_in_game_exp_tooltip_region.hide()
         self._is_debug = False
 
     def enable_debug(self, is_enable : bool = True):
@@ -287,9 +286,6 @@ class ControlRegion(QMainWindow, ControlRegionInterface):
             self._info_board.show()
 
         self._frac_exp_bar.try_show()
-
-        if self._is_debug:
-            self._debug_in_game_exp_tooltip_region.show()
 
     def hideEvent(self, event):
         self._frac_exp_bar.hide()

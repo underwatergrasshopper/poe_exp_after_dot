@@ -3,11 +3,14 @@ import logging  as _logging
 import numpy    as _numpy
 import cv2      as _cv2
 import easyocr  as _easyocr # type: ignore
+import io       as _io
 
 from typing         import Any
 from dataclasses    import dataclass
 from time           import time as _get_time_since_epoch
 from PIL            import ImageGrab as _ImageGrab
+from contextlib     import redirect_stdout as _redirect_stdout, redirect_stderr as _redirect_stderr
+from typing         import Callable as _Callable
 
 from PySide6.QtWidgets  import QWidget
 
@@ -60,6 +63,19 @@ class TextFragment:
         return f"TextFragment(text=\"{self.text}\", polygon={self.polygon})" 
 
 
+def _do_with_redirect_to_logger(do : _Callable[[], None], *, message_prefix : str = ""):
+    with _redirect_stdout(_io.StringIO()) as buffer, _redirect_stderr(_io.StringIO()) as error_buffer:
+        do()
+
+    text = buffer.getvalue().rstrip("\n")
+    if text:
+        to_logger().info(f"{message_prefix}{text}")
+
+    error_text = error_buffer.getvalue().rstrip("\n")
+    if error_text:
+        to_logger().error(f"{message_prefix}{error_text}")
+
+
 class Logic:
     _settings           : Settings
     _measurer           : Measurer
@@ -74,10 +90,15 @@ class Logic:
         self._measurer = Measurer()
 
         self._reader = _easyocr.Reader(['en'], gpu = True, verbose = False)
+        _do_with_redirect_to_logger(self._initialize_debug_reader, message_prefix = "EasyOCR, Debug Reader: ")
 
         self._character_register = CharacterRegister(settings.get_str("_data_path"))
 
         self._is_fetch_failed = False
+
+    def _initialize_debug_reader(self):
+        self._debug_reader  = _easyocr.Reader(['en'], gpu = True, verbose = True)
+
 
     def to_character_register(self):
         return self._character_register
@@ -182,6 +203,9 @@ class Logic:
         for widget in widgets_to_hide:
             widget.hide()
 
+        if to_logger().isEnabledFor(_logging.DEBUG):
+            to_logger().debug(f"Getting image of screen.")
+
         screenshot = _ImageGrab.grab()
 
         for widget in widgets_to_hide:
@@ -192,6 +216,9 @@ class Logic:
         width   = self._settings.get_int("_solved_layout.in_game_exp_tooltip_width")
         height  = self._settings.get_int("_solved_layout.in_game_exp_tooltip_height")
 
+        if to_logger().isEnabledFor(_logging.DEBUG):
+            to_logger().debug(f"Cropping image of screen to region where in-game exp tooltip should be.")
+
         in_game_exp_tooltip_image_tmp = screenshot.crop((
             left,
             right,
@@ -201,7 +228,16 @@ class Logic:
         
         in_game_exp_tooltip_image = _cv2.cvtColor(_numpy.array(in_game_exp_tooltip_image_tmp), _cv2.COLOR_RGB2BGR) # converts image from Pillow format to OpenCV format
 
-        text_fragments = [TextFragment(text_fragment) for text_fragment in self._reader.readtext(in_game_exp_tooltip_image)]
+        if to_logger().isEnabledFor(_logging.DEBUG):
+            to_logger().debug(f"Reading text of in-game exp tooltip.")
+
+        if self._settings.get_bool("_is_debug"):
+            text_fragments = []
+            def do():
+                text_fragments.extend([TextFragment(text_fragment) for text_fragment in self._debug_reader.readtext(in_game_exp_tooltip_image)])
+            _do_with_redirect_to_logger(do, message_prefix = "EasyOCR, Reading Text: ")
+        else:
+            text_fragments = [TextFragment(text_fragment) for text_fragment in self._reader.readtext(in_game_exp_tooltip_image)]
 
         min_text_height = in_game_exp_tooltip_image.shape[0] 
         
@@ -214,6 +250,9 @@ class Logic:
         def extract_comparison_key(text_fragment : TextFragment):
             p = text_fragment.polygon.lb # position of left bottom corner
             return p.x + width * (p.y // min_text_height)
+
+        if to_logger().isEnabledFor(_logging.DEBUG):
+            to_logger().debug(f"Sorting read text fragments of in-game exp tooltip to be in correct order.")
 
         text_fragments.sort(key = extract_comparison_key)
 
