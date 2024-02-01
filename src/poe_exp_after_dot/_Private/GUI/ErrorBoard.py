@@ -111,7 +111,7 @@ def _run(
                 "{hint_begin}"
                 "Hold RMB on This to show Message (might have sensitive data).<br>"
                 "Hold Ctrl + RMB on This to show Details (might have sensitive data).<br>"
-                "Click on This to Exit."
+                "Left Click on This to Exit."
                 "{hint_end}"
             )
 
