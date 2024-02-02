@@ -4,6 +4,7 @@ import numpy    as _numpy
 import cv2      as _cv2
 import easyocr  as _easyocr # type: ignore
 import io       as _io
+import faulthandler as _faulthandler
 
 from typing         import Any
 from dataclasses    import dataclass
@@ -89,7 +90,7 @@ class Logic:
 
         self._measurer = Measurer()
 
-        self._reader = _easyocr.Reader(['en'], gpu = True, verbose = False)
+        self._reader = _easyocr.Reader(['en'], gpu = True, verbose = False, quantize = False)
         _do_with_redirect_to_logger(self._initialize_debug_reader, message_prefix = "EasyOCR, Debug Reader: ")
 
         self._character_register = CharacterRegister(settings.get_str("_data_path"))
@@ -97,7 +98,7 @@ class Logic:
         self._is_fetch_failed = False
 
     def _initialize_debug_reader(self):
-        self._debug_reader  = _easyocr.Reader(['en'], gpu = True, verbose = True)
+        self._debug_reader  = _easyocr.Reader(['en'], gpu = True, verbose = True, quantize = False)
 
 
     def to_character_register(self):
@@ -229,6 +230,8 @@ class Logic:
         in_game_exp_tooltip_image = _cv2.cvtColor(_numpy.array(in_game_exp_tooltip_image_tmp), _cv2.COLOR_RGB2BGR) # converts image from Pillow format to OpenCV format
  
         if self._settings.get_bool("_is_debug"):
+            _faulthandler.enable()
+            
             text_fragments = []
             def do():
                 to_logger().debug(f"Reading text of in-game exp tooltip...")
@@ -238,6 +241,9 @@ class Logic:
                 text_fragments.extend([TextFragment(text_raw_fragment) for text_raw_fragment in text_raw_fragments])
             _do_with_redirect_to_logger(do, message_prefix = "EasyOCR, Reading Text: ")
         else:
+            if _faulthandler.is_enabled():
+                _faulthandler.disable()
+
             text_fragments = [TextFragment(text_fragment) for text_fragment in self._reader.readtext(in_game_exp_tooltip_image)]
 
         min_text_height = in_game_exp_tooltip_image.shape[0] 
