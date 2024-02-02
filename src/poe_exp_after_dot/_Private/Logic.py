@@ -2,6 +2,7 @@ import re       as _re
 import logging  as _logging
 import numpy    as _numpy
 import cv2      as _cv2
+import sys      as _sys
 import easyocr  as _easyocr # type: ignore
 import io       as _io
 import faulthandler as _faulthandler
@@ -64,17 +65,25 @@ class TextFragment:
         return f"TextFragment(text=\"{self.text}\", polygon={self.polygon})" 
 
 
-def _do_with_redirect_to_logger(do : _Callable[[], None], *, message_prefix : str = ""):
-    with _redirect_stdout(_io.StringIO()) as buffer, _redirect_stderr(_io.StringIO()) as error_buffer:
-        do()
+def _do_with_redirect_to_logger(do : _Callable[[], None], *, message_prefix : str = "", is_only_stdout : bool = False):
+    if is_only_stdout:
+        with _redirect_stdout(_io.StringIO()) as buffer:
+            do()
 
-    text = buffer.getvalue().rstrip("\n")
-    if text:
-        to_logger().info(f"{message_prefix}{text}")
+        text = buffer.getvalue().rstrip("\n")
+        if text:
+            to_logger().info(f"{message_prefix}{text}")
+    else:
+        with _redirect_stdout(_io.StringIO()) as buffer, _redirect_stderr(_io.StringIO()) as error_buffer:
+            do()
 
-    error_text = error_buffer.getvalue().rstrip("\n")
-    if error_text:
-        to_logger().error(f"{message_prefix}{error_text}")
+        text = buffer.getvalue().rstrip("\n")
+        if text:
+            to_logger().info(f"{message_prefix}{text}")
+
+        error_text = error_buffer.getvalue().rstrip("\n")
+        if error_text:
+            to_logger().error(f"{message_prefix}{error_text}")
 
 
 class Logic:
@@ -228,9 +237,11 @@ class Logic:
         ))
         
         in_game_exp_tooltip_image = _cv2.cvtColor(_numpy.array(in_game_exp_tooltip_image_tmp), _cv2.COLOR_RGB2BGR) # converts image from Pillow format to OpenCV format
- 
+        
         if self._settings.get_bool("_is_debug"):
-            _faulthandler.enable()
+            if _sys.stdout:
+                # When running by 'start pyw', then there is no 'stderr'.
+                _faulthandler.enable()
 
             text_fragments = []
             def do():
@@ -239,9 +250,11 @@ class Logic:
                 to_logger().debug(f"Text of in-game exp tooltip has been read.")
 
                 text_fragments.extend([TextFragment(text_raw_fragment) for text_raw_fragment in text_raw_fragments])
-            _do_with_redirect_to_logger(do, message_prefix = "EasyOCR, Reading Text: ")
+            _do_with_redirect_to_logger(do, message_prefix = "EasyOCR, Reading Text: ", is_only_stdout = True)
 
-            _faulthandler.disable()
+            if _faulthandler.is_enabled():
+                _faulthandler.disable()
+                
         else:
             text_fragments = [TextFragment(text_fragment) for text_fragment in self._reader.readtext(in_game_exp_tooltip_image)]
 
