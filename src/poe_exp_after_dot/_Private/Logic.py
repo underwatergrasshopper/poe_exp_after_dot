@@ -261,7 +261,7 @@ class Logic:
             full_text += text_fragment.text + " "
 
         if to_logger().isEnabledFor(_logging.DEBUG):
-            to_logger().debug(f"Scanned In-Game Exp Tooltip Text: \"{full_text}\"")
+            to_logger().debug(f"Scanned In-Game Exp Tooltip Text: \"{full_text}\".")
             for text_fragment in text_fragments:
                 to_logger().debug(text_fragment)
             to_logger().debug("---")
@@ -270,6 +270,6 @@ class Logic:
         if match_:
             return int(match_.group(1).replace(",", ""))
         
-        to_logger().error(f"Can't find current exp amount in In-Game Exp Tooltip. Scanned Text: \"{full_text}\"")
+        to_logger().error(f"Can't find current exp amount in In-Game Exp Tooltip. Scanned Text: \"{full_text}\".")
 
         return None
