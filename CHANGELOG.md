@@ -1,4 +1,4 @@
-# 0.1.4
+# 0.1.4 (2024-02-02)
 * Added debug for text reading.
 * Added more debug logging for fetching current exp value.
 * Added usage of `faulthandler` for reading in-game exp tooltip in debug mode.
@@ -6,6 +6,7 @@
 * Changed key controls for Error Board.
 * Changed error message format, when incorrect command option is put, to be more strict.
 * Fixed temporal displacement in debug mode.
+* Fixed bug where python would crash when overlay trying do measurement after LMB click on exp bar.
 # 0.1.3 (2024-01-31)
 * Added logging monitor resolution to `runtime.log`.
 * Added highlighting of in-game exp tooltip region for debug mode.
