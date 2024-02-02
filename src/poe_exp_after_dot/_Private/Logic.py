@@ -231,7 +231,7 @@ class Logic:
  
         if self._settings.get_bool("_is_debug"):
             _faulthandler.enable()
-            
+
             text_fragments = []
             def do():
                 to_logger().debug(f"Reading text of in-game exp tooltip...")
@@ -240,10 +240,9 @@ class Logic:
 
                 text_fragments.extend([TextFragment(text_raw_fragment) for text_raw_fragment in text_raw_fragments])
             _do_with_redirect_to_logger(do, message_prefix = "EasyOCR, Reading Text: ")
-        else:
-            if _faulthandler.is_enabled():
-                _faulthandler.disable()
 
+            _faulthandler.disable()
+        else:
             text_fragments = [TextFragment(text_fragment) for text_fragment in self._reader.readtext(in_game_exp_tooltip_image)]
 
         min_text_height = in_game_exp_tooltip_image.shape[0] 
