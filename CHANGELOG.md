@@ -7,7 +7,7 @@
 * Changed error message format, when incorrect command option is put, to be more strict.
 * Fixed temporal displacement in debug mode.
 * Fixed bug where python would crash when overlay trying do measurement after LMB click on exp bar.
-* Fixed crashing when trying do measure when debug mode is enabled and overlay is executed by `start pyw ...`.
+* Fixed crash when trying do measure when debug mode is enabled and overlay is executed by `start pyw ...`.
 # 0.1.3 (2024-01-31)
 * Added logging monitor resolution to `runtime.log`.
 * Added highlighting of in-game exp tooltip region for debug mode.
