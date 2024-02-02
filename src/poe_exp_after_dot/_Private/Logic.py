@@ -212,29 +212,30 @@ class Logic:
             widget.show()
 
         left    = cursor_x_in_screen + self._settings.get_int("_solved_layout.in_game_exp_tooltip_x_offset")
-        right   = self._settings.get_int("_solved_layout.in_game_exp_tooltip_y")
+        top     = self._settings.get_int("_solved_layout.in_game_exp_tooltip_y")
         width   = self._settings.get_int("_solved_layout.in_game_exp_tooltip_width")
         height  = self._settings.get_int("_solved_layout.in_game_exp_tooltip_height")
 
         if to_logger().isEnabledFor(_logging.DEBUG):
-            to_logger().debug(f"Cropping image of screen to region where in-game exp tooltip should be.")
+            to_logger().debug(f"Cropping image of screen to region where in-game exp tooltip should be. ({left=}, {top=}, {width=}, {height=})")
 
         in_game_exp_tooltip_image_tmp = screenshot.crop((
             left,
-            right,
+            top,
             left + width,
-            right + height,
+            top + height,
         ))
         
         in_game_exp_tooltip_image = _cv2.cvtColor(_numpy.array(in_game_exp_tooltip_image_tmp), _cv2.COLOR_RGB2BGR) # converts image from Pillow format to OpenCV format
-
-        if to_logger().isEnabledFor(_logging.DEBUG):
-            to_logger().debug(f"Reading text of in-game exp tooltip.")
-
+ 
         if self._settings.get_bool("_is_debug"):
             text_fragments = []
             def do():
-                text_fragments.extend([TextFragment(text_fragment) for text_fragment in self._debug_reader.readtext(in_game_exp_tooltip_image)])
+                to_logger().debug(f"Reading text of in-game exp tooltip...")
+                text_raw_fragments = self._debug_reader.readtext(in_game_exp_tooltip_image)
+                to_logger().debug(f"Text of in-game exp tooltip has been read.")
+
+                text_fragments.extend([TextFragment(text_raw_fragment) for text_raw_fragment in text_raw_fragments])
             _do_with_redirect_to_logger(do, message_prefix = "EasyOCR, Reading Text: ")
         else:
             text_fragments = [TextFragment(text_fragment) for text_fragment in self._reader.readtext(in_game_exp_tooltip_image)]
