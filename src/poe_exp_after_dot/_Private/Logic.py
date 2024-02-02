@@ -250,7 +250,7 @@ class Logic:
                 to_logger().debug(f"Text of in-game exp tooltip has been read.")
 
                 text_fragments.extend([TextFragment(text_raw_fragment) for text_raw_fragment in text_raw_fragments])
-            _do_with_redirect_to_logger(do, message_prefix = "EasyOCR, Reading Text: ", is_only_stdout = True)
+            _do_with_redirect_to_logger(do, message_prefix = "EasyOCR, Reading Text: ", is_only_stdout = _faulthandler.is_enabled())
 
             if _faulthandler.is_enabled():
                 _faulthandler.disable()
