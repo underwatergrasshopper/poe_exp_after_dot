@@ -294,7 +294,7 @@ class Logic:
 
         match_ = self._current_exp_pattern.search(full_text)
         if match_:
-            return int(match_.group(1).replace(",", "").replace(" ", ""))
+            return int(match_.group(1).replace(",", "").replace(".", "").replace(" ", ""))
         
         to_logger().error(f"Can't find current exp amount in In-Game Exp Tooltip. Scanned Text: \"{full_text}\".")
 
