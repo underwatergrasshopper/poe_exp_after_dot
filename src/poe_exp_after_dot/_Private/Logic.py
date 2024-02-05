@@ -239,22 +239,23 @@ class Logic:
         in_game_exp_tooltip_image = _cv2.cvtColor(_numpy.array(in_game_exp_tooltip_image_tmp), _cv2.COLOR_RGB2BGR) # converts image from Pillow format to OpenCV format
         
         if self._settings.get_bool("_is_debug"):
+            to_logger().debug(f"Reading text of in-game exp tooltip...")
+
             if _sys.stdout:
                 # When running by 'start pyw', then there is no 'stderr'.
                 _faulthandler.enable()
 
             text_fragments = []
             def do():
-                to_logger().debug(f"Reading text of in-game exp tooltip...")
                 text_raw_fragments = self._debug_reader.readtext(in_game_exp_tooltip_image)
-                to_logger().debug(f"Text of in-game exp tooltip has been read.")
 
                 text_fragments.extend([TextFragment(text_raw_fragment) for text_raw_fragment in text_raw_fragments])
             _do_with_redirect_to_logger(do, message_prefix = "EasyOCR, Reading Text: ", is_only_stdout = _faulthandler.is_enabled())
 
             if _faulthandler.is_enabled():
                 _faulthandler.disable()
-                
+
+            to_logger().debug(f"Text of in-game exp tooltip has been read.") 
         else:
             text_fragments = [TextFragment(text_fragment) for text_fragment in self._reader.readtext(in_game_exp_tooltip_image)]
 

@@ -8,7 +8,7 @@ poe_exp_after_dot.py --help
 poe_exp_after_dot.py [<option>...]
 """
 __author__  = "underwatergrasshopper"
-__version__ = "0.1.4"
+__version__ = "0.1.5dev1"
 
 
 import os           as _os
