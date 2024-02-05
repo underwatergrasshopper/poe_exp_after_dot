@@ -7,7 +7,7 @@ import easyocr  as _easyocr # type: ignore
 import io       as _io
 import faulthandler as _faulthandler
 
-from typing         import Any
+from typing         import Any, AnyStr as _AnyStr
 from dataclasses    import dataclass
 from time           import time as _get_time_since_epoch
 from PIL            import ImageGrab as _ImageGrab
@@ -87,12 +87,14 @@ def _do_with_redirect_to_logger(do : _Callable[[], None], *, message_prefix : st
 
 
 class Logic:
-    _settings           : Settings
-    _measurer           : Measurer
-    _character_register : CharacterRegister
+    _settings               : Settings
+    _measurer               : Measurer
+    _character_register     : CharacterRegister
 
-    _reader             : _easyocr.Reader
-    _is_fetch_failed    : bool
+    _reader                 : _easyocr.Reader
+    _is_fetch_failed        : bool
+
+    _current_exp_pattern    : _re.Pattern[_AnyStr]
 
     def __init__(self, settings : Settings):
         self._settings = settings
@@ -106,9 +108,12 @@ class Logic:
 
         self._is_fetch_failed = False
 
+        # Common Thousands Separators: ',', '.', ' '.
+        EXP_VALUE_PATTERN_TEXT = r"(0|([1-9][0-9]{0,2})([,\. ][0-9]{3}){0,3})"
+        self._current_exp_pattern = _re.compile(fr"^.*?Current[ ]+Exp\:[ ]+({EXP_VALUE_PATTERN_TEXT})[ ]+.*$")
+
     def _initialize_debug_reader(self):
         self._debug_reader  = _easyocr.Reader(['en'], gpu = True, verbose = True, quantize = False)
-
 
     def to_character_register(self):
         return self._character_register
@@ -286,9 +291,10 @@ class Logic:
                 to_logger().debug(text_fragment)
             to_logger().debug("---")
 
-        match_ = _re.search(r"^.*?Current[ ]+Exp\:[ ]+([0-9,]+)[ ]+.*$", full_text)
+
+        match_ = self._current_exp_pattern.search(full_text)
         if match_:
-            return int(match_.group(1).replace(",", ""))
+            return int(match_.group(1).replace(",", "").replace(" ", ""))
         
         to_logger().error(f"Can't find current exp amount in In-Game Exp Tooltip. Scanned Text: \"{full_text}\".")
 
