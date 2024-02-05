@@ -1,5 +1,6 @@
 # 0.1.5
 * Added more common thousands separators to text scan format of current exp value.
+* Added information about required "Path of Exile" language to README.md.
 * Fixed missing output stream for logger, while trying to log in debug mode, when scanning text.
 # 0.1.4 (2024-02-02)
 * Added debug for text reading.
