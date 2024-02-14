@@ -1,6 +1,9 @@
 import pytest   as _pytest
 import os       as _os
-import sys      as _sys
+
+
+class _CommandArgumentError(Exception):
+    pass
 
 
 def _parse_and_run(arguments : list[str]) -> int:
@@ -24,11 +27,11 @@ def _parse_and_run(arguments : list[str]) -> int:
                 is_stdout_enabled = True
 
             case ["--output"]:
-                raise ValueError(f"Option \"{name}\" need to have value.")
+                raise _CommandArgumentError(f"Option \"{name}\" need to have value.")
             case ["--stdout", _]:
-                raise ValueError(f"Option \"{name}\" can not have value.")
+                raise _CommandArgumentError(f"Option \"{name}\" can not have value.")
             case [name, *_]:
-                raise ValueError(f"Option \"{name}\" is unknown.")
+                raise _CommandArgumentError(f"Option \"{name}\" is unknown.")
             
     return _run(output_path, is_stdout_enabled, pytest_arguments)
 
@@ -50,9 +53,10 @@ def _run(
     run_path = _os.getcwd()
     _os.chdir(base_path)
 
-    exit_code = _pytest.main(options + pytest_arguments)
-
-    _os.chdir(run_path)
+    try:
+        exit_code = _pytest.main(options + pytest_arguments)
+    finally:
+        _os.chdir(run_path)
 
     return exit_code
 

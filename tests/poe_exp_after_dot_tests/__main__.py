@@ -1,7 +1,7 @@
 def _execute():
     import sys
-    from . import main
+    from . import _main
 
-    sys.exit(main(sys.argv))
+    sys.exit(_main(sys.argv))
 
 _execute()

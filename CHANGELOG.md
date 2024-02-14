@@ -1,4 +1,5 @@
 # 0.1.6
+* Changed displaying command line argument errors without trace for test.
 * Changed paths to files and folder to have same format. Windows format with `single backslash` as separator.
 * Changed project scripts. Project scripts now can be called from other directory than project directory.
 # 0.1.5 (2024-02-05)

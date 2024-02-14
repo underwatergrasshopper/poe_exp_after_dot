@@ -6,27 +6,29 @@ poe_exp_after_dot_tests unit_tests [<option>...] [-- <pytest_argument>...]
 
 Note: 'pytest' is executed from '<project_path>\\tests\\poe_exp_after_dot_tests\\unit_tests' directory. 
 """
-from . import unit_tests as _unit_tests
+from .              import unit_tests as _unit_tests
+from .unit_tests    import _CommandArgumentError
 
 
 _EXIT_SUCCESS = 0
 _EXIT_FAILURE = 1
 
 
-def _main(argv : list[str]) -> int:
-    arguments = argv[1:]
-    mode = arguments[0]
+def _run(mode : str, arguments : list[str]) -> int:
     match mode:
         case "unit_tests":
-            return _unit_tests._parse_and_run(arguments[1:])
-        case undefined:
-            raise ValueError(f"Undefined mode \"{undefined}\".")
+            return _unit_tests._parse_and_run(arguments)
+        case _:
+            raise _CommandArgumentError(f"Undefined mode \"{mode}\".")
+
+
+def _main(argv : list[str]) -> int:
+    arguments   = argv[1:]
+    mode        = arguments[0]
+    arguments   = arguments[1:]
+    try:
+        return _run(mode, arguments)
+    except _CommandArgumentError as error:
+        print(error)
     
     return _EXIT_FAILURE
-
-
-def main(argv : list[str] | None = None) -> int:
-    if argv is not None and not (isinstance(argv, list) and all(isinstance(item, str) for item in argv)):
-       raise TypeError("Unexpected type of 'argv' parameter.")
-    
-    return _main(argv if argv is not None else [])

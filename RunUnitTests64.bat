@@ -2,6 +2,9 @@
 :: <option>
 ::     --stdout
 ::     --output=<path>          (default: '<project_path>\out\unit_tests')
+:: <pytest_argument>
+::     --trace
+::         Invokes pdb inside pytest.
 ::
 :: Note: 'pytest' is executed from '<project_path>\tests\poe_exp_after_dot_tests\unit_tests' directory. 
 
