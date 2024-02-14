@@ -1,9 +1,10 @@
 @echo off
+set PROJECT_PATH=%~dp0
 
-if exist "./dist" rd /s /q "./dist"
-if exist "./build" rd /s /q "./build"
-if exist "./out" rd /s /q "./out"
-if exist "./log" rd /s /q "./log"
-if exist "./src/poe_exp_after_dot.egg-info" rd /s /q "./src/poe_exp_after_dot.egg-info"
+if exist "%PROJECT_PATH%dist" rd /s /q "%PROJECT_PATH%dist"
+if exist "%PROJECT_PATH%build" rd /s /q "%PROJECT_PATH%build"
+if exist "%PROJECT_PATH%out" rd /s /q "%PROJECT_PATH%out"
+if exist "%PROJECT_PATH%log" rd /s /q "%PROJECT_PATH%log"
+if exist "%PROJECT_PATH%src/poe_exp_after_dot.egg-info" rd /s /q "%PROJECT_PATH%src/poe_exp_after_dot.egg-info"
 
 echo done

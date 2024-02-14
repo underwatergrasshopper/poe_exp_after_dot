@@ -9,6 +9,7 @@
 @echo off
 setlocal EnableDelayedExpansion
 
+set PROJECT_PATH=%~dp0
 set PYTHON_VERSION=%1
 
 if "!PYTHON_VERSION!" neq "" (
@@ -17,4 +18,4 @@ if "!PYTHON_VERSION!" neq "" (
     set PY_PYTHON_VERSION=-3-64
 )
 
-py !PY_PYTHON_VERSION! -m mypy ./src ./tests
+py !PY_PYTHON_VERSION! -m mypy "%PROJECT_PATH%src" "%PROJECT_PATH%tests"

@@ -9,7 +9,7 @@ with open('requirements.txt', "r") as file:
 
 setuptools.setup(
     name                            = "poe_exp_after_dot",
-    version                         = "0.1.5",
+    version                         = "0.1.5r2",
     author                          = "underwatergrasshopper",
     description                     = "An overlay for the \"Path of Exile\" game. Displays additional experience bar, which represent experience progress in fractional part of percent (two digits after dot). ",
     long_description                = long_description,
