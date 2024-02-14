@@ -3,6 +3,8 @@ poe_exp_after_dot_tests unit_tests [<option>...] [-- <pytest_argument>...]
 <option>
     --stdout
     --output=<path>
+    --order
+        Run test in specified default order.
 
 Note: 'pytest' is executed from '<project_path>\\tests\\poe_exp_after_dot_tests\\unit_tests' directory. 
 """

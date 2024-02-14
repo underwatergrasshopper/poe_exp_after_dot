@@ -1,4 +1,5 @@
 # 0.1.6
+* Added running tests in specific order.
 * Changed displaying command line argument errors without trace for test.
 * Changed paths to files and folder to have same format. Windows format with `single backslash` as separator.
 * Changed project scripts. Project scripts now can be called from other directory than project directory.

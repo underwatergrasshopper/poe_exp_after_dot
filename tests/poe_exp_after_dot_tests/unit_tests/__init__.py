@@ -25,8 +25,10 @@ def _parse_and_run(arguments : list[str]) -> int:
                 output_path = _os.path.abspath(output_path)
             case ["--stdout"]:
                 is_stdout_enabled = True
+            case ["--order"]:
+                pytest_arguments = _order + pytest_arguments
 
-            case ["--output"]:
+            case ["--output" | "--order"]:
                 raise _CommandArgumentError(f"Option \"{name}\" need to have value.")
             case ["--stdout", _]:
                 raise _CommandArgumentError(f"Option \"{name}\" can not have value.")
@@ -59,5 +61,19 @@ def _run(
         _os.chdir(run_path)
 
     return exit_code
+
+
+_order = [
+    "test_commons.py",
+    "test_fine_formatters.py",
+
+    "test_template_loader.py",
+    "test_text_generator.py",
+
+    "test_settings.py",
+    "test_measurer.py",
+    "test_logic.py",
+    "test_overlay.py",
+]
 
 
