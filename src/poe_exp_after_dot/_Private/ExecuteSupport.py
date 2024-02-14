@@ -19,7 +19,7 @@ def _get_register_value(name : str, path : str):
 def make_run_file():
     desktop_path = _get_register_value("Desktop", "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\User Shell Folders")
     desktop_path = _os.path.expandvars(desktop_path)
-    run_file_name = desktop_path + "/poe_exp_after_dot.bat"
+    run_file_name = desktop_path + "\\poe_exp_after_dot.bat"
 
     with open(run_file_name, "w") as file:
         file.write(_RUN_FILE_CONTENT)

@@ -20,6 +20,7 @@ def test_merge_on_all_levels():
 
     assert merge_on_all_levels({"a" : 1, "c" : {"d" : 10, "e" : {"f" : 88, "g" : 44}}}, {"b" : 2, "c" : {"d" : 15, "e" : {"f" : 99, "h" : 71}}}) == {"a" : 1, "b" : 2, "c" : {"d" : 15, "e" : {"f" : 99, "g" : 44, "h" : 71}}}
 
+
 def test_get_argument_value():
     assert get_argument_value("", []) == None
     assert get_argument_value("XXX", []) == None

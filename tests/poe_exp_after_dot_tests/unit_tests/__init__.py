@@ -2,6 +2,7 @@ import pytest   as _pytest
 import os       as _os
 import sys      as _sys
 
+
 def _parse_and_run(arguments : list[str]) -> int:
     try:
         index = arguments.index("--")
@@ -30,6 +31,7 @@ def _parse_and_run(arguments : list[str]) -> int:
                 raise ValueError(f"Option \"{name}\" is unknown.")
             
     return _run(output_path, is_stdout_enabled, pytest_arguments)
+
 
 def _run(
         output_path         : str | None, 

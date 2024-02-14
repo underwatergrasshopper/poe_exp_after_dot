@@ -20,10 +20,10 @@ class Character:
 
         if name == "":
             self._character_folder_path     = None
-            self._exp_data_file_name        = _os.path.abspath(data_path) + "/exp_data.json"
+            self._exp_data_file_name        = _os.path.abspath(data_path) + "\\exp_data.json"
         else:
-            self._character_folder_path     = _os.path.abspath(data_path) + "/characters/" + name
-            self._exp_data_file_name        = self._character_folder_path + "/exp_data.json"
+            self._character_folder_path     = _os.path.abspath(data_path) + "\\characters\\" + name
+            self._exp_data_file_name        = self._character_folder_path + "\\exp_data.json"
 
         self._create()
 
@@ -58,11 +58,11 @@ class CharacterRegister:
         self._characters = {}
 
     def scan_for_characters(self):
-        characters_path = self._data_path + "/characters"
+        characters_path = self._data_path + "\\characters"
 
         if _os.path.exists(characters_path):
             for name in _os.listdir(characters_path):
-                if _os.path.isdir(characters_path + "/" + name):
+                if _os.path.isdir(characters_path + "\\" + name):
                     self.add_character(name)
 
     def add_character(self, name : str):

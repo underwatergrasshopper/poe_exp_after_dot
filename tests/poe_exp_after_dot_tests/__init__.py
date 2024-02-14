@@ -4,7 +4,7 @@ poe_exp_after_dot_tests unit_tests [<option>...] [-- <pytest_argument>...]
     --stdout
     --output=<path>
 
-Note: 'pytest' is executed from '<project_path>/tests/poe_exp_after_dot_tests/unit_tests' directory. 
+Note: 'pytest' is executed from '<project_path>\\tests\\poe_exp_after_dot_tests\\unit_tests' directory. 
 """
 from . import unit_tests as _unit_tests
 

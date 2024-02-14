@@ -4,7 +4,7 @@ import json
 from poe_exp_after_dot._Private.Settings import Settings
 
 def test_settings_none_existing(tmpdir):
-    file_name = tmpdir + "/settings.json"
+    file_name = tmpdir + "\\settings.json"
 
     settings = Settings()
     settings.load(file_name)
@@ -16,7 +16,7 @@ def test_settings_none_existing(tmpdir):
     assert _load_settings(file_name) == {}
 
 def test_settings_empty(tmpdir):
-    file_name = tmpdir + "/settings.json"
+    file_name = tmpdir + "\\settings.json"
 
     _make_settings(file_name, {})
 
@@ -30,7 +30,7 @@ def test_settings_empty(tmpdir):
     assert _load_settings(file_name) == {}
 
 def test_settings_no_default_no_file_no_temporal(tmpdir):
-    file_name = tmpdir + "/settings.json"
+    file_name = tmpdir + "\\settings.json"
 
     settings = Settings()
     settings.load(file_name)
@@ -97,7 +97,7 @@ def test_settings_no_default_no_file_no_temporal(tmpdir):
     assert _load_settings(file_name) == {"aaa" : 12, "bbb" : {"ccc" : 23, "eee" : "67"}}
 
 def test_settings_no_file_no_temporal(tmpdir):
-    file_name = tmpdir + "/settings.json"
+    file_name = tmpdir + "\\settings.json"
 
     settings = Settings()
 
@@ -164,7 +164,7 @@ def test_settings_no_file_no_temporal(tmpdir):
     assert _load_settings(file_name) == {"aaa" : 12, "nnn" : 15, "bbb" : {"ccc" : 23, "eee" : "67"}}
 
 def test_settings_no_temporal(tmpdir):
-    file_name = tmpdir + "/settings.json"
+    file_name = tmpdir + "\\settings.json"
 
     _make_settings(file_name, {"aaa" : 2, "bbb" : {"ccc" : -1}})
 
@@ -231,7 +231,7 @@ def test_settings_no_temporal(tmpdir):
     assert _load_settings(file_name) == {"aaa" : 12, "nnn" : 15, "bbb" : {"ccc" : 23, "eee" : "67"}}
 
 def test_settings_all(tmpdir):
-    file_name = tmpdir + "/settings.json"
+    file_name = tmpdir + "\\settings.json"
 
     _make_settings(file_name, {"aaa" : 2, "bbb" : {"ccc" : -1}})
 
@@ -301,7 +301,7 @@ def test_settings_all(tmpdir):
     assert _load_settings(file_name) == {"aaa" : 12, "nnn" : 15, "bbb" : {"ccc" : 23, "eee" : "67"}}
 
 def test_settings_all_specific(tmpdir):
-    file_name = tmpdir + "/settings.json"
+    file_name = tmpdir + "\\settings.json"
 
     _make_settings(file_name, {"aaa" : 2, "bbb" : {"ccc" : -1}})
 
@@ -458,7 +458,7 @@ def test_settings_bool(tmpdir):
 
 
 def test_settings_all_with_merge(tmpdir):
-    file_name = tmpdir + "/settings.json"
+    file_name = tmpdir + "\\settings.json"
 
     _make_settings(file_name, {"aaa" : 2, "bbb" : {"ccc" : -1}})
 

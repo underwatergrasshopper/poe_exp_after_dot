@@ -61,7 +61,7 @@ class InfoBoard(QWidget):
         template_loader = TemplateLoader()
         data_path = self._logic.to_settings().get_str("_data_path")
 
-        format_file_name = data_path + "/formats/" + format_name + ".format"
+        format_file_name = data_path + "\\formats\\" + format_name + ".format"
 
         to_logger().info(f"Loading formats for info board from \"{_os.path.basename(format_file_name)}\" ...")
         template_loader.load_and_parse(format_file_name)

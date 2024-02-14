@@ -168,7 +168,7 @@ layout.<resolution>.in_game_exp_tooltip_height
 """.strip("\n")
 
 # path to top level package
-_base_path = _os.path.abspath(_os.path.dirname(__file__) + "/..")
+_base_path = _os.path.abspath(_os.path.dirname(__file__) + "\\..")
 
 
 class _ExceptionStash:
@@ -346,7 +346,7 @@ class Overlay:
 
         _os.makedirs(data_path, exist_ok = True)
 
-        to_log_manager().setup_logger(data_path + "/runtime.log", is_debug = is_debug, is_stdout = True)
+        to_log_manager().setup_logger(data_path + "\\runtime.log", is_debug = is_debug, is_stdout = True)
         
         to_logger().info("====== NEW RUN ======")
         version = _get_version()
@@ -383,7 +383,7 @@ class Overlay:
 
         ### load settings ###
 
-        settings_path = data_path + "/settings.json"
+        settings_path = data_path + "\\settings.json"
         settings.load(settings_path)
         to_logger().info("Loaded settings.")
 
@@ -532,7 +532,7 @@ class Overlay:
         _solve_layout(settings, selected_layout_name)
         to_logger().info(f"Layout: " + selected_layout_name)
     
-        def_format_file_name = data_path + "/formats/Default.format"
+        def_format_file_name = data_path + "\\formats\\Default.format"
         settings.set_tmp_str("_def_format_file_name", def_format_file_name)
 
         to_logger().debug(f"temporal_settings={settings.to_temporal()}")
@@ -611,7 +611,7 @@ def _try_create_default_format_file(def_format_file_name : str, is_overwrite_def
         if is_overwrite_default_format and _os.path.exists(def_format_file_name):
             _os.remove(def_format_file_name)
 
-        source_file_name = _base_path + "/assets/Default.format"
+        source_file_name = _base_path + "\\assets\\Default.format"
         
         _shutil.copy(source_file_name, def_format_file_name)
 

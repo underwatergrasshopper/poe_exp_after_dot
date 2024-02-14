@@ -8,7 +8,7 @@ from PySide6.QtWidgets import QApplication
 
 
 # path to top level package
-_base_path = _os.path.abspath(_os.path.dirname(__file__) + "/..")
+_base_path = _os.path.abspath(_os.path.dirname(__file__) + "\\..")
 
 
 EXIT_SUCCESS = 0
@@ -84,7 +84,7 @@ def get_argument_value(name, arguments : list[str]) -> str | None:
 
 
 def get_default_data_path() -> str:
-    return _os.path.abspath(_os.environ["APPDATA"] + "/../Local/poe_exp_after_dot")
+    return _os.path.abspath(_os.environ["APPDATA"] + "\\..\\Local\\poe_exp_after_dot")
 
 
 def run_error_board(data_path : str, message : str, short_message : str) -> int:
@@ -97,17 +97,17 @@ def run_error_board(data_path : str, message : str, short_message : str) -> int:
     message = apply_qt_escape_sequences(message).replace("\n", "<br>")
     short_message = apply_qt_escape_sequences(short_message).replace("\n", "<br>")
 
-    cache_path = data_path + "/cache"
+    cache_path = data_path + "\\cache"
     _os.makedirs(cache_path, exist_ok=True)
 
-    error_board_exception_file_name = data_path + "/error_board_exception_message.txt"
+    error_board_exception_file_name = data_path + "\\error_board_exception_message.txt"
     if _os.path.exists(error_board_exception_file_name):
         _os.remove(error_board_exception_file_name)
 
-    error_board_file_name = _base_path + "/_Private/GUI/ErrorBoard.py"
+    error_board_file_name = _base_path + "\\_Private\\GUI\\ErrorBoard.py"
 
-    message_file_name = cache_path + "/last_exception_message_preprocessed.txt"    
-    short_message_file_name = cache_path + "/last_exception_short_message_preprocessed.txt"
+    message_file_name = cache_path + "\\last_exception_message_preprocessed.txt"    
+    short_message_file_name = cache_path + "\\last_exception_short_message_preprocessed.txt"
 
     with open(message_file_name, "w") as file:
         file.write(message)

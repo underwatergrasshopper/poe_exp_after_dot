@@ -112,12 +112,12 @@ class FormatMenu(QMenu):
             
     def _scan_for_formats(self):
         data_path = self._logic.to_settings().get_str("_data_path")
-        format_folder_path = data_path + "/formats"
+        format_folder_path = data_path + "\\formats"
 
         self._formats = {}
 
         for file_name in _os.listdir(format_folder_path):
-            full_file_name = format_folder_path + "/" + file_name
+            full_file_name = format_folder_path + "\\" + file_name
             if _os.path.isfile(full_file_name):
                 name, *extension = file_name.split(".", 1)
                 if extension and extension[0] == "format":

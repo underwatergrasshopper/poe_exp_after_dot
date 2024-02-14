@@ -15,4 +15,4 @@ if "!PYTHON_VERSION!" neq "" (
     set PY_PYTHON_VERSION=-3-64
 )
 
-py !PY_PYTHON_VERSION! %PROJECT_PATH%setup.py bdist_wheel --plat-name=win-amd64
+py !PY_PYTHON_VERSION! "%PROJECT_PATH%setup.py" bdist_wheel --plat-name=win-amd64
