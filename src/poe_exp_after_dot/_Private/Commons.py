@@ -87,7 +87,7 @@ def get_default_data_path() -> str:
     return _os.path.abspath(_os.environ["APPDATA"] + "\\..\\Local\\poe_exp_after_dot")
 
 
-def run_error_board(data_path : str, message : str, short_message : str) -> int:
+def run_error_board(data_path : str, message : str, short_message : str, *, is_details : bool = False) -> int:
     """
     Runs ErrorBoard and does not wait.
 
@@ -118,7 +118,12 @@ def run_error_board(data_path : str, message : str, short_message : str) -> int:
     is_pyw = _os.system("where /Q pyw") == 0
     launcher = "pyw -3-64" if is_pyw else "pythonw"
 
-    return _os.system(f"start {launcher} {error_board_file_name} {error_board_exception_file_name} {message_file_name} {short_message_file_name}")
+    options = []
+    if is_details:
+        options.append("--details")
+    options = " ".join(options)
+
+    return _os.system(f"start {launcher} \"{error_board_file_name}\" \"{error_board_exception_file_name}\" \"{message_file_name}\" \"{short_message_file_name}\" 0 - {options}")
 
 
 def character_name_to_log_name(character_name : str):

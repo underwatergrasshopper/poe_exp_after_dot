@@ -4,7 +4,7 @@ Displays error message.
 Should be called separately from package and only from command line.
 
 Semantic:
-    ErrorBoard.py <error_board_exception_file_name> <message_file_name> <short_message_file_name> [<x> [<bottom>]]
+    ErrorBoard.py <error_board_exception_file_name> <message_file_name> <short_message_file_name> <x> <bottom> [<options>...]
 
     <error_board_exception_file_name> 
         File to which error board's exception message will be logged.
@@ -16,14 +16,25 @@ Semantic:
         Path to file with exception short message which must be preprocessed to be displayed correctly in PyQt label widget.
 
     <x>
-        Position of board's left edge on X axis in screen. Default is 0.
+        Position of board's left edge on X axis in screen.
 
     <bottom>
-        Position of board's bottom edge on Y axis in screen. Default is screen's height.
+        Position of board's bottom edge on Y axis in screen. 
+        Or '-', which means bottom of screen.
+
+    <option>
+        --details
+            When error occurs, then additional option is visible in ErrorBoard, which allows to show details of error.
+            Details of error may contain sensitive data.
+
 """
 import sys          as _sys
 import os           as _os
 import traceback    as _traceback
+
+
+_EXIT_SUCCESS = 0
+_EXIT_FAILURE = 1
 
 
 class _ExceptionStash:
@@ -39,7 +50,9 @@ def _run(
         message         : str, 
         short_message   : str, 
         x               : int, 
-        bottom          : int | None
+        bottom          : int | None,
+        *,
+        is_details      : bool = False,
             ) -> int:
     import typing
 
@@ -64,6 +77,7 @@ def _run(
         _short_message          : str
 
         _no_enter_leave_check   : bool
+        _is_details             : bool
 
         def __init__(
                 self, 
@@ -72,12 +86,15 @@ def _run(
                 x               : int,
                 bottom          : int | None,
                 screen_width    : int,
-                screen_height   : int
+                screen_height   : int,
+                *,
+                is_details      : bool = False
                     ):
             super().__init__()
 
             self._message       = message
             self._short_message = short_message
+            self._is_details    = is_details
 
             self._x = x
             
@@ -106,13 +123,22 @@ def _run(
                 "{title_begin}FATAL ERROR{title_end}"
             )
 
-            hint_section = (
-                "{hint_begin}"
-                "Left Click on This to Exit.<br>"
-                "Right Click on This to show Message.<br>"
-                "Hold Ctrl + Shift + RMB on This to show Details (may contain sensitive data)."
-                "{hint_end}"
-            )
+            if self._is_details:
+                hint_section = (
+                    "{hint_begin}"
+                    "Left Click on This to Exit.<br>"
+                    "Right Click on This to show Message.<br>"
+                    "Hold Ctrl + Shift + RMB on This to show Details (may contain sensitive data)."
+                    "{hint_end}"
+                )
+            else:
+                hint_section = (
+                    "{hint_begin}"
+                    "Left Click on This to Exit.<br>"
+                    "Right Click on This to show Message."
+                    "{hint_end}"
+                )
+                
 
             self._notice_text_format = (
                 f"{title_section}<br>"
@@ -182,7 +208,7 @@ def _run(
                 if to_app().keyboardModifiers() == Qt.KeyboardModifier.NoModifier:
                     self._set_text_from_format(self._short_message_text_format)
 
-                elif to_app().keyboardModifiers() == Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.ShiftModifier:
+                elif self._is_details and to_app().keyboardModifiers() == Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.ShiftModifier:
                     self._set_text_from_format(self._message_text_format)
 
 
@@ -205,7 +231,8 @@ def _run(
         x,
         bottom,
         screen_width    = screen_size.width(),
-        screen_height   = screen_size.height()
+        screen_height   = screen_size.height(),
+        is_details      = is_details
     )
     exception_board.show()
 
@@ -232,58 +259,83 @@ def _run(
     return exit_code
 
 
-def _main(argv : list[str]) -> int:
-    if len(argv) <= 3:
-        raise ValueError("Not enough arguments were given through command line. At lest 3 argument is expected.")
+class _CommandArgumentError(Exception):
+    pass
+
+
+def _main_no_error_handling(argv : list[str]) -> int:
+    arguments = argv[1:]
+
+    if len(arguments) < 5:
+        raise _CommandArgumentError(f"Not enough arguments were given through command line. At lest 5 arguments is expected.")
     
-    message_file_name = argv[2]
+    # first argument is handled in _main
+    
+    message_file_name = arguments[1]
     message_file_name = message_file_name.rstrip("/").rstrip("\\").rstrip("\\")
     if not _os.path.isfile(message_file_name):
-        raise RuntimeError("File with error message does not exist.")
+        raise _CommandArgumentError("File with error message does not exist.")
     
     with open(message_file_name, "r") as file:
         message = file.read()
 
-    short_message_file_name = argv[3]
+    short_message_file_name = arguments[2]
     short_message_file_name = short_message_file_name.rstrip("/").rstrip("\\").rstrip("\\")
     if not _os.path.isfile(short_message_file_name):
-        raise RuntimeError("File with error short message does not exist.")
+        raise _CommandArgumentError("File with error short message does not exist.")
 
     with open(short_message_file_name, "r") as file:
         short_message = file.read()
 
-    if len(argv) > 4:
-        x_text = argv[4]
-        if x_text.lstrip("-").isdigit():
-            x = int(x_text)
-        else:
-            raise TypeError("Fifth argument is not an integer.")
+    x_text = arguments[3]
+    if x_text.lstrip("-").isdigit():
+        x = int(x_text)
     else:
-        x = 0
+        raise _CommandArgumentError("Fifth argument is not an integer.")
 
     # raise RuntimeError("Some error inside.") # debug
 
-    if len(argv) > 5:
-        bottom_text = argv[5]
+    bottom_text = arguments[4]
+    if bottom_text == "-":
+        bottom = None
+    else:
         if bottom_text.lstrip("-").isdigit():
             bottom = int(bottom_text)
         else:
-            raise TypeError("Sixth argument is not an integer.")
-    else:
-        bottom = None
+            raise _CommandArgumentError("Sixth argument is not an integer.")
 
-    return _run(message, short_message, x, bottom)
+    if len(arguments) > 5 and arguments[5] == "--details":
+        is_details = True
+    else:
+        is_details = False
+
+    return _run(message, short_message, x, bottom, is_details = is_details)
+
+
+def _main(argv : list[str]) -> int:
+    try:
+       return _main_no_error_handling(argv)
+    except Exception as error:
+        FILE_NAME = "error_board_exception_message.txt"
+
+        if len(argv) > 1 and _os.path.basename(argv[1]) == FILE_NAME:
+            file_name = argv[1]
+        else:
+            file_name = FILE_NAME
+
+        with open(file_name, "w") as file:
+            file.write(_traceback.format_exc())
+
+        if isinstance(error, _CommandArgumentError):
+            print(error, flush = True)
+        else:
+            print(
+                "Unexpected exception occurred inside ErrorBoard. "
+                f"Exception message should be already logged to \"{FILE_NAME}\" in Data Folder or in current folder if Data Folder is not specified."
+            )
+
+    return _EXIT_FAILURE
 
 
 if __name__ == "__main__":
-    try:
-        _sys.exit(_main(_sys.argv))
-    except Exception as _exception:
-        if len(_sys.argv) > 1:
-            _exception_file_name = _sys.argv[1]
-
-            if "error_board_exception_message.txt" in _exception_file_name:
-                with open(_exception_file_name, "w") as _file:
-                    _file.write(_traceback.format_exc())
-
-        raise RuntimeError("Exception ocurred inside ErrorBoard. Exception message should be already logged to error_board_exception_message.txt in data folder.") from _exception
+    _sys.exit(_main(_sys.argv))

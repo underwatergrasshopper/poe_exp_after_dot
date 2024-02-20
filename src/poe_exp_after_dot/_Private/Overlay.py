@@ -106,6 +106,10 @@ poe_exp_after_dot.py [<option> ...]
 
         Examples
             --format=Default
+    --error-details
+        When error occurs, then additional option is visible in ErrorBoard, which allows to show details of error.
+        Details of error may contain sensitive data.
+
 """.strip("\n")
 
 _SETTINGS_HELP_TEXT = """
@@ -324,9 +328,12 @@ class Overlay:
                 case ["--format", info_board_format]:
                     pass
 
+                case ["--error-details"]:
+                    pass # processed before entering _main
+
                 ### incorrect ###
 
-                case ["--version" | "-v" | "--help" | "-h" | "--debug" | "--settings-help" | "--overwrite-default-format", "--make-run-file", _]:
+                case ["--version" | "-v" | "--help" | "-h" | "--debug" | "--settings-help" | "--overwrite-default-format", "--make-run-file" | "--error-details", _]:
                     raise CommandArgumentError(f"Incorrect command line argument. Option \"{option_name}\" can't have a value.")
                 
                 case ["--data-path" | "--custom" | "--font" | "--time-max-unit" | "--just-weeks-if-cap" | "--ms-if-below-1s", "--format"]:

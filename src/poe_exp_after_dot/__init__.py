@@ -60,7 +60,9 @@ def _main(argv : list[str], *, is_pass_all_exceptions_through : bool = False) ->
         # When inside except, some pyqt widgets from overlay still exists. 
         # To prevent displaying them with error board, os.system is used for running error board in separate window.
 
-        data_path = _get_argument_value("--data-path", argv[1:])
+        arguments = argv[1:]
+
+        data_path = _get_argument_value("--data-path", arguments)
         if data_path is None:
             data_path = _get_default_data_path()
         else:
@@ -71,20 +73,20 @@ def _main(argv : list[str], *, is_pass_all_exceptions_through : bool = False) ->
         else:
             short_message = "Inner error. Check 'runtime.log' in Data Folder."
 
-        error_board_launch_error_code = _run_error_board(
+        _run_error_board(
             data_path,
             _hide_abs_paths(_traceback.format_exc()),
-            short_message
+            short_message,
+            is_details = "--error-details" in arguments
         )
 
         # All internal exceptions are handled here, if logger managed to setup correctly.
         logger = _to_logger()
 
+        logger.warning("If ErrorBoard does not appear, then it might crashed. Details about ErrorBoard crash should be in \"error_board_exception_message.txt\" in Data Folder.")
+
         if logger and logger.hasHandlers():
             logger.critical("", exc_info = True)
-
-            if error_board_launch_error_code != 0:
-                logger.error(f"ErrorBoard failed to launch, error code: {error_board_launch_error_code}.")
 
             return _EXIT_FAILURE
         else:
