@@ -19,6 +19,7 @@ from .ExecuteSupport        import make_run_file as _make_run_file
 
 from .GUI.ControlRegion     import ControlRegion
 from .GUI.TrayMenu          import TrayMenu
+from .GUI.ErrorBoard        import _remove_error_board_error_message_file
 
 from ..Exceptions           import Error, CommandArgumentError
 
@@ -359,6 +360,8 @@ class Overlay:
         version = _get_version()
         to_logger().info(f"Version: {version}")
         to_logger().debug(f"data_path={data_path}")
+
+        _remove_error_board_error_message_file(data_path)
 
         settings = Settings()
 

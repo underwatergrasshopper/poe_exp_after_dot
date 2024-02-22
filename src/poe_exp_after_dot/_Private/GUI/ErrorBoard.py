@@ -1,40 +1,66 @@
 """
-Displays error message.
+Displays error message on screen.
 
-Should be called separately from package and only from command line.
+This module is autonomous from rest of package. 
+Should be called separately and only from command line.
 
-Semantic:
-    ErrorBoard.py <error_board_exception_file_name> <message_file_name> <short_message_file_name> <x> <bottom> [<options>...]
-
-    <error_board_exception_file_name> 
-        File to which error board's exception message will be logged.
-
-    <message>
-        Path to file with exception message which must be preprocessed to be displayed correctly in PyQt label widget.
-
-    <short_message>
-        Path to file with exception short message which must be preprocessed to be displayed correctly in PyQt label widget.
-
-    <x>
-        Position of board's left edge on X axis in screen.
-
-    <bottom>
-        Position of board's bottom edge on Y axis in screen. 
-        Or '-', which means bottom of screen.
-
-    <option>
-        --details
-            When error occurs, then additional option is visible in ErrorBoard, which allows to show details of error.
-            Details of error may contain sensitive data.
-
+ErrorBoard.py --help
+    Displays manual.
 """
 import sys          as _sys
 import os           as _os
 import traceback    as _traceback
+import re           as _re
 
 
 _EXIT_SUCCESS = 0
 _EXIT_FAILURE = 1
+
+_HELP_TEXT = """
+Displays error message on screen.
+
+ErrorBoard.py --help
+    Displays manual.
+
+ErrorBoard.py <log_path> <message_file_name> <short_message_file_name> [<option>...]
+    Displays error message.
+    If fails then error message is logged to "error_board_error_message.txt" in <log_path>.
+
+    <log_path>
+        Path to folder where "error_board_error_message.txt" will be create in case of error.
+        Each new run will delete this file at start.
+
+    <message_file_name>
+        Path to file with full error message, which content will be loaded. 
+        Content must be preprocessed to be displayed correctly in PyQt label widget.
+
+    <short_message_file_name>
+        Path to file with short error message, which content will be loaded.
+        Content must be preprocessed to be displayed correctly in PyQt label widget.
+
+    <option>
+        --position="<x>,<y>"
+        -p="<x>,<y>"
+            Position of error board in screen.
+
+            <x>
+                An integer number.
+                Default: 0.
+            <y>
+                An integer number or text 'bottom'.
+                If 'bottom', then error board is at the bottom of screen.
+                Default: bottom.
+
+            Examples:
+                -p="0,bottom"
+                -p="100,30"
+
+        --details
+            When error occurs, additional option is visible in ErrorBoard, which allows to show details of error.
+            Details of error may contain sensitive data.
+""".strip("\n")
+
+_ERROR_BOARD_ERROR_MESSAGE_FILE_NAME = "error_board_error_message.txt"
 
 
 class _ExceptionStash:
@@ -46,29 +72,54 @@ class _ExceptionStash:
 _exception_stash = _ExceptionStash()
 
 
+class _Error(Exception):
+    pass
+
+class _ExecutionError(_Error):
+    pass
+
+class _CommandArgumentError(_Error):
+    pass
+
+
 def _run(
-        message         : str, 
-        short_message   : str, 
-        x               : int, 
-        bottom          : int | None,
+        message_file_name       : str, 
+        short_message_file_name : str, 
+        x                       : int, 
+        y                       : int | None,
         *,
-        is_details      : bool = False,
+        is_details              : bool = False,
             ) -> int:
     import typing
 
-    from PySide6.QtCore     import Qt, QPoint, QEvent, QTimer
-    from PySide6.QtWidgets  import QMainWindow, QApplication, QWidget, QLabel
-    from PySide6.QtGui      import QColor, QMouseEvent, QEnterEvent, QPainter, QKeyEvent, QPaintEvent
+    from PySide6.QtCore     import Qt, QPoint
+    from PySide6.QtWidgets  import QMainWindow, QApplication, QLabel
+    from PySide6.QtGui      import QColor, QMouseEvent, QPainter, QPaintEvent
 
     def to_app() -> QApplication:
         app = QApplication.instance()
         if app:
             return typing.cast(QApplication, app)
         return QApplication([])
+    
+    message_file_name = message_file_name.rstrip("/").rstrip("\\").rstrip("\\")
+    if not _os.path.isfile(message_file_name):
+        raise _ExecutionError(f"File with error message \"{message_file_name}\" does not exist.")
+    
+    with open(message_file_name, "r") as file:
+        message = file.read()
+
+    short_message_file_name = short_message_file_name.rstrip("/").rstrip("\\").rstrip("\\")
+    if not _os.path.isfile(short_message_file_name):
+        raise _ExecutionError(f"File with error short message \"{short_message_file_name}\" does not exist.")
+
+    with open(short_message_file_name, "r") as file:
+        short_message = file.read()
+
 
     class ErrorBoard(QMainWindow):
         _x                      : int
-        _bottom                 : int
+        _y                      : int | None
 
         _screen_width           : int
         _screen_height          : int
@@ -84,9 +135,7 @@ def _run(
                 message         : str, 
                 short_message   : str,
                 x               : int,
-                bottom          : int | None,
-                screen_width    : int,
-                screen_height   : int,
+                y               : int | None,
                 *,
                 is_details      : bool = False
                     ):
@@ -97,14 +146,7 @@ def _run(
             self._is_details    = is_details
 
             self._x = x
-            
-            if bottom is None:
-                self._bottom = to_app().primaryScreen().size().height() 
-            else:
-                self._bottom = bottom
-
-            self._screen_width  = screen_width
-            self._screen_height = screen_height
+            self._y = y
 
             self._no_enter_leave_check = False
 
@@ -197,7 +239,13 @@ def _run(
 
                 self._label.adjustSize()
                 self.resize(self._label.size())
-                self.move(QPoint(self._x, self._bottom - self._label.height()))
+                if self._y is None:
+                    screen_height = to_app().primaryScreen().size().height() 
+                    y = screen_height - self._label.height()
+                else:
+                    y = self._y
+
+                self.move(QPoint(self._x, y))
             else:
                 self._label.setWordWrap(True)  
                 self._label.setText(text)
@@ -223,31 +271,27 @@ def _run(
             painter = QPainter(self)
             painter.fillRect(self.rect(), QColor(0, 0, 0, 191))
 
+    app = to_app()
 
-    screen_size = to_app().primaryScreen().size()
-    exception_board = ErrorBoard(
+    error_board = ErrorBoard(
         message, 
         short_message,
         x,
-        bottom,
-        screen_width    = screen_size.width(),
-        screen_height   = screen_size.height(),
+        y,
         is_details      = is_details
     )
-    exception_board.show()
-
-    EXIT_FAILURE = 1
+    error_board.show()
 
     def excepthook(exception_type, exception : BaseException, traceback_type):
         _exception_stash.exception = exception
         # NOTE: With some brief testing, closeEvent was not triggered when exited with _EXIT_FAILURE (or value equal 1). 
         # But for safety, do not implement closeEvent in any widget.
-        QApplication.exit(EXIT_FAILURE)
+        QApplication.exit(_EXIT_FAILURE)
 
     previous_excepthook = _sys.excepthook
     _sys.excepthook = excepthook
 
-    exit_code = to_app().exec()
+    exit_code = app.exec()
 
     _sys.excepthook = previous_excepthook
 
@@ -259,80 +303,107 @@ def _run(
     return exit_code
 
 
-class _CommandArgumentError(Exception):
-    pass
-
-
 def _main_no_error_handling(argv : list[str]) -> int:
     arguments = argv[1:]
 
-    if len(arguments) < 5:
-        raise _CommandArgumentError(f"Not enough arguments were given through command line. At lest 5 arguments is expected.")
-    
-    # first argument is handled in _main
-    
-    message_file_name = arguments[1]
-    message_file_name = message_file_name.rstrip("/").rstrip("\\").rstrip("\\")
-    if not _os.path.isfile(message_file_name):
-        raise _CommandArgumentError("File with error message does not exist.")
-    
-    with open(message_file_name, "r") as file:
-        message = file.read()
+    options : list[str] = []
+    non_options = []
 
-    short_message_file_name = arguments[2]
-    short_message_file_name = short_message_file_name.rstrip("/").rstrip("\\").rstrip("\\")
-    if not _os.path.isfile(short_message_file_name):
-        raise _CommandArgumentError("File with error short message does not exist.")
-
-    with open(short_message_file_name, "r") as file:
-        short_message = file.read()
-
-    x_text = arguments[3]
-    if x_text.lstrip("-").isdigit():
-        x = int(x_text)
-    else:
-        raise _CommandArgumentError("Fifth argument is not an integer.")
-
-    # raise RuntimeError("Some error inside.") # debug
-
-    bottom_text = arguments[4]
-    if bottom_text == "-":
-        bottom = None
-    else:
-        if bottom_text.lstrip("-").isdigit():
-            bottom = int(bottom_text)
+    for argument in arguments:
+        if argument and argument[0] == "-":
+            options.append(argument)
         else:
-            raise _CommandArgumentError("Sixth argument is not an integer.")
+            non_options.append(argument)
 
-    if len(arguments) > 5 and arguments[5] == "--details":
-        is_details = True
-    else:
-        is_details = False
+    is_run                      = True
+    x           : int           = 0
+    y           : int | None    = None
+    is_details                  = False
 
-    return _run(message, short_message, x, bottom, is_details = is_details)
+    for option in options:
+        name, *value = option.split("=", 1)
+
+        match (name, *value):
+            case ["--help"]:
+                print(_HELP_TEXT)
+                is_run = False
+            case ["--position" | "-p", position]:
+                match_ = _re.search(r"^([^,]*),([^,]*)$", position)
+                if match_:
+                    try:
+                        x = int(match_.group(1))
+                    except ValueError:
+                        raise _CommandArgumentError("Value 'x' in command line option '--position' must be an integer number.")
+
+                    if match_.group(2) == "bottom":
+                        y = None
+                    else:
+                        try:
+                            y = int(match_.group(2))
+                        except ValueError:
+                            raise _CommandArgumentError("Value 'y' in command line option '--position' must be an integer number.")
+
+            case ["--details"]:
+                is_details = True
+
+            case ["--position" | "-p"]:
+                raise _CommandArgumentError(f"Command line option \"{name}\" need to have value.")
+            case ["--help" | "--details", _]:
+                raise _CommandArgumentError(f"Command line option \"{name}\" can not have value.")
+            case [name, *_]:
+                raise _CommandArgumentError(f"Command line option \"{name}\" is unknown.")
+        
+    if is_run:
+        try:
+            log_path = non_options.pop(0)
+        except IndexError:
+            _CommandArgumentError("Command line arguments missing <log_path>.")
+
+        try:
+            message_file_name = non_options.pop(0)
+        except IndexError:
+            _CommandArgumentError("Command line arguments missing <message_file_name>.")
+
+        try:
+            short_message_file_name = non_options.pop(0)
+        except IndexError:
+            _CommandArgumentError("Command line arguments missing <short_message_file_name>.")
+
+        _remove_error_board_error_message_file(log_path)
+
+        return _run(message_file_name, short_message_file_name, x, y, is_details = is_details)
+
+    return _EXIT_SUCCESS
+
+
+def _remove_error_board_error_message_file(log_path : str):
+    file_name = log_path + "\\" + _ERROR_BOARD_ERROR_MESSAGE_FILE_NAME
+    if _os.path.isfile(file_name):
+        _os.remove(file_name)
 
 
 def _main(argv : list[str]) -> int:
     try:
        return _main_no_error_handling(argv)
     except Exception as error:
-        FILE_NAME = "error_board_exception_message.txt"
+        if len(argv) > 1:
+            log_path = argv[1]
+            _os.makedirs(log_path, exist_ok = True)
 
-        if len(argv) > 1 and _os.path.basename(argv[1]) == FILE_NAME:
-            file_name = argv[1]
+            file_name = log_path + "\\" + _ERROR_BOARD_ERROR_MESSAGE_FILE_NAME
+
+            with open(file_name, "w") as file:
+                if isinstance(error, _Error):
+                    file.write(str(error))
+                else:
+                    file.write(_traceback.format_exc())
+
+            print(f"Exception occurred. Exception message is logged to \"{file_name}\".")
         else:
-            file_name = FILE_NAME
+            if not isinstance(error, _Error):
+                raise
 
-        with open(file_name, "w") as file:
-            file.write(_traceback.format_exc())
-
-        if isinstance(error, _CommandArgumentError):
             print(error, flush = True)
-        else:
-            print(
-                "Unexpected exception occurred inside ErrorBoard. "
-                f"Exception message should be already logged to \"{FILE_NAME}\" in Data Folder or in current folder if Data Folder is not specified."
-            )
 
     return _EXIT_FAILURE
 

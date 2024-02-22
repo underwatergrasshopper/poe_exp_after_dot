@@ -100,10 +100,6 @@ def run_error_board(data_path : str, message : str, short_message : str, *, is_d
     cache_path = data_path + "\\cache"
     _os.makedirs(cache_path, exist_ok=True)
 
-    error_board_exception_file_name = data_path + "\\error_board_exception_message.txt"
-    if _os.path.exists(error_board_exception_file_name):
-        _os.remove(error_board_exception_file_name)
-
     error_board_file_name = _base_path + "\\_Private\\GUI\\ErrorBoard.py"
 
     message_file_name = cache_path + "\\last_exception_message_preprocessed.txt"    
@@ -123,7 +119,7 @@ def run_error_board(data_path : str, message : str, short_message : str, *, is_d
         options.append("--details")
     options = " ".join(options)
 
-    return _os.system(f"start {launcher} \"{error_board_file_name}\" \"{error_board_exception_file_name}\" \"{message_file_name}\" \"{short_message_file_name}\" 0 - {options}")
+    return _os.system(f"start {launcher} \"{error_board_file_name}\" \"{data_path}\" \"{message_file_name}\" \"{short_message_file_name}\" {options}")
 
 
 def character_name_to_log_name(character_name : str):
