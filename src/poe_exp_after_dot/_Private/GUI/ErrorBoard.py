@@ -403,7 +403,7 @@ def _main(argv : list[str]) -> int:
             if not isinstance(error, _Error):
                 raise
 
-            print(error, flush = True)
+            print(error, file = _sys.stderr)
 
     return _EXIT_FAILURE
 

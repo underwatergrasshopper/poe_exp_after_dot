@@ -8,6 +8,8 @@ poe_exp_after_dot_tests unit_tests [<option>...] [-- <pytest_argument>...]
 
 Note: 'pytest' is executed from '<project_path>\\tests\\poe_exp_after_dot_tests\\unit_tests' directory. 
 """
+import sys as _sys
+
 from .              import unit_tests as _unit_tests
 from .unit_tests    import _CommandArgumentError
 
@@ -31,6 +33,6 @@ def _main(argv : list[str]) -> int:
     try:
         return _run(mode, arguments)
     except _CommandArgumentError as error:
-        print(error)
+        print(error, file = _sys.stderr)
     
     return _EXIT_FAILURE

@@ -51,7 +51,7 @@ def _main(argv : list[str], *, is_pass_all_exceptions_through : bool = False) ->
     except CommandArgumentError as error:
         if is_pass_all_exceptions_through:
             raise
-        print(str(error))
+        print(error, file = _sys.stderr)
         return _EXIT_FAILURE
     except Exception as exception:
         # Displays exception message in ErrorBoard.
