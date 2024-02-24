@@ -14,13 +14,26 @@ class LogManager:
         self._file_handler  = None
         self._log_file_name = None
 
-    def setup_logger(self, log_file_name : str | None = None, *, is_debug : bool = False, is_stdout : bool = False):
+    def setup_logger(self, log_file_name : str | None = None, *, is_debug : bool = False, is_stdout : bool = False, is_stderr : bool = False):
         formatter = logging.Formatter(fmt = "[%(asctime)s][%(name)s][%(levelname)s]: %(message)s", datefmt = "%Y-%m-%d %H:%M:%S")
 
         if is_stdout:
-            stream_handler = logging.StreamHandler(_sys.stdout)
-            stream_handler.setFormatter(formatter)
-            self._logger.addHandler(stream_handler)
+            def filter(record : logging.LogRecord) -> bool | logging.LogRecord:
+                return record.levelno <= logging.WARNING
+                    
+            handler = logging.StreamHandler(_sys.stdout)
+            handler.setFormatter(formatter)
+            handler.addFilter(filter)
+            self._logger.addHandler(handler)
+
+        if is_stderr:
+            def filter(record : logging.LogRecord) -> bool | logging.LogRecord:
+                return record.levelno >= logging.ERROR
+                    
+            handler = logging.StreamHandler(_sys.stderr)
+            handler.setFormatter(formatter)
+            handler.addFilter(filter)
+            self._logger.addHandler(handler)
 
         if log_file_name:
             path = _os.path.dirname(log_file_name)

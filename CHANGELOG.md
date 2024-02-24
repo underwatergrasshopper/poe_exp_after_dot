@@ -6,6 +6,7 @@
 * Changed displaying command line argument errors without trace for test.
 * Changed paths to files and folder to have same format. Windows format with `single backslash` as separator.
 * Changed project scripts. Project scripts now can be called from other directory than project directory.
+* Changed logging to log errors and critical errors to `stderr` and other messages to `stdout`, instead just to `stdout`. Logging to file is still present.
 # 0.1.5 (2024-02-05)
 * Added more common thousands separators to text scan format of current exp value.
 * Added information about required "Path of Exile" language to README.md.

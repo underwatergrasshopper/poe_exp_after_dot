@@ -354,7 +354,7 @@ class Overlay:
 
         _os.makedirs(data_path, exist_ok = True)
 
-        to_log_manager().setup_logger(data_path + "\\runtime.log", is_debug = is_debug, is_stdout = True)
+        to_log_manager().setup_logger(data_path + "\\runtime.log", is_debug = is_debug, is_stdout = True, is_stderr = True)
         
         to_logger().info("====== NEW RUN ======")
         version = _get_version()
