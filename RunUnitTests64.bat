@@ -13,4 +13,4 @@ set PROJECT_PATH=%~dp0
 set PYTHONPATH=%PROJECT_PATH%src;%PYTHONPATH%
 set PYTHONPATH=%PROJECT_PATH%tests;%PYTHONPATH%
 
-py -3-64 -m poe_exp_after_dot_tests unit_tests --output="%PROJECT_PATH%out\unit_tests" %*
+py -3.11-64 -m poe_exp_after_dot_tests unit_tests --output="%PROJECT_PATH%out\unit_tests" %*

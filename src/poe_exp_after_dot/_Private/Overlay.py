@@ -397,7 +397,7 @@ class Overlay:
         settings.load(settings_path)
         to_logger().info("Loaded settings.")
 
-        settings.set_list("_comment_help", ["Type 'py -3-64 poe_exp_after_dot.py --settings-help' in console to see this info.", ""] + _SETTINGS_HELP_TEXT.split("\n"),)
+        settings.set_list("_comment_help", ["Type 'py -3.11-64 poe_exp_after_dot.py --settings-help' in console to see this info.", ""] + _SETTINGS_HELP_TEXT.split("\n"),)
         settings.set_list("_comment_layouts_help", [
             "Custom layouts can be added to layouts.",
             "Default layouts can not be changed, but can be used as templates for custom layouts.",
