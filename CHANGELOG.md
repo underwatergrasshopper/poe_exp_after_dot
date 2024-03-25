@@ -1,10 +1,10 @@
 # 0.2.0
-* Added running tests in specific order.
-* Changed required python version to 3.11 only.
-* Changed stream of error messages to be `stderr` for all error print outs.
+* Added ability to run tests in specific order.
+* Changed required python version to be 3.11 only.
+* Changed stream indicator of error messages to be `stderr` for all error print outs.
 * Changed interface of ErrorBoard. Refactored handling of command line arguments.
 * Changed displaying error details in ErrorBoard. Now it requires `--error-details` option to be available.
-* Changed displaying command line argument errors without trace for test.
+* Changed displaying command line argument errors. Now it doesn't display trace in code.
 * Changed paths to files and folder to have same format. Windows format with `single backslash` as separator.
 * Changed project scripts. Project scripts now can be called from other directory than project directory.
 * Changed logging behaviour to: log errors and critical errors to `stderr` and other messages to `stdout`, instead just to `stdout`. Logging to file is still present.
