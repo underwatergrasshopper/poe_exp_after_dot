@@ -5,7 +5,7 @@ import winreg   as _winreg
 _RUN_FILE_CONTENT = """
 @echo off
 
-start pyw -3-64 -m poe_exp_after_dot
+start pyw -3.11-64 -m poe_exp_after_dot
 """.strip("\n")
 
 

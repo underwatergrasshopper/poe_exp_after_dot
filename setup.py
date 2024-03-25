@@ -7,9 +7,10 @@ with open("README.md", "r", encoding="utf-8") as file:
 with open('requirements.txt', "r") as file:
     requirements = file.readlines()
 
+
 setuptools.setup(
     name                            = "poe_exp_after_dot",
-    version                         = "0.1.6",
+    version                         = "0.2.0",
     author                          = "underwatergrasshopper",
     description                     = "An overlay for the \"Path of Exile\" game. Displays additional experience bar, which represent experience progress in fractional part of percent (two digits after dot). ",
     long_description                = long_description,
@@ -31,6 +32,6 @@ setuptools.setup(
     package_data                    = {"poe_exp_after_dot" : ["assets\\icon.png", "assets\\Default.format"]},
     install_requires                = requirements,
     license                         = "MIT",
-    python_requires                 = "~=3.11",
+    python_requires                 = "==3.11.*",
 )
 

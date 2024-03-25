@@ -1,5 +1,6 @@
-# 0.1.6
+# 0.2.0
 * Added running tests in specific order.
+* Changed required python version to 3.11 only.
 * Changed stream of error messages to be `stderr` for all error print outs.
 * Changed interface of ErrorBoard. Refactored handling of command line arguments.
 * Changed displaying error details in ErrorBoard. Now it requires `--error-details` option to be available.

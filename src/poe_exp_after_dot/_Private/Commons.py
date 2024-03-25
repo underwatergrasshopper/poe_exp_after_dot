@@ -112,7 +112,7 @@ def run_error_board(data_path : str, message : str, short_message : str, *, is_d
         file.write(short_message)
 
     is_pyw = _os.system("where /Q pyw") == 0
-    launcher = "pyw -3-64" if is_pyw else "pythonw"
+    launcher = "pyw -3.11-64" if is_pyw else "pythonw"
 
     options = []
     if is_details:
