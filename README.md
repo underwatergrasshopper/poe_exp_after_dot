@@ -13,7 +13,9 @@ Displays time needed to gain next level and time needed to gain next 10% of expe
 
 Requires the "Path of Exile" window to be in "Windowed Fullscreen" mode.
 
-When you left click on in-game exp bar, then this program takes a screenshot of the "Path of Exile" window and scans the part of the screenshot, where the in game exp tooltip is, to fetch current exp value. It's considered as a measure. Calculates an experience gain between last and current measure.
+<p align="center"><img src="./docs/images/MeasureClarity.png"></p>
+
+When you left click on in-game exp bar, then this program takes a screenshot of "Path of Exile" window and scans the part of the screenshot, where the in game exp tooltip is, to fetch current exp value. It's considered as a measure. Calculates an experience gain between last and current measure.
 
 This program brings the "Path of Exile" window back to foreground every time any overlay element is clicked.
 
@@ -27,12 +29,12 @@ This program doesn't read any character data from GGG servers.
 |||
 |---|---| 
 | System | Windows 10 |
-| Python | 3.11 64bit (or above) |
+| Python | 3.11 64bit |
 | py launcher | Yes |
 | Path of Exile Language | English |
 | Supported Resolutions* | 1280x720, 1920x1080, 2560x1440, 4K |
 
-*) Overlay layout for custom resolutions can be added manually in `settings.json` file. And then loaded through `Menu > Layout > <custom_resolution>`. Meanings for coordinates names are in `docs/images/GUI_Layout.png` file or in [Overlay Positioning](#overlay-positioning) section.
+*) Overlay layout for custom resolutions can be changed or added manually in `settings.json` file. And then loaded through `Menu > Layout > <custom_resolution>`. Meanings for coordinates names are in `docs/images/GUI_Layout.png` file or in [Overlay Positioning](#overlay-positioning) section.
 
 # How to install
 
@@ -41,25 +43,25 @@ This program doesn't read any character data from GGG servers.
 ## From `.whl` file
 
 Go to `Releases` in github side panel. Download `poe_exp_after_dot-<version>-py3-none-win_amd64.whl` from latest release.
-Run `py -3-64 -m pip install poe_exp_after_dot-<version>-py3-none-win_amd64.whl` in console window.
+Run `py -3.11-64 -m pip install poe_exp_after_dot-<version>-py3-none-win_amd64.whl` in console window.
 
 # How to uninstall
 
-Run `py -3-64 -m pip uninstall poe_exp_after_dot` in console window.
+Run `py -3.11-64 -m pip uninstall poe_exp_after_dot` in console window.
 
 # How to run
 
-Run `start pyw -3-64 -m poe_exp_after_dot` in console window.
+Run `start pyw -3.11-64 -m poe_exp_after_dot` in console window.
 
 ... or ...
 
-Run `py -3-64 -m poe_exp_after_dot --make-run-file` in console window once after install.
+Run `py -3.11-64 -m poe_exp_after_dot --make-run-file` in console window once after install.
 
 It will create `poe_exp_after_dot.bat` on desktop to run overlay.
 
 # Command Line
 
-Run `py -3-64 -m poe_exp_after_dot --help` to see available options.
+Run `py -3.11-64 -m poe_exp_after_dot --help` to see available options.
 
 # Hot to quit
 
@@ -138,7 +140,7 @@ Data folder is located by default in `%APPDATA%/../Local`.
 
 All following actions are taken from project folder.
 
-Run `py -3-64 -m pip install -r tests_and_examples_requirements.txt` in command window to install test dependencies.
+Run `py -3.11-64 -m pip install -r tests_and_examples_requirements.txt` in command window to install test dependencies.
 
 Run `./RunUnitTests64.bat` in command window to run unit tests.
 

@@ -1,4 +1,4 @@
-# 0.2.0
+# 0.2.0 (2024-03-25)
 * Added ability to run tests in specific order.
 * Changed required python version to be 3.11 only.
 * Changed stream indicator of error messages to be `stderr` for all error print outs.
