@@ -42,8 +42,8 @@ This program doesn't read any character data from GGG servers.
 
 ## From `.whl` file
 
-Go to `Releases` in github side panel. Download `poe_exp_after_dot-<version>-py3-none-win_amd64.whl` from latest release.
-Run `py -3.11-64 -m pip install poe_exp_after_dot-<version>-py3-none-win_amd64.whl` in console window.
+Go to `Releases` in github side panel. Download `poe_exp_after_dot-<version>-py311-none-win_amd64.whl` from latest release.
+Run `py -3.11-64 -m pip install poe_exp_after_dot-<version>-py311-none-win_amd64.whl` in console window.
 
 # How to uninstall
 
